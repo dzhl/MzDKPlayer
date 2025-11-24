@@ -64,6 +64,7 @@ import org.mz.mzdkplayer.ui.screen.localfile.LocalFileScreen
 import org.mz.mzdkplayer.ui.screen.localfile.LocalFileTypeScreen
 import org.mz.mzdkplayer.ui.screen.httplink.HTTPLinkConScreen
 import org.mz.mzdkplayer.ui.screen.library.MovieLibraryScreen
+import org.mz.mzdkplayer.ui.screen.library.TvLibraryScreen
 import org.mz.mzdkplayer.ui.screen.nfs.NFSConListScreen
 import org.mz.mzdkplayer.ui.screen.nfs.NFSConScreen
 import org.mz.mzdkplayer.ui.screen.nfs.NFSFileListScreen
@@ -76,6 +77,7 @@ import org.mz.mzdkplayer.ui.screen.webdavfile.WebDavConScreen
 import org.mz.mzdkplayer.ui.screen.webdavfile.WebDavFileListScreen
 import org.mz.mzdkplayer.ui.screen.setting.SettingsScreen
 import org.mz.mzdkplayer.ui.screen.tv.TVSeriesDetailsScreen
+import org.mz.mzdkplayer.ui.screen.vm.MediaHistoryViewModel
 import org.mz.mzdkplayer.ui.screen.vm.MediaLibraryViewModel
 import org.mz.mzdkplayer.ui.screen.vm.SMBListViewModel
 import org.mz.mzdkplayer.ui.theme.MySideListItemColor
@@ -94,7 +96,9 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
         listOf(
             "主页" to painterResource(id = R.drawable.baseline_home_24),
             "电影" to painterResource(id = R.drawable.moviefileicon),
-            "我的" to painterResource(id = R.drawable.history24dp),
+            "电视" to painterResource(id = R.drawable.tv24dp),
+            "搜索" to painterResource(id = R.drawable.baseline_search_24),
+            "历史" to painterResource(id = R.drawable.history24dp),
             "设置" to painterResource(id = R.drawable.baseline_settings_24),
         )
     var backPressedTime by remember { mutableLongStateOf(0L) }
@@ -145,6 +149,8 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
     val libraryViewModel: MediaLibraryViewModel = viewModelWithFactory {
         RepositoryProvider.createMediaLibraryViewModel()
     }
+
+    val mediaHistoryViewModel: MediaHistoryViewModel = viewModelWithFactory {RepositoryProvider.createMediaHistoryViewModel()  }
     NavHost(
         navController = mainNavController,
         startDestination = "MainPage",
@@ -208,6 +214,14 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
                                                 }
                                             })
                                         2 -> homeNavController.navigate(
+                                            "TvLibraryPage",
+                                            navOptions = navOptions {
+                                                launchSingleTop = true
+                                                popUpTo("TvLibraryPage") {
+                                                    inclusive = true
+                                                }
+                                            })
+                                        3 -> homeNavController.navigate(
                                             "HistoryPage",
                                             navOptions = navOptions {
                                                 launchSingleTop = true
@@ -216,7 +230,7 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
                                                 }
                                             })
 
-                                        3 -> homeNavController.navigate(
+                                        4 -> homeNavController.navigate(
                                             "SettingsPage",
                                             navOptions = navOptions {
                                                 launchSingleTop = true
@@ -261,11 +275,16 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
                         }
                         composable("HistoryPage") {
                             //页面路由对应的页面组件
-                            MediaHistoryScreen(mainNavController)
+                            MediaHistoryScreen(mainNavController,mediaHistoryViewModel)
                         }
                         composable("MoviesPage") {
                             //页面路由对应的页面组件
                             MovieLibraryScreen(libraryViewModel,mainNavController)
+                        }
+
+                        composable("TvLibraryPage") {
+                            //页面路由对应的页面组件
+                            TvLibraryScreen(libraryViewModel,mainNavController)
                         }
 
                     }
@@ -298,7 +317,8 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
                     URLDecoder.decode(sourceUri, "UTF-8"),
                     dataSourceType,
                     URLDecoder.decode(fileName, "UTF-8"),
-                    URLDecoder.decode(connectionName, "UTF-8")
+                    URLDecoder.decode(connectionName, "UTF-8"),
+                    mediaHistoryViewModel
                 )
             }
         }
@@ -322,7 +342,8 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
                     URLDecoder.decode(fileName, "UTF-8") ?: "未知文件名",
                     extraList,
                     currentIndex = currentIndex,
-                    URLDecoder.decode(connectionName, "UTF-8")
+                    URLDecoder.decode(connectionName, "UTF-8"),
+                    mediaHistoryViewModel
 
                 )
             }

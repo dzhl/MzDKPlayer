@@ -45,6 +45,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.mz.mzdkplayer.data.model.AudioInfo
 import org.mz.mzdkplayer.data.model.AudioItem
+import org.mz.mzdkplayer.data.model.MediaHistoryRecord
 
 import org.mz.mzdkplayer.tool.SmbUtils
 import org.mz.mzdkplayer.tool.Tools
@@ -76,7 +77,8 @@ fun AudioPlayerScreen(
     fileName: String,
     extraList: List<AudioItem>,
     currentIndex: String,
-    connectionName: String
+    connectionName: String,
+    mediaHistoryViewModel: MediaHistoryViewModel
 ) {
     val context = LocalContext.current
     val exoPlayer = rememberAudioPlayer(context, mediaUri, dataSourceType)
@@ -99,7 +101,6 @@ fun AudioPlayerScreen(
     // 添加Seek状态，用于跟踪快速Seek操作
     var isSeeking by remember { mutableStateOf(false) }
     var lastSeekTime by remember { mutableLongStateOf(0L) }
-    val mediaHistoryViewModel: MediaHistoryViewModel = viewModel()
 
     BuilderMzAudioPlayer(
         context,
@@ -113,19 +114,26 @@ fun AudioPlayerScreen(
 
     DisposableEffect(Unit) {
         onDispose {
+            // 1. 获取播放器当前状态
+            val currentPos = exoPlayer.currentPosition
+            val totalDur = exoPlayer.duration
+            if (currentPos > 0 && totalDur > 0) {
+                val record = MediaHistoryRecord(
+                    mediaUri = mediaUri,
+                    fileName = fileName,
+                    playbackPosition = currentPos,
+                    mediaDuration = totalDur,
+                    // 处理协议名称显示的逻辑
+                    protocolName = if (dataSourceType == "LOCAL") "本地文件" else dataSourceType,
+                    connectionName = connectionName,
+                    serverAddress = "test", // 如果你有真实的 server IP，请传入，否则留空或用占位符
+                    mediaType = "AUDIO",    // 明确标记为视频
+                    timestamp = System.currentTimeMillis()
+                )
+                // 3. 调用 ViewModel 保存 (ViewModel 内部会启动协程写入数据库)
+                mediaHistoryViewModel.saveHistory(record)
+            }
 
-            mediaHistoryViewModel.saveAudioHistory(
-                audioUri = mediaUri,
-                fileName = fileName,
-                playbackPosition = exoPlayer.currentPosition,
-                audioDuration = exoPlayer.duration,
-                protocolName = when(dataSourceType){
-                    "LOCAL" -> "本地文件"
-                    else -> dataSourceType
-                },
-                connectionName = connectionName,
-                serverAddress = "test",
-            )
             exoPlayer.release()
         }
     }

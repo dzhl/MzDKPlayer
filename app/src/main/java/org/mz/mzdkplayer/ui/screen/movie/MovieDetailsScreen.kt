@@ -137,10 +137,9 @@ fun MovieDetailsScreen(
 
             is Resource.Error -> ErrorView(
                 message = "加载失败",
-                onPlayAnyway = { navController.navigate("VideoPlayer/$videoUriEncoder/$fileNameEncoder/$fileName/$connectionNameEncoder") }
+                onPlayAnyway = { navController.navigate("VideoPlayer/$videoUriEncoder/$dataSourceType/$fileNameEncoder/$connectionNameEncoder") }
             )
 
-            else -> {}
         }
     }
 }
@@ -483,14 +482,8 @@ fun ErrorView(message: String, onPlayAnyway: () -> Unit) {
             MyIconButton(
                 text = "尝试直接播放",
                 icon = R.drawable.baseline_play_arrow_24,
-                modifier = Modifier.width(180.dp),
                 onClick = onPlayAnyway
             )
         }
     }
 }
-
-// 辅助 Helper 以避免 Border 导入冲突
-// 在 Compose 中，BorderStroke 来自 androidx.compose.foundation
-// 而 Border 对象来自 androidx.tv.material3
-// 上面的代码已处理导入，这里只是说明。

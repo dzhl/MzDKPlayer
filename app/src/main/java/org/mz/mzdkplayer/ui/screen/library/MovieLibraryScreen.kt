@@ -48,10 +48,11 @@ fun MovieLibraryScreen(
                         onClick = {
                             // 电影直接跳转播放或详情
                             val encodedUri = URLEncoder.encode(movie.videoUri, "UTF-8")
-                            val encodedName = URLEncoder.encode(movie.title, "UTF-8")
+                            val encodedFileName = URLEncoder.encode(movie.fileName, "UTF-8")
+                            val connectionName = URLEncoder.encode(movie.connectionName, "UTF-8")
                             Log.d("MovieLibraryScreen",movie.dataSourceType)
                             // 假设这里跳转到电影详情，参数根据你的路由定义
-                            //navController.navigate("MovieDetailsScreen/$encodedUri/local/$encodedName/local/0/0/0")
+                            navController.navigate("MovieDetails/$encodedUri/${movie.dataSourceType}/$encodedFileName/$connectionName/${movie.tmdbId}")
                             // 注意：这里如果是电影，你的 DetailsScreen 需要做适配，或者用单独的 MovieDetailsScreen
                         }
                     )

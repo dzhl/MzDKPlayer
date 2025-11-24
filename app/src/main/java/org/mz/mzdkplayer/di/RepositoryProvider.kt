@@ -1,24 +1,20 @@
 package org.mz.mzdkplayer.di
 
+
+
 import android.content.Context
 import org.mz.mzdkplayer.data.local.AppDatabase
 import org.mz.mzdkplayer.data.repository.TmdbRepository
+import org.mz.mzdkplayer.data.repository.RoomMediaHistoryRepository // 👈 记得导入新的 Repository
+import org.mz.mzdkplayer.ui.screen.vm.MediaHistoryViewModel
 import org.mz.mzdkplayer.ui.screen.vm.MediaLibraryViewModel
 import org.mz.mzdkplayer.ui.screen.vm.MovieViewModel
 
-
-
 object RepositoryProvider {
 
-    // 直接使用 Repository 的单例
     private val tmdbRepository = TmdbRepository.instance
-
-    // 持有数据库实例
     private var database: AppDatabase? = null
 
-    /**
-     * 在 Application 的 onCreate 中调用此方法进行初始化
-     */
     fun init(context: Context) {
         if (database == null) {
             database = AppDatabase.getDatabase(context)
@@ -27,18 +23,25 @@ object RepositoryProvider {
 
     fun createMovieViewModel(): MovieViewModel {
         val db = database ?: throw IllegalStateException("RepositoryProvider.init(context) must be called before creating ViewModels")
-
-        // 将 DAO 注入到 ViewModel 中
         return MovieViewModel(tmdbRepository, db.mediaDao())
     }
 
-    // 👇 【新增】 MediaLibraryViewModel 的工厂方法
     fun createMediaLibraryViewModel(): MediaLibraryViewModel {
         val db = database ?: throw IllegalStateException("RepositoryProvider.init(context) must be called before creating ViewModels")
-
-        // 将 DAO 注入到 MediaLibraryViewModel 中
         return MediaLibraryViewModel(db.mediaDao())
     }
 
+    // 👇 【新增】 MediaHistoryViewModel 的注入方法
+    fun createMediaHistoryViewModel(): MediaHistoryViewModel {
+        val db = database ?: throw IllegalStateException("RepositoryProvider.init(context) must be called before creating ViewModels")
 
+        // 1. 获取 DAO (前提：你已经在 AppDatabase 中添加了 abstract fun mediaHistoryDao(): MediaHistoryDao)
+        val historyDao = db.mediaHistoryDao()
+
+        // 2. 创建 Repository
+        val repository = RoomMediaHistoryRepository(historyDao)
+
+        // 3. 创建 ViewModel
+        return MediaHistoryViewModel(repository)
+    }
 }

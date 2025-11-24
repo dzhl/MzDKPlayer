@@ -75,9 +75,9 @@ import org.mz.mzdkplayer.danmaku.DanmakuData
 import org.mz.mzdkplayer.danmaku.DanmakuResponse
 import org.mz.mzdkplayer.danmaku.getDanmakuXmlFromFile
 import org.mz.mzdkplayer.data.model.DanmakuScreenRatio
+import org.mz.mzdkplayer.data.model.MediaHistoryRecord
 
 import org.mz.mzdkplayer.data.repository.DanmakuSettingsManager
-import org.mz.mzdkplayer.tool.SmbDataSource
 import org.mz.mzdkplayer.tool.SmbUtils
 import org.mz.mzdkplayer.tool.SubtitleView
 import org.mz.mzdkplayer.tool.handleDPadKeyEvents
@@ -123,7 +123,8 @@ fun VideoPlayerScreen(
     mediaUri: String,
     dataSourceType: String,
     fileName: String = "未知文件名",
-    connectionName: String
+    connectionName: String,
+    mediaHistoryViewModel: MediaHistoryViewModel
 ) {
     // 获取当前 Compose 上下文
     val context = LocalContext.current
@@ -170,32 +171,48 @@ fun VideoPlayerScreen(
 
     // 弹幕设置管理器
     val settingsManager = remember { DanmakuSettingsManager(context) }
-    val mediaHistoryViewModel: MediaHistoryViewModel = viewModel()
+
     // 构建播放器 (设置媒体源等)
     BuilderMzPlayer(context, mediaUri, exoPlayer, dataSourceType)
     // 当 Composable 离开组合时，释放资源
     DisposableEffect(Unit) {
         onDispose {
-            mediaHistoryViewModel.saveVideoHistory(
-                videoUri = mediaUri,
-                fileName = fileName,
-                playbackPosition = exoPlayer.currentPosition,
-                videoDuration = exoPlayer.duration,
-                protocolName =  when(dataSourceType){
-                    "LOCAL" -> "本地文件"
-                    else -> dataSourceType
-                },
-                connectionName = connectionName,
-                serverAddress = "test",
-            )
+            // 1. 获取播放器当前状态
+            val currentPos = exoPlayer.currentPosition
+            val totalDur = exoPlayer.duration
+
+            // 2. 构建历史记录对象
+            // 只要播放过（进度 > 0）且总时长有效，才保存
+            if (currentPos > 0 && totalDur > 0) {
+                val record = MediaHistoryRecord(
+                    mediaUri = mediaUri,
+                    fileName = fileName,
+                    playbackPosition = currentPos,
+                    mediaDuration = totalDur,
+                    // 处理协议名称显示的逻辑
+                    protocolName = if (dataSourceType == "LOCAL") "本地文件" else dataSourceType,
+                    connectionName = connectionName,
+                    serverAddress = "test", // 如果你有真实的 server IP，请传入，否则留空或用占位符
+                    mediaType = "VIDEO",    // 明确标记为视频
+                    timestamp = System.currentTimeMillis()
+                )
+
+                // 3. 调用 ViewModel 保存 (ViewModel 内部会启动协程写入数据库)
+                mediaHistoryViewModel.saveHistory(record)
+            }
+
+            // 4. 释放资源
             exoPlayer.release()
-            mDanmakuPlayer.release() // 释放弹幕播放器
+            mDanmakuPlayer.release()
         }
     }
     LaunchedEffect(Unit) {
-        val playbackPosition=mediaHistoryViewModel.getPlaybackPositionByUri(mediaUri = mediaUri)
-        if (playbackPosition!=0L){
-            exoPlayer.seekTo(playbackPosition)
+        // 调用 suspend 函数从数据库获取进度
+        val historyPosition = mediaHistoryViewModel.getHistoryPosition(mediaUri)
+
+        // 如果有记录且大于0，则跳转
+        if (historyPosition > 0) {
+            exoPlayer.seekTo(historyPosition)
         }
     }
 
