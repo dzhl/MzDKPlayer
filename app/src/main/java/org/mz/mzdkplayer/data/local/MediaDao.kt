@@ -39,4 +39,40 @@ interface MediaDao {
      */
     @Query("DELETE FROM media_cache")
     suspend fun clearAllMediaCache()
+
+    /**
+     * 【新增】模糊搜索功能
+     * 1. 同时也搜索 title 和 fileName
+     * 2. 针对 TV 类型，按 tmdbId 分组，避免搜索结果出现几十集同一部剧
+     * 3. 如果你有拼音字段，可以在 WHERE 中加入 OR pinyin LIKE ...
+     */
+//    @Query("""
+//        SELECT * FROM media_cache
+//        WHERE (title LIKE '%' || :query || '%' OR fileName LIKE '%' || :query || '%')
+//        GROUP BY (CASE WHEN mediaType = 'tv' THEN tmdbId ELSE videoUri END)
+//        ORDER BY
+//            CASE WHEN title LIKE :query || '%' THEN 1 ELSE 2 END, --以此开头优先
+//            title ASC
+//    """)
+    /**
+     * 【新增】模糊搜索功能（性能优化版）
+     * 1. 使用 groupKey 分组，性能远高于 CASE WHEN 分组。
+     * 2. LIKE '%%' 依然是全表扫描，但配合防抖和索引能保证可接受的性能。
+     */
+    @Query("""
+        SELECT * FROM media_cache 
+        WHERE (title LIKE '%' || :query || '%' OR fileName LIKE '%' || :query || '%')
+        GROUP BY groupKey -- 【优化点】直接使用预计算的 groupKey 字段进行分组
+        ORDER BY 
+            CASE WHEN title LIKE :query || '%' THEN 1 ELSE 2 END, -- 以关键词开头的优先
+            title ASC
+    """)
+    fun searchMediaPaged(query: String): androidx.paging.PagingSource<Int, MediaCacheEntity>
+
+    /**
+     * 【新增】批量插入，用于性能测试。
+     * 使用 REPLACE 策略，避免重复插入时报错。
+     */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(mediaList: List<MediaCacheEntity>)
 }

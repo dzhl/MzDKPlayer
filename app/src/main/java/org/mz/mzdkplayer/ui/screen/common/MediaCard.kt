@@ -49,7 +49,7 @@ fun MediaCard(
             )
         ),
         scale = CardDefaults.scale(
-            focusedScale = 1.05f // 聚焦时轻微放大
+            focusedScale = 1.03f // 聚焦时轻微放大
         )
     ) {
         Column(

@@ -97,6 +97,13 @@ class MovieViewModel(private val repository: TmdbRepository,private val mediaDao
                     if (result is Resource.Success) {
                         val movie = result.data.results.firstOrNull()
                         if (movie != null) {
+//                            val groupKey = if (media.mediaType == "tv") {
+//                                // TV 使用 tmdbId 作为分组键
+//                                "tv_${media.tmdbId}"
+//                            } else {
+//                                // 电影使用 videoUri (主键) 作为分组键
+//                                "movie_${media.videoUri}"
+//                            }
                             // [修改] 保存到数据库时填入新字段
                             val entity = MediaCacheEntity(
                                 videoUri = videoUri,
@@ -111,7 +118,8 @@ class MovieViewModel(private val repository: TmdbRepository,private val mediaDao
                                 backdropPath = movie.backdropPath,
                                 releaseDate = movie.releaseDate,
                                 voteAverage = movie.voteAverage,
-                                isDetailsLoaded = false
+                                isDetailsLoaded = false,
+                                groupKey = "movie_${videoUri}"
                             )
                             mediaDao.insertMedia(entity)
                             _focusedMovie.value = Resource.Success(entity.toMediaItem())
@@ -142,7 +150,8 @@ class MovieViewModel(private val repository: TmdbRepository,private val mediaDao
                                 voteAverage = tv.voteAverage,
                                 seasonNumber = mediaInfo.season.toIntOrNull() ?: 1,
                                 episodeNumber = mediaInfo.episode.toIntOrNull() ?: 1,
-                                isDetailsLoaded = false
+                                isDetailsLoaded = false,
+                                groupKey = "tv_${tv.id}"
                             )
                             mediaDao.insertMedia(entity)
                             _focusedMovie.value = Resource.Success(entity.toMediaItem())
@@ -228,7 +237,9 @@ class MovieViewModel(private val repository: TmdbRepository,private val mediaDao
                         isDetailsLoaded = true,
                         dataSourceType = dataSourceType,
                         fileName = fileName,
-                        connectionName = connectionName
+                        connectionName = connectionName,
+                        groupKey = "movie_${videoUri}"
+
                     )
                     mediaDao.insertMedia(newEntity)
                 }
@@ -372,7 +383,8 @@ class MovieViewModel(private val repository: TmdbRepository,private val mediaDao
                             episodeRuntime = eData.runtime,
                             dataSourceType = dataSourceType,
                             fileName = fileName,
-                            connectionName = connectionName
+                            connectionName = connectionName,
+                            groupKey = "tv_${sData.id}"
                         )
                     mediaDao.insertMedia(newOrUpdatedEntity) // 使用 insert(onConflict = REPLACE) 或者 update
                 }

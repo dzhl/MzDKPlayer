@@ -15,6 +15,7 @@ import androidx.tv.material3.*
 import org.mz.mzdkplayer.di.RepositoryProvider
 import org.mz.mzdkplayer.tool.viewModelWithFactory
 import org.mz.mzdkplayer.ui.screen.vm.MediaHistoryViewModel
+import org.mz.mzdkplayer.ui.theme.myListItemCoverColor
 import java.net.URLEncoder
 
 @OptIn(ExperimentalTvMaterial3Api::class)
@@ -58,7 +59,7 @@ fun MediaHistoryScreen(
         if (selectedTab == 0) {
             // === 视频历史 (Grid) ===
             LazyVerticalGrid(
-                columns = GridCells.Adaptive(160.dp), // 自适应宽度
+                columns = GridCells.Fixed(5),
                 contentPadding = PaddingValues(bottom = 20.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -90,6 +91,7 @@ fun MediaHistoryScreen(
                         onClick = {
                             // 音频导航逻辑 (参考之前的代码)
                         },
+                        colors = myListItemCoverColor(),
                         headlineContent = { Text(record.fileName) },
                         supportingContent = {
                             Text("${record.connectionName} | ${record.getPlaybackPercentage()}")

@@ -68,6 +68,7 @@ import org.mz.mzdkplayer.ui.screen.library.TvLibraryScreen
 import org.mz.mzdkplayer.ui.screen.nfs.NFSConListScreen
 import org.mz.mzdkplayer.ui.screen.nfs.NFSConScreen
 import org.mz.mzdkplayer.ui.screen.nfs.NFSFileListScreen
+import org.mz.mzdkplayer.ui.screen.search.SearchScreen
 import org.mz.mzdkplayer.ui.screen.smbfile.SMBConListScreen
 import org.mz.mzdkplayer.ui.screen.smbfile.SMBConScreen
 import org.mz.mzdkplayer.ui.screen.smbfile.SMBFileListScreen
@@ -222,6 +223,14 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
                                                 }
                                             })
                                         3 -> homeNavController.navigate(
+                                            "SearchPage",
+                                            navOptions = navOptions {
+                                                launchSingleTop = true
+                                                popUpTo("SearchPage") {
+                                                    inclusive = true
+                                                }
+                                            })
+                                        4 -> homeNavController.navigate(
                                             "HistoryPage",
                                             navOptions = navOptions {
                                                 launchSingleTop = true
@@ -230,7 +239,7 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
                                                 }
                                             })
 
-                                        4 -> homeNavController.navigate(
+                                        5 -> homeNavController.navigate(
                                             "SettingsPage",
                                             navOptions = navOptions {
                                                 launchSingleTop = true
@@ -285,6 +294,10 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
                         composable("TvLibraryPage") {
                             //页面路由对应的页面组件
                             TvLibraryScreen(libraryViewModel,mainNavController)
+                        }
+                        composable("SearchPage") {
+                            //页面路由对应的页面组件
+                            SearchScreen(mainNavController)
                         }
 
                     }

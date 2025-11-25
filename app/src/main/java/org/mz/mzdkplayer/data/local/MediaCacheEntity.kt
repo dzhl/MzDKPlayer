@@ -6,7 +6,11 @@ import androidx.room.TypeConverters
 import org.mz.mzdkplayer.data.model.Genre
 import org.mz.mzdkplayer.data.model.MediaItem
 
-@Entity(tableName = "media_cache")
+@Entity(tableName = "media_cache",indices = [
+    androidx.room.Index(value = ["groupKey"]), // 加速分组
+    androidx.room.Index(value = ["title"]),    // 加速排序
+    androidx.room.Index(value = ["tmdbId"])    // 加速关联查询
+])
 @TypeConverters(MediaConverters::class)
 data class MediaCacheEntity(
     @PrimaryKey
@@ -18,6 +22,7 @@ data class MediaCacheEntity(
     val connectionName: String, // 连接配置名称 (用于查找存储的账号密码)，例如 "MyNas"
 
     // 基础信息 (列表页显示)
+
     val tmdbId: Int,
     val mediaType: String, // "movie" or "tv"
     val title: String,
@@ -46,7 +51,10 @@ data class MediaCacheEntity(
     val episodeOverview: String? = null,
     val episodeStillPath: String? = null,
     val episodeAirDate: String? = null,
-    val episodeRuntime: Int? = null
+    val episodeRuntime: Int? = null,
+
+    // 【新增字段】groupKey (必须与 MIGRATION_3_4 对应)
+    val groupKey: String,
 ) {
     // 转换为 UI 使用的 MediaItem
     // 假设你的 MediaItem 还没更新，这里暂时只传已有字段

@@ -9,6 +9,8 @@ import org.mz.mzdkplayer.data.repository.RoomMediaHistoryRepository // 👈 记�
 import org.mz.mzdkplayer.ui.screen.vm.MediaHistoryViewModel
 import org.mz.mzdkplayer.ui.screen.vm.MediaLibraryViewModel
 import org.mz.mzdkplayer.ui.screen.vm.MovieViewModel
+import org.mz.mzdkplayer.ui.screen.vm.PerformanceTestViewModel
+import org.mz.mzdkplayer.ui.screen.vm.SearchViewModel
 
 object RepositoryProvider {
 
@@ -29,6 +31,16 @@ object RepositoryProvider {
     fun createMediaLibraryViewModel(): MediaLibraryViewModel {
         val db = database ?: throw IllegalStateException("RepositoryProvider.init(context) must be called before creating ViewModels")
         return MediaLibraryViewModel(db.mediaDao())
+    }
+
+    fun createSearchViewModel(): SearchViewModel {
+        val db = database ?: throw IllegalStateException("RepositoryProvider.init(context) must be called before creating ViewModels")
+        return SearchViewModel(db.mediaDao())
+    }
+
+    fun createPerformanceTestViewModel(): PerformanceTestViewModel {
+        val db = database ?: throw IllegalStateException("RepositoryProvider.init(context) must be called before creating ViewModels")
+        return PerformanceTestViewModel(db.mediaDao())
     }
 
     // 👇 【新增】 MediaHistoryViewModel 的注入方法

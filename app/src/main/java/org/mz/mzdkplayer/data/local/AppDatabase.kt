@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration // 👈 记得导入
 import androidx.sqlite.db.SupportSQLiteDatabase // 👈 记得导入
 
-@Database(entities = [MediaCacheEntity::class,MediaHistoryEntity::class], version = 3, exportSchema = false) // 👈 版本改为 3
+@Database(entities = [MediaCacheEntity::class,MediaHistoryEntity::class], version = 4, exportSchema = false) // 👈 版本改为 4
 abstract class AppDatabase : RoomDatabase() {
     abstract fun mediaDao(): MediaDao
     abstract fun mediaHistoryDao(): MediaHistoryDao // 新增
@@ -49,7 +49,23 @@ abstract class AppDatabase : RoomDatabase() {
                 )
             }
         }
+        // 定义 V3 到 V4 的迁移：为 media_cache 表添加 groupKey 列和新的索引
+        val MIGRATION_3_4: Migration = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // 1. 添加新的 groupKey 列 (必须提供 DEFAULT 值)
+                db.execSQL("ALTER TABLE media_cache ADD COLUMN groupKey TEXT NOT NULL DEFAULT ''")
 
+                // 2. 添加索引 (根据 MediaCacheEntity 中定义的索引)
+                // 添加 groupKey 索引 (用于加速分组查询)
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_media_cache_groupKey` ON `media_cache` (`groupKey`)")
+
+                // 添加 title 索引 (用于加速排序和搜索)
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_media_cache_title` ON `media_cache` (`title`)")
+
+                // tmdbId 索引可能已存在（或通过之前的索引添加），但再次执行确保无误
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_media_cache_tmdbId` ON `media_cache` (`tmdbId`)")
+            }
+        }
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -57,7 +73,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "mzdk_player_database"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3) // 添加迁移
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3,MIGRATION_3_4) // 添加迁移
                     .build()
                 INSTANCE = instance
                 instance
