@@ -63,6 +63,7 @@ import org.mz.mzdkplayer.ui.screen.movie.ErrorView
 import org.mz.mzdkplayer.ui.screen.movie.FullDescriptionDialog
 import org.mz.mzdkplayer.ui.screen.vm.MovieViewModel
 import java.net.URLEncoder
+import java.util.Locale
 
 @Composable
 fun TVSeriesDetailsScreen(
@@ -287,6 +288,8 @@ private fun TVSeriesContent(
                         text = tvSeries.name ?: "未知剧集",
                         style = MaterialTheme.typography.displayMedium,
                         fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.padding(8.dp),
                         color = Color.White
                     )
@@ -313,7 +316,7 @@ private fun TVSeriesContent(
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            text = "TMDB ${String.format("%.1f", tvSeries.voteAverage)}",
+                            text = "TMDB ${String.format(Locale.getDefault(),"%.1f", tvSeries.voteAverage)}",
                             style = MaterialTheme.typography.labelMedium,
 
                             color = Color.Black,

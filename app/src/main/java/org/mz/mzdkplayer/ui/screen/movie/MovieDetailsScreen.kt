@@ -69,6 +69,7 @@ import org.mz.mzdkplayer.ui.screen.common.LoadingScreen
 import org.mz.mzdkplayer.ui.screen.common.LocalizedStatusText
 import org.mz.mzdkplayer.ui.screen.common.MyIconButton
 import org.mz.mzdkplayer.ui.screen.vm.MovieViewModel
+import java.net.URLDecoder
 import java.net.URLEncoder
 
 @Composable
@@ -88,7 +89,7 @@ fun MovieDetailsScreen(
 
     // [新增] 解码 URI 用于数据库查询
     val decodedUri = remember(videoUri) {
-        java.net.URLDecoder.decode(videoUri, "UTF-8")
+        URLDecoder.decode(videoUri, "UTF-8")
     }
     LaunchedEffect(movieId) {
         if (movieId > 0) {
@@ -270,6 +271,8 @@ private fun MovieContent(
                     text = movie.title ?: "未知标题",
                     style = MaterialTheme.typography.displayMedium,
                     fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.padding(8.dp),
                     color = Color.White
                 )
@@ -570,7 +573,7 @@ fun ErrorView(message: String, onPlayAnyway: () -> Unit) {
             MyIconButton(
                 text = "尝试直接播放",
                 icon = R.drawable.baseline_play_arrow_24,
-                onClick = onPlayAnyway
+                onClick = onPlayAnyway,
             )
         }
     }

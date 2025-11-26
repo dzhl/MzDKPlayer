@@ -28,7 +28,7 @@ import org.mz.mzdkplayer.ui.theme.myListItemCoverColor
 
 
 @Composable
-fun HomeScreen(mainNavController: NavHostController) {
+fun FileHomeScreen(mainNavController: NavHostController) {
     var selectPanel by remember { mutableStateOf("local") }
     val items by remember { mutableStateOf(listOf("local", "SMB", "WebDav", "FTP","NFS","HTTP")) }
     val iconList = listOf<Int>(

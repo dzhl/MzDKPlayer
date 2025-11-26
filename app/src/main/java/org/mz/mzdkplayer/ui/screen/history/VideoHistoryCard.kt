@@ -41,7 +41,9 @@ fun VideoHistoryCard(
     // 优先使用元数据中的标题和图片，如果没有则使用文件名
     val title = metadata?.title ?: history.fileName
     val posterPath = metadata?.posterPath
-    val year = metadata?.releaseDate?.take(4)
+    val year = metadata?.releaseDate?.take(4)?: "未知年份"
+    val seasonNumber = metadata?.seasonNumber ?: 0
+    val episodeNumber = metadata?.episodeNumber ?: 0
 // --- 关键修改点：确保微小进度至少显示 1% ---
     val rawPercentageInt = history.getPlaybackPercentage()
     // Req 2: 计算进度。只要有播放进度，percentage 就大于 0
@@ -99,7 +101,9 @@ fun VideoHistoryCard(
                     } else {
                         // 占位图
                         Box(
-                            modifier = Modifier.fillMaxSize().padding(16.dp),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text("No Image", color = Color.Gray)
@@ -123,14 +127,18 @@ fun VideoHistoryCard(
                         color = Color.White
                     )
 
-                    if (!year.isNullOrEmpty()) {
-                        Text(
-                            text = year,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.Gray,
-                            modifier = Modifier.padding(top = 2.dp)
-                        )
-                    }
+
+                    Text(
+                        text = if (seasonNumber > 0 && episodeNumber > 0) {
+                            "第${seasonNumber}季第${episodeNumber}集 看到 ${(percentage * 100).toInt()}%"
+                        }else{
+                            "$year 看到 ${(percentage * 100).toInt()}%"
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+
                 }
             }
 
@@ -191,16 +199,16 @@ fun VideoHistoryCard(
                         .padding(horizontal = 12.dp) // 与 Card 边框对齐
                 ) {
                     // 进度百分比提示
-                    Text(
-                        text = "${(percentage * 100).toInt()}%",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.White,
-                        modifier = Modifier
-                            .align(Alignment.End)
-                            .padding(bottom = 2.dp)
-                    )
+//                    Text(
+//                        text = "${(percentage * 100).toInt()}%",
+//                        style = MaterialTheme.typography.labelSmall,
+//                        fontSize = 10.sp,
+//                        fontWeight = FontWeight.SemiBold,
+//                        color = Color.White,
+//                        modifier = Modifier
+//                            .align(Alignment.End)
+//                            .padding(bottom = 2.dp)
+//                    )
 
                     // 进度条容器
                     Box(

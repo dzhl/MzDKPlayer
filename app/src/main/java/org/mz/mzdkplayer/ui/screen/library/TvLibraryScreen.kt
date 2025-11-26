@@ -22,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
@@ -163,8 +164,11 @@ fun EpisodeSelectionDialog(
                                     }
                                 } else null,
                                 // trailingContent: 可以在右侧放置一个指示图标或文本
-                                trailingContent = {
-                                    Text("选择", color = Color.LightGray)
+//                                trailingContent = {
+//                                    Text(episode.dataSourceType,)
+//                                },
+                                overlineContent = {
+                                    Text("${episode.dataSourceType} · ${episode.fileName}",maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 }
                             )
                         }

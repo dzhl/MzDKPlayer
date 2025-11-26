@@ -51,12 +51,10 @@ import org.mz.mzdkplayer.tool.viewModelWithFactory
 import org.mz.mzdkplayer.ui.audioplayer.AudioPlayerScreen
 import org.mz.mzdkplayer.ui.screen.movie.MovieDetailsScreen
 import org.mz.mzdkplayer.ui.screen.history.MediaHistoryScreen
-
-
-import org.mz.mzdkplayer.ui.screen.home.HomeScreen
 import org.mz.mzdkplayer.ui.screen.ftp.FTPConListScreen
 import org.mz.mzdkplayer.ui.screen.ftp.FTPConScreen
 import org.mz.mzdkplayer.ui.screen.ftp.FTPFileListScreen
+import org.mz.mzdkplayer.ui.screen.home.FileHomeScreen
 import org.mz.mzdkplayer.ui.screen.httplink.HTTPLinkFileListScreen
 import org.mz.mzdkplayer.ui.screen.httplink.HTTPLinkConListScreen
 
@@ -64,6 +62,7 @@ import org.mz.mzdkplayer.ui.screen.localfile.LocalFileScreen
 import org.mz.mzdkplayer.ui.screen.localfile.LocalFileTypeScreen
 import org.mz.mzdkplayer.ui.screen.httplink.HTTPLinkConScreen
 import org.mz.mzdkplayer.ui.screen.library.MovieLibraryScreen
+import org.mz.mzdkplayer.ui.screen.library.MovieLibraryScreen1
 import org.mz.mzdkplayer.ui.screen.library.TvLibraryScreen
 import org.mz.mzdkplayer.ui.screen.nfs.NFSConListScreen
 import org.mz.mzdkplayer.ui.screen.nfs.NFSConScreen
@@ -95,11 +94,12 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
     var selectedIndex by remember { mutableIntStateOf(0) }
     val items =
         listOf(
-            "主页" to painterResource(id = R.drawable.baseline_home_24),
+
             "电影" to painterResource(id = R.drawable.moviefileicon),
             "电视" to painterResource(id = R.drawable.tv24dp),
+            "继续播放" to painterResource(id = R.drawable.history24dp),
+            "文件浏览" to painterResource(id = R.drawable.baseline_folder_24),
             "搜索" to painterResource(id = R.drawable.baseline_search_24),
-            "历史" to painterResource(id = R.drawable.history24dp),
             "设置" to painterResource(id = R.drawable.baseline_settings_24),
         )
     var backPressedTime by remember { mutableLongStateOf(0L) }
@@ -197,16 +197,7 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
                                 onClick = {
                                     selectedIndex = index
                                     when (selectedIndex) {
-                                        0 -> homeNavController.navigate(
-                                            "HomePage",
-                                            navOptions = navOptions {
-                                                launchSingleTop = true
-                                                popUpTo("HomePage") {
-                                                    inclusive = true
-                                                }
-                                            }
-                                        )
-                                        1 -> homeNavController.navigate(
+                                        0 ->  homeNavController.navigate(
                                             "MoviesPage",
                                             navOptions = navOptions {
                                                 launchSingleTop = true
@@ -214,7 +205,7 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
                                                     inclusive = true
                                                 }
                                             })
-                                        2 -> homeNavController.navigate(
+                                        1 ->homeNavController.navigate(
                                             "TvLibraryPage",
                                             navOptions = navOptions {
                                                 launchSingleTop = true
@@ -222,19 +213,27 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
                                                     inclusive = true
                                                 }
                                             })
-                                        3 -> homeNavController.navigate(
-                                            "SearchPage",
-                                            navOptions = navOptions {
-                                                launchSingleTop = true
-                                                popUpTo("SearchPage") {
-                                                    inclusive = true
-                                                }
-                                            })
-                                        4 -> homeNavController.navigate(
+                                        2 -> homeNavController.navigate(
                                             "HistoryPage",
                                             navOptions = navOptions {
                                                 launchSingleTop = true
                                                 popUpTo("HistoryPage") {
+                                                    inclusive = true
+                                                }
+                                            })
+                                        3 -> homeNavController.navigate(
+                                            "FileHomePage",
+                                            navOptions = navOptions {
+                                                launchSingleTop = true
+                                                popUpTo("FileHomePage") {
+                                                    inclusive = true
+                                                }
+                                            })
+                                        4 ->homeNavController.navigate(
+                                            "SearchPage",
+                                            navOptions = navOptions {
+                                                launchSingleTop = true
+                                                popUpTo("SearchPage") {
                                                     inclusive = true
                                                 }
                                             })
@@ -267,16 +266,16 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
                 content = {
                     NavHost(
                         navController = homeNavController,
-                        startDestination = "HomePage",
+                        startDestination = "MoviesPage",
                         modifier = Modifier
                             .background(Color.Black)
                             .fillMaxHeight()
                             .fillMaxWidth()
                     ) {
                         //声明名为MainPage的页面路由
-                        composable("HomePage") {
+                        composable("FileHomePage") {
                             //页面路由对应的页面组件
-                            HomeScreen(mainNavController)
+                            FileHomeScreen(mainNavController)
                         }
                         composable("SettingsPage") {
                             //页面路由对应的页面组件
@@ -288,7 +287,7 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
                         }
                         composable("MoviesPage") {
                             //页面路由对应的页面组件
-                            MovieLibraryScreen(libraryViewModel,mainNavController)
+                            MovieLibraryScreen1(libraryViewModel,mainNavController)
                         }
 
                         composable("TvLibraryPage") {
