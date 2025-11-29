@@ -151,6 +151,7 @@ fun WebDavFileListScreen(
     LaunchedEffect(focusedFileName, focusedIsDir, focusedIsVideo) {
         if (focusedFileName != null && !focusedIsDir && focusedIsVideo) {
             Log.d("WebDavFileListScreen", "触发电影搜索: $focusedFileName")
+
             // 非目录文件，触发电影搜索
             // [修改] 传入 focusedMediaUri 以便查询数据库
             movieViewModel.searchFocusedMovie(
@@ -244,8 +245,8 @@ fun WebDavFileListScreen(
                                                         when {
                                                             Tools.containsVideoFormat(fileExtension) -> {
                                                                 Log.d(
-                                                                    "encodedFileUrl",
-                                                                    encodedFileUrl
+                                                                    "WebDavFileListScreen",
+                                                                    file.path
                                                                 )
                                                                 if (mediaId > 0 && focusedFileName == file.name && !settingsState.hideDetails) {
                                                                     val mediaInfoFN =

@@ -207,17 +207,19 @@ fun BuilderMzPlayer(
 
                     }
                 }
-                if (videoPlayerViewModel.onTracksChangedState == 0) {
-                    if (videoPlayerViewModel.mutableSetOfVideoTrackGroups.isNotEmpty()) {
-                        exoPlayer.trackSelectionParameters =
-                            exoPlayer.trackSelectionParameters.buildUpon().setOverrideForType(
-                                TrackSelectionOverride(
-                                    videoPlayerViewModel.mutableSetOfVideoTrackGroups[0].mediaTrackGroup,
-                                    0
-                                )
-                            ).build()
-                    }
-
+                //  🚀 关键修改：移除强制选择视频轨道的代码// ⚠️ 视频轨道选择逻辑已移除，依赖 ExoPlayer 默认选择器
+                // 原因有些播放有些杜比视界的视频尤其是演示片电视只能其识别成HDR，打开视频轨道面板显示的是两个轨道一个HDR一个是杜比视界
+//                if (videoPlayerViewModel.onTracksChangedState == 0) {
+//                    if (videoPlayerViewModel.mutableSetOfVideoTrackGroups.isNotEmpty()) {
+//                        exoPlayer.trackSelectionParameters =
+//                            exoPlayer.trackSelectionParameters.buildUpon().setOverrideForType(
+//                                TrackSelectionOverride(
+//                                    videoPlayerViewModel.mutableSetOfVideoTrackGroups[0].mediaTrackGroup,
+//                                    0
+//                                )
+//                            ).build()
+//                    }
+//                }
 //                    if (videoPlayerViewModel.mutableSetOfTextTrackGroups.isNotEmpty()) {
 //                        exoPlayer.trackSelectionParameters =
 //                            exoPlayer.trackSelectionParameters.buildUpon().setOverrideForType(
@@ -227,8 +229,6 @@ fun BuilderMzPlayer(
 //                                )
 //                            ).build()
 //                    }
-                }
-
                 if (videoPlayerViewModel.mutableSetOfAudioTrackGroups.isNotEmpty()) {
                     for ((index, atGroup) in videoPlayerViewModel.mutableSetOfAudioTrackGroups.withIndex()) {
                         Log.d("VideoTrackGroupsID", atGroup.getTrackFormat(0).id.toString())
