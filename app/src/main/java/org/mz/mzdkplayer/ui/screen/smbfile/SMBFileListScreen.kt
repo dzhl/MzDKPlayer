@@ -196,6 +196,7 @@ fun SMBFileListScreen(
         if (focusedFileName != null && !focusedIsDir && focusedIsVideo) {
             // 非目录文件，触发电影搜索
             // [修改] 传入 focusedMediaUri 以便查询数据库
+            Log.d("SMBFileListScreen", "触发电影搜索: $focusedFileName")
             movieViewModel.searchFocusedMovie(
                 focusedFileName!!,
                 false,

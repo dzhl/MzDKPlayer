@@ -178,7 +178,7 @@ fun VideoPlayerScreen(
     val settingsState by settingsViewModel.uiState.collectAsState()
 
     // 构建播放器 (设置媒体源等)
-    BuilderMzPlayer(context, mediaUri, exoPlayer, dataSourceType)
+    BuilderMzPlayer(context, mediaUri, exoPlayer, dataSourceType,settingsViewModel)
     // 当 Composable 离开组合时，释放资源
     DisposableEffect(Unit) {
         onDispose {

@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.ListItem
@@ -53,6 +54,7 @@ import coil3.request.crossfade
 
 import org.mz.mzdkplayer.data.local.MediaCacheEntity
 import org.mz.mzdkplayer.ui.screen.common.LibraryEmpty
+import org.mz.mzdkplayer.ui.screen.common.LoadingScreen
 import org.mz.mzdkplayer.ui.screen.common.MediaCard
 import org.mz.mzdkplayer.ui.screen.vm.MediaLibraryViewModel
 import org.mz.mzdkplayer.ui.screen.vm.SettingsViewModel
@@ -79,6 +81,8 @@ fun MovieLibraryScreen(
     // 状态：标记是否需要检查版本数量并执行跳转/弹窗逻辑
     var checkVersionsAfterLoad by remember { mutableStateOf(false) }
     val settingsState by settingsViewModel.uiState.collectAsState()
+    val isMoviesLoading = movies.loadState.refresh == LoadState.Loading
+    val isMoviesEmpty = movies.itemCount == 0
     // 在版本加载完成后，检查版本数量
     LaunchedEffect(movieVersions.size, checkVersionsAfterLoad) {
         if (checkVersionsAfterLoad && movieVersions.isNotEmpty()) {
@@ -111,7 +115,9 @@ fun MovieLibraryScreen(
             focusedMovie = movies.itemSnapshotList.items.firstOrNull()
         }
     }
-    if (movies.itemCount<=0){
+    if (isMoviesLoading){
+        LoadingScreen(modifier = Modifier.fillMaxSize())
+    }else if (isMoviesEmpty){
         LibraryEmpty(navController = homeNavController)
     }else{
         // === 使用 Box 容器来实现 ImmersiveList 的效果 ===

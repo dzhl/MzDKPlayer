@@ -46,6 +46,7 @@ fun LibraryEmpty(isMovie: Boolean =true, navController: NavController){
                 modifier = Modifier.size(100.dp) // 可选：调整图标大小
             )
 
+
             // 标题
             Text(
                 text = if (isMovie )"暂无电影信息" else "暂无TV剧信息",

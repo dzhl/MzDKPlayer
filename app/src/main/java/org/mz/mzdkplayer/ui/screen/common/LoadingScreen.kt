@@ -8,6 +8,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -30,6 +31,34 @@ import java.io.File
 @Composable
 
 fun LoadingScreen(
+    text: String = "正在加载",
+    modifier: Modifier,
+    fontSize: Int = 26,
+    arcSize: Int = 80,
+
+) {
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            TwoArcLoading(modifier = Modifier.size(arcSize.dp))
+            Spacer(modifier = Modifier.height(16.dp)) // 用 Spacer 控制间距，自适应
+            Text(
+                text = text,
+                fontSize = fontSize.sp,
+                color = Color.White
+            )
+
+
+        }
+    }
+}
+@Composable
+fun LoadingScreenWithSub(
     text: String = "正在加载",
     modifier: Modifier,
     fontSize: Int = 26,
@@ -58,6 +87,7 @@ fun LoadingScreen(
                 fontSize = subtitleFontSize.sp,
                 color = Color.Gray
             )
+
 
         }
     }

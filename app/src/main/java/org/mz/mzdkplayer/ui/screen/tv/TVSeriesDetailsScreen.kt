@@ -57,6 +57,7 @@ import org.mz.mzdkplayer.tool.Tools.getCountryName
 import org.mz.mzdkplayer.tool.viewModelWithFactory
 
 import org.mz.mzdkplayer.ui.screen.common.LoadingScreen
+import org.mz.mzdkplayer.ui.screen.common.LoadingScreenWithSub
 import org.mz.mzdkplayer.ui.screen.common.LocalizedStatusText
 import org.mz.mzdkplayer.ui.screen.common.MyIconButton
 import org.mz.mzdkplayer.ui.screen.movie.ErrorView
@@ -136,7 +137,7 @@ fun TVSeriesDetailsScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    LoadingScreen(
+                    LoadingScreenWithSub(
                         text = "正在加载剧集信息...",
                         modifier = Modifier
                             .fillMaxWidth()

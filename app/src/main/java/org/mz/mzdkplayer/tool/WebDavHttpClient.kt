@@ -118,7 +118,7 @@ class WebDavHttpClient {
 
                 hostname =="openapi.alipan.com" ->true
 
-                hostname.contains("aliyundrive.net")  ->true
+                hostname.contains("aliyundrive")  ->true
                 // 其他情况一律拒绝
                 else -> false
             }

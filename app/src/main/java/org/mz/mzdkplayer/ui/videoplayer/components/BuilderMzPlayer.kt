@@ -7,6 +7,8 @@ import android.view.View
 import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 
 import androidx.compose.runtime.remember
 
@@ -43,6 +45,7 @@ import org.mz.mzdkplayer.tool.NFSDataSourceFactory
 
 
 import org.mz.mzdkplayer.tool.WebDavDataSourceFactory
+import org.mz.mzdkplayer.ui.screen.vm.SettingsViewModel
 
 @OptIn(UnstableApi::class)
 @SuppressLint("SuspiciousIndentation")
@@ -51,10 +54,13 @@ fun BuilderMzPlayer(
     context: Context,
     mediaUri: String,
     exoPlayer: ExoPlayer,
-    dataSourceType: String
+    dataSourceType: String,
+    settingsViewModel: SettingsViewModel
 ) {
     //val pathStr = LocalContext.current.filesDir.toString()
     val videoPlayerViewModel: VideoPlayerViewModel = viewModel()
+    // 从 SettingsViewModel 中获取字幕与音轨相关的状态
+    val settingsState by settingsViewModel.uiState.collectAsState()
 // ⚠️ 重点：获取与 rememberPlayer 中使用的相同的 DataSourceFactory 逻辑
     val dataSourceFactory =
         remember { selectedDataSourceFactory(mediaUri, dataSourceType, context) }
@@ -65,14 +71,18 @@ fun BuilderMzPlayer(
 //            .buildUpon()
 //            .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, true) // 禁用文本轨道
 //            .build()
-//        val trackSelectionParameters = exoPlayer.trackSelectionParameters.buildUpon()
-//            .setPreferredTextLanguage("zh") // 将 "zh" 替换为你需要的默认字幕语言代码，例如 "en" 表示英语
-//            .build()
+        val preferredAudioLanguage = settingsState.audioLang.ifEmpty { null }
+        // --- 字幕语言设置 ---
+        val preferredTextLanguage = settingsState.subLang.ifEmpty { null }
+        android.util.Log.d("preferredTextLanguage",preferredTextLanguage.toString())
+        val trackSelectionParameters = exoPlayer.trackSelectionParameters.buildUpon()
+            .setPreferredTextLanguage(preferredTextLanguage).setPreferredAudioLanguage(preferredAudioLanguage) // 将 "zh" 替换为你需要的默认字幕语言代码，例如 "en" 表示英语
+            .build()
 
         // SRT 字幕的 MIME 类型
         val mimeTypeSRT = "application/x-subrip"
 
-        //exoPlayer.trackSelectionParameters = trackSelectionParameters
+        exoPlayer.trackSelectionParameters = trackSelectionParameters
 
         // 根据 URI 类型处理 MediaItem 创建
         val mediaItem =
@@ -207,21 +217,16 @@ fun BuilderMzPlayer(
                                 )
                             ).build()
                     }
-//                    exoPlayer.trackSelectionParameters =exoPlayer.trackSelectionParameters.buildUpon().setOverrideForType(
-//                        TrackSelectionOverride(
-//                            videoPlayerViewModel.mutableSetOfAudioTrackGroups[0].mediaTrackGroup,
-//                            0
-//                        )
-//                    ).build()
-                    if (videoPlayerViewModel.mutableSetOfTextTrackGroups.isNotEmpty()) {
-                        exoPlayer.trackSelectionParameters =
-                            exoPlayer.trackSelectionParameters.buildUpon().setOverrideForType(
-                                TrackSelectionOverride(
-                                    videoPlayerViewModel.mutableSetOfTextTrackGroups[0].mediaTrackGroup,
-                                    0
-                                )
-                            ).build()
-                    }
+
+//                    if (videoPlayerViewModel.mutableSetOfTextTrackGroups.isNotEmpty()) {
+//                        exoPlayer.trackSelectionParameters =
+//                            exoPlayer.trackSelectionParameters.buildUpon().setOverrideForType(
+//                                TrackSelectionOverride(
+//                                    videoPlayerViewModel.mutableSetOfTextTrackGroups[0].mediaTrackGroup,
+//                                    0
+//                                )
+//                            ).build()
+//                    }
                 }
 
                 if (videoPlayerViewModel.mutableSetOfAudioTrackGroups.isNotEmpty()) {
@@ -322,6 +327,7 @@ fun rememberPlayer(context: Context, mediaUri: String, dataSourceType: String) =
 
 //            .buildWithAssSupport(context = context, renderType = AssRenderType.LEGACY,
 //                renderersFactory=renderersFactory, dataSourceFactory = dataSourceFactory).apply {
+@OptIn(UnstableApi::class)
 fun selectedDataSourceFactory(
     mediaUri: String,
     dataSourceType: String,

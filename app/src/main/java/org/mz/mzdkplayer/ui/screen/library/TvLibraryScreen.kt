@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.ListItem
@@ -52,6 +53,7 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import org.mz.mzdkplayer.data.local.MediaCacheEntity
 import org.mz.mzdkplayer.ui.screen.common.LibraryEmpty
+import org.mz.mzdkplayer.ui.screen.common.LoadingScreen
 import org.mz.mzdkplayer.ui.screen.common.MediaCard
 import org.mz.mzdkplayer.ui.screen.vm.MediaLibraryViewModel
 import org.mz.mzdkplayer.ui.screen.vm.SettingsViewModel
@@ -65,14 +67,15 @@ fun TvLibraryScreen(
     viewModel: MediaLibraryViewModel,
     navController: NavController,
     homeNavController: NavController,
-    settingsViewModel: SettingsViewModel =viewModel()
+    settingsViewModel: SettingsViewModel = viewModel()
 ) {
     val tvSeriesList = viewModel.pagedTVSeries.collectAsLazyPagingItems()
     val episodes by viewModel.selectedSeriesEpisodes.collectAsState()
 
     // 状态：当前获得焦点的剧集 (用于更新背景)
     var focusedTvShow by remember { mutableStateOf<MediaCacheEntity?>(null) }
-
+    val isTvSeriesLoading = tvSeriesList.loadState.refresh == LoadState.Loading
+    val isTvSeriesEmpty = tvSeriesList.itemCount == 0
     // 控制弹窗显示
     var showEpisodeDialog by remember { mutableStateOf(false) }
     var selectedSeriesName by remember { mutableStateOf("") }
@@ -83,9 +86,11 @@ fun TvLibraryScreen(
             focusedTvShow = tvSeriesList.itemSnapshotList.items.firstOrNull()
         }
     }
-    if (tvSeriesList.itemCount<=0){
-        LibraryEmpty(false,navController = homeNavController)
-    }else {
+    if (isTvSeriesLoading) {
+        LoadingScreen(modifier = Modifier.fillMaxSize())
+    } else if (isTvSeriesEmpty) {
+        LibraryEmpty(navController = homeNavController)
+    } else {
         // === 使用 Box 容器来实现 ImmersiveList 的效果 ===
         Box(modifier = Modifier.fillMaxSize())
         {
@@ -174,7 +179,8 @@ fun TvLibraryScreen(
                     ),
                     horizontalArrangement = Arrangement.spacedBy(24.dp), // 增大水平间距，让卡片更分散
                     modifier = Modifier
-                        .height(260.dp).background(Color.Transparent) // 占据 Column 剩下的所有垂直空间
+                        .height(260.dp)
+                        .background(Color.Transparent) // 占据 Column 剩下的所有垂直空间
                 ) {
                     items(tvSeriesList.itemCount) { index ->
                         val tvShow = tvSeriesList[index]
@@ -212,7 +218,9 @@ fun TvLibraryScreen(
                     )
                 },
                 label = "TvShowInfoAnimation",
-                modifier = Modifier.fillMaxWidth().align(Alignment.TopStart)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.TopStart)
             ) { tvShow ->
                 if (tvShow != null) {
                     Column(
@@ -304,11 +312,11 @@ fun TvLibraryScreen(
                 val encodedFileName = URLEncoder.encode(episode.fileName, "UTF-8")
                 val connectionName = URLEncoder.encode(episode.connectionName, "UTF-8")
                 // 核心：这里将具体的 Uri 和 Season/Episode 传给详情页
-                if (!settingsState.hideDetails){
+                if (!settingsState.hideDetails) {
                     navController.navigate(
                         "TVSeriesDetails/$encodedUri/${episode.dataSourceType}/$encodedFileName/$connectionName/${episode.tmdbId}/${episode.seasonNumber}/${episode.episodeNumber}"
                     )
-                }else{
+                } else {
                     navController.navigate("VideoPlayer/$encodedUri/${episode.dataSourceType}/$encodedFileName/$connectionName")
                 }
 
@@ -318,7 +326,7 @@ fun TvLibraryScreen(
     }
 }
 
- //弹窗组件 (保持原样，无需修改)
+//弹窗组件 (保持原样，无需修改)
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun EpisodeSelectionDialog(
@@ -377,7 +385,11 @@ fun EpisodeSelectionDialog(
 //                                    Text(episode.dataSourceType,)
 //                                },
                                 overlineContent = {
-                                    Text("${episode.dataSourceType} · ${episode.fileName}",maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Text(
+                                        "${episode.dataSourceType} · ${episode.fileName}",
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
                                 }
                             )
                         }

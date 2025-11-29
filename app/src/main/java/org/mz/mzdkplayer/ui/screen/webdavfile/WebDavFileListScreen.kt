@@ -1,4 +1,4 @@
-// 文件路径: package org.mz.mzdkplayer.ui.screen.webdavfile.WebDavFileListScreen.kt
+
 
 package org.mz.mzdkplayer.ui.screen.webdavfile
 
@@ -6,19 +6,25 @@ import NoSearchResult
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.OptIn
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,11 +41,15 @@ import org.mz.mzdkplayer.tool.Tools
 import org.mz.mzdkplayer.ui.screen.vm.WebDavConViewModel
 import java.net.URLEncoder
 import androidx.media3.common.util.UnstableApi
+import coil3.compose.AsyncImage
 import kotlinx.coroutines.delay
 import org.mz.mzdkplayer.MzDkPlayerApplication
 import org.mz.mzdkplayer.data.model.AudioItem
 import org.mz.mzdkplayer.data.model.FileConnectionStatus
+import org.mz.mzdkplayer.data.repository.Resource
+import org.mz.mzdkplayer.di.RepositoryProvider
 import org.mz.mzdkplayer.tool.Tools.VideoBigIcon
+import org.mz.mzdkplayer.tool.viewModelWithFactory
 import org.mz.mzdkplayer.ui.screen.common.FileEmptyScreen
 
 import org.mz.mzdkplayer.ui.screen.common.LoadingScreen
@@ -48,6 +58,8 @@ import org.mz.mzdkplayer.ui.theme.myTTFColor
 import org.mz.mzdkplayer.ui.theme.MyFileListItemColor
 
 import org.mz.mzdkplayer.ui.screen.common.TvTextField
+import org.mz.mzdkplayer.ui.screen.vm.MovieViewModel
+import org.mz.mzdkplayer.ui.screen.vm.SettingsViewModel
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -55,7 +67,8 @@ fun WebDavFileListScreen(
     // path 现在是完整的 WebDAV URL 路径
     path: String?, // e.g., "https://192.168.1.4:5006/folder1/subfolder"
     navController: NavHostController,
-    webDavConnection: WebDavConnection
+    webDavConnection: WebDavConnection,
+    settingsViewModel: SettingsViewModel =viewModel()
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -67,8 +80,17 @@ fun WebDavFileListScreen(
     var focusedFileName by remember { mutableStateOf<String?>(null) }
     var focusedIsDir by remember { mutableStateOf(false) }
     var focusedMediaUri by remember { mutableStateOf("") }
+    var focusedIsVideo by remember { mutableStateOf(false) }
+    val movieViewModel: MovieViewModel = viewModelWithFactory {
+        RepositoryProvider.createMovieViewModel()
+    }// 新增：获取MovieViewModel
+    // 新增：电影信息状态
+    val focusedMovie by movieViewModel.focusedMovie.collectAsState()
+    val settingsState by settingsViewModel.uiState.collectAsState()
+    var mediaId by remember { mutableIntStateOf(-1) }
 // 过滤后的文件列表
     var seaText by remember { mutableStateOf("") }
+
     // ✅ 新增：过滤后的文件列表
     val filteredFiles by remember(fileList, seaText) {
         derivedStateOf {
@@ -81,6 +103,7 @@ fun WebDavFileListScreen(
             }
         }
     }
+
     // 当传入的 path 参数变化时，或者首次进入时，尝试加载文件列表
     LaunchedEffect(path, connectionStatus) {
         Log.d(
@@ -125,7 +148,23 @@ fun WebDavFileListScreen(
             else -> {}
         }
     }
-
+    LaunchedEffect(focusedFileName, focusedIsDir, focusedIsVideo) {
+        if (focusedFileName != null && !focusedIsDir && focusedIsVideo) {
+            Log.d("WebDavFileListScreen", "触发电影搜索: $focusedFileName")
+            // 非目录文件，触发电影搜索
+            // [修改] 传入 focusedMediaUri 以便查询数据库
+            movieViewModel.searchFocusedMovie(
+                focusedFileName!!,
+                false,
+                focusedMediaUri,
+                dataSourceType = "WEBDAV",
+                connectionName=webDavConnection.name?:"未知连接"
+            )
+        } else {
+            // 目录或无焦点，清空电影信息
+            movieViewModel.clearFocusedMovie()
+        }
+    }
     DisposableEffect(Unit) {
         onDispose {
             viewModel.disconnectWebDav()
@@ -180,10 +219,8 @@ fun WebDavFileListScreen(
                                             }",
                                             "UTF-8"
                                         )
-//                                        Log.d(
-//                                            "WebDavFileListScreen",
-//                                            "Navigating to media player: $fullFileUrl (encoded: $encodedFileUrl)"
-//                                        )
+                                        val encodedFileName = URLEncoder.encode(fileName, "UTF-8")
+                                        val connectionName=URLEncoder.encode(webDavConnection.name, "UTF-8")
                                         ListItem(
                                             selected = false,
                                             onClick = {
@@ -210,20 +247,22 @@ fun WebDavFileListScreen(
                                                                     "encodedFileUrl",
                                                                     encodedFileUrl
                                                                 )
-                                                                navController.navigate(
-                                                                    "VideoPlayer/$encodedFileUrl/WEBDAV/${
-                                                                        URLEncoder.encode(
-                                                                            fileName,
-                                                                            "UTF-8"
+                                                                if (mediaId > 0 && focusedFileName == file.name && !settingsState.hideDetails) {
+                                                                    val mediaInfoFN =
+                                                                        MediaInfoExtractorFormFileName.extract(
+                                                                            file.name
                                                                         )
-                                                                    }/${
-                                                                        URLEncoder.encode(
-                                                                            webDavConnection.name,
-                                                                            "UTF-8"
-                                                                        )}"
-                                                                )
+                                                                    if (mediaInfoFN.mediaType == "movie") {
+                                                                        navController.navigate("MovieDetails/$encodedFileUrl/WEBDAV/$encodedFileName/${connectionName}/$mediaId")
+                                                                    } else {
+                                                                        navController.navigate("TVSeriesDetails/$encodedFileUrl/WEBDAV/$encodedFileName/${connectionName}/$mediaId/${mediaInfoFN.season.toInt()}/${mediaInfoFN.episode.toInt()}")
+                                                                    }
+                                                                } else {
+                                                                    navController.navigate(
+                                                                        "VideoPlayer/$encodedFileUrl/WEBDAV/${encodedFileName}/${connectionName}"
+                                                                    )
+                                                                }
                                                             }
-
                                                             Tools.containsAudioFormat(fileExtension) -> {
                                                                 val audioFiles =
                                                                     fileList.filter { webdavFile ->
@@ -269,15 +308,7 @@ fun WebDavFileListScreen(
                                                                 )
 
                                                                 navController.navigate(
-                                                                    "AudioPlayer/$encodedFileUrl/WEBDAV/${
-                                                                        URLEncoder.encode(
-                                                                            fileName,
-                                                                            "UTF-8"
-                                                                        )
-                                                                    }/${ URLEncoder.encode(
-                                                                        webDavConnection.name,
-                                                                        "UTF-8"
-                                                                    )}/$currentAudioIndex"
+                                                                    "AudioPlayer/$encodedFileUrl/WEBDAV/${encodedFileName}/${connectionName}/$currentAudioIndex"
                                                                 )
                                                             }
 
@@ -300,7 +331,15 @@ fun WebDavFileListScreen(
                                                     if (it.isFocused) {
                                                         focusedFileName = file.name
                                                         focusedIsDir = file.isDirectory
-                                                        focusedMediaUri = file.path
+                                                        mediaId = -1
+                                                        focusedIsVideo = Tools.containsVideoFormat(
+                                                            Tools.extractFileExtension(
+                                                                file.name
+                                                            )
+                                                        )
+                                                        focusedMediaUri = "${authenticatedUrl}/${
+                                                            fileName.trimEnd('/').trimStart('/')
+                                                        }"
                                                     }
                                                 },
                                             scale = ListItemDefaults.scale(
@@ -355,22 +394,138 @@ fun WebDavFileListScreen(
                                 placeholder = "请输入文件名",
                                 textStyle = TextStyle(color = Color.White),
                             )
-                            VideoBigIcon(
-                                focusedIsDir,
-                                focusedFileName,
-                                modifier = Modifier
-                                    .height(200.dp)
-                                    .fillMaxWidth()
-                            )
-                            focusedFileName?.let {
-                                Text(
-                                    it,
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp,
-                                    modifier = Modifier.padding(start = 8.dp)
-                                )
+                            // 添加弹性空间，让海报区域在垂直方向上居中
+                            Spacer(modifier = Modifier.weight(1f))
+                            when (val movieResult = focusedMovie) {
+                                is Resource.Success -> {
+                                    val movie = movieResult.data
+
+                                    if (movie != null && movie.posterPath != null) {
+                                        mediaId = movie.id
+                                        // 显示电影海报
+                                        Box(
+                                            Modifier
+                                                .widthIn(180.dp, 200.dp)
+                                                .border(
+                                                    width = 2.dp,
+                                                    color = Color.Gray.copy(alpha = 0.5f),
+                                                    shape = RoundedCornerShape(20.dp)
+                                                )
+                                        ) {
+                                            AsyncImage(
+                                                model = "https://image.tmdb.org/t/p/w500${movie.posterPath}",
+                                                contentDescription = movie.title,
+                                                contentScale = ContentScale.Fit,
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .clip(RoundedCornerShape(20.dp)) // 增大圆角
+                                            )
+                                        }
+
+                                    } else {
+                                        // 没有电影海报，显示默认视频图标
+                                        VideoBigIcon(
+                                            focusedIsDir,
+                                            focusedFileName,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(200.dp)
+
+                                        )
+                                    }
+                                }
+
+                                is Resource.Loading -> {
+                                    Box(
+                                        modifier = Modifier
+                                            .widthIn(200.dp)
+                                            .fillMaxHeight(0.6f)
+                                            .background(Color.DarkGray.copy(alpha = 0.3f))
+                                            .clip(RoundedCornerShape(20.dp)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            "正在加载...",
+                                            color = Color.White,
+                                            fontSize = 12.sp
+                                        )
+                                    }
+                                }
+
+                                is Resource.Error -> {
+                                    VideoBigIcon(
+                                        focusedIsDir,
+                                        focusedFileName,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(200.dp)
+
+                                    )
+                                }
                             }
+                            when (val movieResult = focusedMovie) {
+                                is Resource.Success -> {
+                                    val movie = movieResult.data
+                                    if (movie != null) {
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 16.dp),
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            movie.title?.let {
+                                                Text(
+                                                    it,
+                                                    color = Color.White,
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 18.sp, // 稍微减小字体
+                                                    maxLines = 2,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                    textAlign = TextAlign.Center
+                                                )
+                                            }
+
+                                            Text(
+                                                text = movie.releaseDate?.substring(0, 4) ?: "N/A",
+                                                color = Color.Gray,
+                                                fontSize = 14.sp, // 稍微减小字体
+                                                textAlign = TextAlign.Center
+                                            )
+                                        }
+                                    } else {
+                                        focusedFileName?.let { fileName ->
+                                            Text(
+                                                fileName,
+                                                color = Color.White,
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 18.sp,
+                                                maxLines = 2,
+                                                overflow = TextOverflow.Ellipsis,
+                                                textAlign = TextAlign.Center,
+                                                modifier = Modifier.padding(horizontal = 16.dp)
+                                            )
+                                        }
+                                    }
+                                }
+
+                                else -> {
+                                    focusedFileName?.let { fileName ->
+                                        Text(
+                                            fileName,
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 18.sp,
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis,
+                                            textAlign = TextAlign.Center,
+                                            modifier = Modifier.padding(horizontal = 16.dp)
+                                        )
+                                    }
+                                }
+                            }
+
+                            // 添加一个弹性空间，让内容在垂直方向上分布更均匀
+                            Spacer(modifier = Modifier.weight(1f))
                         }
                     }
                 }
