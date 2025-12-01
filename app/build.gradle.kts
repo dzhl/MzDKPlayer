@@ -33,8 +33,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
-            isShrinkResources = false
+            isMinifyEnabled = true
+            //isShrinkResources = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -47,6 +47,11 @@ android {
         // isCoreLibraryDesugaringEnabled = true
 
     }
+//    repositories {
+//        flatDir {
+//            dirs("libs") // 声明本地 libs 目录
+//        }
+//    }
 
     buildFeatures {
         compose = true
@@ -77,6 +82,7 @@ dependencies {
     implementation(libs.androidx.media3.exoplayer)
 //    implementation(libs.androidx.media3.exoplayer.dash)
     implementation(libs.androidx.media3.ui)
+    //implementation(files("libs/lib-decoder-ffmpeg-release.aar"))
     implementation(libs.androidx.palette.ktx)
     implementation(libs.akdanmaku)
     implementation(libs.accompanist.permissions)
@@ -109,6 +115,7 @@ dependencies {
 
     implementation(libs.jaudiotagger)
     implementation(libs.commons.net)
+    //implementation("androidx.media3:media3-exoplayer-ffmpeg:1.9.0-alpha01")
     //implementation(libs.jcifs)
 
 // 请检查最新版本

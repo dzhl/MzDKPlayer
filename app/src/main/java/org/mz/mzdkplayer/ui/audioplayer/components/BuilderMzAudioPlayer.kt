@@ -22,6 +22,7 @@ import androidx.core.net.toUri
 import androidx.media3.common.AudioAttributes
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
+import androidx.media3.extractor.DefaultExtractorsFactory
 import org.mz.mzdkplayer.data.model.AudioItem
 import org.mz.mzdkplayer.tool.FtpDataSourceFactory
 import org.mz.mzdkplayer.tool.NFSDataSourceFactory
@@ -114,7 +115,7 @@ fun rememberAudioPlayer(context: Context, mediaUri: String, dataSourceType: Stri
 
         // 配置 RenderersFactory
         val renderersFactory = DefaultRenderersFactory(context).apply {
-            setExtensionRendererMode(EXTENSION_RENDERER_MODE_PREFER)
+            //setExtensionRendererMode(EXTENSION_RENDERER_MODE_PREFER)
             setEnableAudioFloatOutput(true)
             setEnableDecoderFallback(true)
         }
@@ -153,8 +154,8 @@ fun rememberAudioPlayer(context: Context, mediaUri: String, dataSourceType: Stri
 
 
         ExoPlayer.Builder(context)
-            .setSeekForwardIncrementMs(60000)
-            .setSeekBackIncrementMs(60000)
+            .setSeekForwardIncrementMs(30000)
+            .setSeekBackIncrementMs(30000)
             .setMediaSourceFactory(
                 DefaultMediaSourceFactory(dataSourceFactory)
             )

@@ -78,6 +78,7 @@ import org.mz.mzdkplayer.tool.viewModelWithFactory
 import org.mz.mzdkplayer.ui.screen.common.FileEmptyScreen
 
 import org.mz.mzdkplayer.ui.screen.common.LoadingScreen
+import org.mz.mzdkplayer.ui.screen.common.MyIconButton
 import org.mz.mzdkplayer.ui.screen.common.VAErrorScreen
 import org.mz.mzdkplayer.ui.screen.vm.SMBConViewModel
 
@@ -95,7 +96,7 @@ fun SMBFileListScreen(
     path: String?,
     navController: NavHostController,
     connectionName: String = "",
-    settingsViewModel: SettingsViewModel =viewModel()
+    settingsViewModel: SettingsViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val viewModel: SMBConViewModel = viewModel()
@@ -112,7 +113,11 @@ fun SMBFileListScreen(
     // 新增：电影信息状态
     val focusedMovie by movieViewModel.focusedMovie.collectAsState()
     val settingsState by settingsViewModel.uiState.collectAsState()
-
+// 在 Composable 顶部获取状态
+    val isScanning by movieViewModel.isScanning.collectAsState()
+    val currentScanIndex by movieViewModel.currentScanIndex.collectAsState() // 新增：引入当前进度
+    val totalScanCount by movieViewModel.totalScanCount.collectAsState() // 新增：引入总数
+// ...
     var seaText by remember { mutableStateOf("") }
     //  新增：过滤后的文件列表
     val filteredFiles by remember(files, seaText) {
@@ -202,7 +207,7 @@ fun SMBFileListScreen(
                 false,
                 focusedMediaUri,
                 dataSourceType = "SMB",
-                connectionName=connectionName
+                connectionName = connectionName
             )
         } else {
             // 目录或无焦点，清空电影信息
@@ -336,7 +341,7 @@ fun SMBFileListScreen(
                                                                 "movieId:$mediaId"
                                                             )
                                                             // 先注释掉 观察movieId的值是否预期
-                                                            if (mediaId > 0 && focusedFileName == file.name&&!settingsState.hideDetails) {
+                                                            if (mediaId > 0 && focusedFileName == file.name && !settingsState.hideDetails) {
                                                                 val mediaInfoFN =
                                                                     MediaInfoExtractorFormFileName.extract(
                                                                         file.name
@@ -535,6 +540,7 @@ fun SMBFileListScreen(
                                 placeholder = "请输入文件名",
                                 textStyle = TextStyle(color = Color.White),
                             )
+
                             // 添加弹性空间，让海报区域在垂直方向上居中
                             Spacer(modifier = Modifier.weight(1f))
                             // 电影海报区域 - 进一步缩小尺寸
@@ -672,6 +678,63 @@ fun SMBFileListScreen(
 
                             // 添加一个弹性空间，让内容在垂直方向上分布更均匀
                             Spacer(modifier = Modifier.weight(1f))
+                            MyIconButton(
+                                if (isScanning && currentScanIndex > 0)  "正在获取信息 $currentScanIndex/$totalScanCount" else "批量获取信息",
+                                icon = R.drawable.sync24dp,
+                                onClick = {
+                                    // 1. 过滤出所有的视频文件 (不递归，只取当前层级)
+                                    val videoFilesToScan = files.filter { file ->
+                                        !file.isDirectory &&
+                                                Tools.containsVideoFormat(
+                                                    Tools.extractFileExtension(
+                                                        file.name
+                                                    )
+                                                )
+                                    }
+
+                                    if (videoFilesToScan.isEmpty()) {
+                                        Toast.makeText(
+                                            context,
+                                            "当前目录没有视频文件",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        return@MyIconButton
+                                    }
+
+                                    // 2. 构建数据列表 Pair(fileName, fullUri)
+                                    // 注意：URI 的构建规则必须和 LazyColumn 里点击时的规则完全一致
+                                    val scanList = videoFilesToScan.map { file ->
+                                        val uri =
+                                            "smb://${file.username}:${file.password}@${file.server}/${file.share}${file.fullPath}"
+                                        file.name to uri
+                                    }
+
+                                    // 3. 调用 ViewModel 开始后台任务
+                                    Toast.makeText(
+                                        context,
+                                        "开始后台获取信息，请稍候...",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    movieViewModel.batchScrapeVideoInfo(
+                                        videoList = scanList,
+                                        dataSourceType = "SMB",
+                                        connectionName = connectionName
+                                    )
+                                })
+                            // ↓↓↓↓↓↓ 新增进度显示文字 ↓↓↓↓↓↓
+//                            if (isScanning && currentScanIndex > 0) {
+//                                val displayMessage = "正在获取信息 $currentScanIndex/$totalScanCount"
+//
+//                                if (displayMessage.isNotEmpty()) {
+//                                    Text(
+//                                        text = displayMessage,
+//                                        color = Color.Yellow,
+//                                        fontSize = 14.sp,
+//                                        modifier = Modifier.padding(top = 8.dp)
+//                                    )
+//                                }
+//                            }
+                            // ↑↑↑↑↑↑ 新增进度显示文字 ↑↑↑↑↑↑
                         }
                     }
                 }

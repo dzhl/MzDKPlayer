@@ -1,6 +1,7 @@
 package org.mz.mzdkplayer.data.local
 
 
+import androidx.paging.PagingSource
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 import org.mz.mzdkplayer.data.model.HistoryWithMetadata
@@ -20,7 +21,14 @@ interface MediaHistoryDao {
     // 获取所有音频历史 (音频通常没有 metadata，直接查实体即可)
     @Query("SELECT * FROM media_history WHERE mediaType = 'AUDIO' ORDER BY timestamp DESC")
     fun getAudioHistory(): Flow<List<MediaHistoryEntity>>
+    // 【修改点 1】: 视频历史记录分页源
+    @Transaction
+    @Query("SELECT * FROM media_history WHERE mediaType = 'VIDEO' ORDER BY timestamp DESC")
+    fun getVideoHistoryPagingSource(): PagingSource<Int, HistoryWithMetadata>
 
+    // 【修改点 2】: 音频历史记录分页源
+    @Query("SELECT * FROM media_history WHERE mediaType = 'AUDIO' ORDER BY timestamp DESC")
+    fun getAudioHistoryPagingSource(): PagingSource<Int, MediaHistoryEntity>
     // 删除单条
     @Query("DELETE FROM media_history WHERE mediaUri = :uri")
     suspend fun deleteHistoryByUri(uri: String)

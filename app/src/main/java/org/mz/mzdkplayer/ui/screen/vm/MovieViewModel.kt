@@ -9,6 +9,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.mz.mzdkplayer.data.local.MediaCacheEntity
 import org.mz.mzdkplayer.data.local.MediaDao
@@ -47,7 +48,16 @@ class MovieViewModel(private val repository: TmdbRepository,private val mediaDao
     val focusedMovie: StateFlow<Resource<MediaItem?>> = _focusedMovie
 
 
+    // 新增：扫描状态，用于UI显示进度或禁用按钮（可选）
+    private val _isScanning = MutableStateFlow(false)
+    val isScanning = _isScanning.asStateFlow()
 
+    // 新增：追踪扫描进度和总数
+    private val _currentScanIndex = MutableStateFlow(0)
+    val currentScanIndex: StateFlow<Int> = _currentScanIndex.asStateFlow()
+
+    private val _totalScanCount = MutableStateFlow(0)
+    val totalScanCount: StateFlow<Int> = _totalScanCount.asStateFlow()
     // 搜索任务 Job
     private var currentSearchJob: Job? = null
 
@@ -395,6 +405,110 @@ class MovieViewModel(private val repository: TmdbRepository,private val mediaDao
             }
         }
     }
+    /**
+     * 批量扫描当前目录下的视频文件
+     * @param videoList 包含 (文件名, 完整URI) 的列表
+     */
+    fun batchScrapeVideoInfo(
+        videoList: List<Pair<String, String>>, // Pair(fileName, videoUri)
+        dataSourceType: String,
+        connectionName: String
+    ) {
+        if (_isScanning.value) return // 防止重复点击
+
+        viewModelScope.launch(Dispatchers.IO) {
+            _isScanning.value = true
+            _totalScanCount.value = videoList.size // 设置总数
+            _currentScanIndex.value = 0 // 重置进度
+            Log.d("MovieViewModel", "开始批量扫描，待处理数量: ${videoList.size}")
+
+            try {
+                videoList.forEachIndexed { index, (fileName, videoUri) ->
+
+                    _currentScanIndex.value = index + 1 // 进度从 1 开始
+                    // 1. 检查数据库是否已存在 (避免重复请求)
+                    val cachedMedia = mediaDao.getMediaByUri(videoUri)
+                    if (cachedMedia != null) {
+                        if (index > 0) delay(100)
+                        Log.d("MovieViewModel", "跳过已存在: $fileName")
+                        return@forEachIndexed // continue
+                    }
+
+                    // 2. 提取文件名信息
+                    val mediaInfo = MediaInfoExtractorFormFileName.extract(fileName)
+                    if (mediaInfo.title.isBlank()) return@forEachIndexed
+
+                    // 3. 延时，防止速度太快 (2秒一次)
+                    if (index > 0) delay(2000)
+
+                    Log.d("MovieViewModel", "正在获取信息 ($index/${videoList.size}): ${mediaInfo.title}")
+
+                    try {
+                        // 4. 执行搜索并入库 (逻辑复用 searchFocusedMovie 的核心部分，但不更新 _focusedMovie)
+                        if (mediaInfo.mediaType == "movie") {
+                            val result = repository.searchMovies(mediaInfo.title, year = mediaInfo.year)
+                            if (result is Resource.Success) {
+                                val movie = result.data.results.firstOrNull()
+                                if (movie != null) {
+                                    val entity = MediaCacheEntity(
+                                        videoUri = videoUri,
+                                        dataSourceType = dataSourceType,
+                                        fileName = fileName,
+                                        connectionName = connectionName,
+                                        tmdbId = movie.id,
+                                        mediaType = "movie",
+                                        title = movie.title ?: "",
+                                        overview = movie.overview,
+                                        posterPath = movie.posterPath,
+                                        backdropPath = movie.backdropPath,
+                                        releaseDate = movie.releaseDate,
+                                        voteAverage = movie.voteAverage,
+                                        isDetailsLoaded = false,
+                                        groupKey = "movie_${videoUri}"
+                                    )
+                                    mediaDao.insertMedia(entity)
+                                    Log.d("MovieViewModel", "入库成功: ${movie.title}")
+                                }
+                            }
+                        } else {
+                            val result = repository.searchTV(mediaInfo.title, year = mediaInfo.year)
+                            if (result is Resource.Success) {
+                                val tv = result.data.results.firstOrNull()
+                                if (tv != null) {
+                                    val entity = MediaCacheEntity(
+                                        videoUri = videoUri,
+                                        dataSourceType = dataSourceType,
+                                        fileName = fileName,
+                                        connectionName = connectionName,
+                                        tmdbId = tv.id,
+                                        mediaType = "tv",
+                                        title = tv.name ?: "",
+                                        overview = tv.overview,
+                                        posterPath = tv.posterPath,
+                                        backdropPath = tv.backdropPath,
+                                        releaseDate = tv.firstAirDate,
+                                        voteAverage = tv.voteAverage,
+                                        seasonNumber = mediaInfo.season.toIntOrNull() ?: 1,
+                                        episodeNumber = mediaInfo.episode.toIntOrNull() ?: 1,
+                                        isDetailsLoaded = false,
+                                        groupKey = "tv_${tv.id}"
+                                    )
+                                    mediaDao.insertMedia(entity)
+                                    Log.d("MovieViewModel", "入库成功: ${tv.name}")
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e("MovieViewModel", "获取单个信息失败: $fileName", e)
+                    }
+                }
+            } finally {
+                _isScanning.value = false
+                Log.d("MovieViewModel", "批量扫描结束")
+            }
+        }
+    }
+
 
     /**
      * 【新增】清理媒体缓存数据库 (相当于 Kodi 的清理资料库)

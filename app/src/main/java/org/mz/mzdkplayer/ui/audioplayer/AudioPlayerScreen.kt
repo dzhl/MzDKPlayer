@@ -17,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -97,11 +98,13 @@ fun AudioPlayerScreen(
 
     // 添加缓存状态，用于在单曲循环时恢复音频信息
     var cachedAudioInfo by remember { mutableStateOf<AudioInfo?>(null) }
-
+// 获取 audioSessionId
+    val audioSessionId = remember(exoPlayer) { exoPlayer.audioSessionId }
     // 添加Seek状态，用于跟踪快速Seek操作
     var isSeeking by remember { mutableStateOf(false) }
     var lastSeekTime by remember { mutableLongStateOf(0L) }
-
+// 1. 定义一个状态来存储动态变化的 AudioSessionId
+    var currentAudioSessionId by remember { mutableIntStateOf(exoPlayer.audioSessionId) }
     BuilderMzAudioPlayer(
         context,
         currentMediaUri,
@@ -333,9 +336,33 @@ fun AudioPlayerScreen(
                     lastSeekTime = System.currentTimeMillis()
                 }
             }
+
         })
     }
+// 2. 注册监听器，专门监听 SessionId 的变化
+    DisposableEffect(exoPlayer) {
+        val listener = object : Player.Listener {
+            override fun onAudioSessionIdChanged(audioSessionId: Int) {
+                super.onAudioSessionIdChanged(audioSessionId)
+                Log.d("audioSessionIdC", "Got new ID: $audioSessionId")
+                // 当 ID 变化且有效时，更新状态
+                if (audioSessionId != C.AUDIO_SESSION_ID_UNSET) {
+                    currentAudioSessionId = audioSessionId
+                }
+            }
+        }
 
+        exoPlayer.addListener(listener)
+
+        // 再次检查初始值（防止监听器绑定前ID已经生成）
+        if (exoPlayer.audioSessionId != C.AUDIO_SESSION_ID_UNSET) {
+            currentAudioSessionId = exoPlayer.audioSessionId
+        }
+
+        onDispose {
+            exoPlayer.removeListener(listener)
+        }
+    }
     // 处理播放进度更新，使用防抖机制避免快速Seek时的问题
     LaunchedEffect(exoPlayer) {
         var lastUpdateTime = System.currentTimeMillis()
@@ -390,7 +417,9 @@ fun AudioPlayerScreen(
         showToast = true
     }
 
-
+    LaunchedEffect(audioSessionId) {
+        Log.d("audioSessionId",audioSessionId.toString())
+    }
     val pulseState = rememberAudioPlayerPulseState()
     val focusRequester = remember { FocusRequester() }
     Box(
@@ -408,9 +437,23 @@ fun AudioPlayerScreen(
     ) {
 
 
-        // 创建水平布局容器
-        // 优化 1: 使用 fillMaxSize() 确保 Row 占据整个可用空间
-        // 在频谱显示组件中使用：
+        // --- 新增：频谱显示 ---
+        // 把它放在最底层（Box的第一个子元素），这样会被文字覆盖，当作动态背景
+        // 或者你可以放在 Row 下面，如果你想让它显示在特定区域
+//        if (isPlaying&& currentAudioSessionId > 0) {
+//
+//            AudioVisualizer(
+//                audioSessionId = currentAudioSessionId,
+//                isPlaying = isPlaying,
+//                modifier = Modifier
+//                    .align(Alignment.BottomCenter) // 对齐到底部
+//                    .fillMaxWidth()
+//                    .height(200.dp) // 高度限制
+//                    .padding(bottom = 120.dp) // 避开底部的控制栏
+//                    .alpha(0.3f), // 设置透明度，不要太抢眼
+//                color = MaterialTheme.colorScheme.primary // 使用主题色
+//            )
+//        }
 
         Row(
             modifier = Modifier

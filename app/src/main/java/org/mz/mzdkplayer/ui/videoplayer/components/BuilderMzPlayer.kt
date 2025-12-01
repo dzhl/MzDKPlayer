@@ -315,7 +315,7 @@ fun rememberPlayer(context: Context, mediaUri: String, dataSourceType: String) =
 //            .setPrioritizeTimeOverSizeThresholds(true)
 //            .setBackBuffer(5000, true) // 添加回退缓冲，允许 seek 回退 5 秒
 //            .build()
-        ExoPlayer.Builder(context).setSeekForwardIncrementMs(60000).setSeekBackIncrementMs(60000)
+        ExoPlayer.Builder(context).setSeekForwardIncrementMs(30000).setSeekBackIncrementMs(30000)
             //.setLoadControl(loadControl)
 
             .setRenderersFactory(renderersFactory).build().apply {

@@ -32,11 +32,11 @@
 
 # ====================== Media3 专属 R8 规则（解决视频播放闪退） ======================
 # 保留 Media3 全部核心类（必须！避免 R8 移除内部类 nb.a/kb.a）
--keep class androidx.media3.** { *; }
+#-keep class androidx.media3.** { *; }
 
 # 保留 Media3 源数据和播放器核心功能
--keep class androidx.media3.datasource.** { *; }
--keep class androidx.media3.exoplayer.** { *; }
+#-keep class androidx.media3.datasource.** { *; }
+#-keep class androidx.media3.exoplayer.** { *; }
 -keep class androidx.media3.ui.** { *; }
 
  #保留 @Keep 注解（Media3 使用了此注解）
@@ -50,11 +50,10 @@
 #-keep class com.hierynomus.smbj.** { *; }
 #-keep class com.hierynomus.smbj.protocol.** { *; }
 #
-## 保留 Retrofit 和 Gson（避免网络请求崩溃）
-#-keep class retrofit.** { *; }
-#-keep interface retrofit.** { *; }
-#-keep class com.google.gson.** { *; }
-#-keep class com.google.gson.stream.** { *; }
+# 保留 Retrofit 和 Gson（避免网络请求崩溃）
+-keep interface retrofit.** { *; }
+
+-keep class com.google.gson.stream.** { *; }
 #
 ## 保留 Coil 图片加载（避免图片相关崩溃）
 #-keep class coil.** { *; }
@@ -70,6 +69,31 @@
 #-keepclassmembers class * {
 #    *;
 #}
+# akdanmaku
+-dontwarn com.badlogic.gdx.backends.android.AndroidFragmentApplication
+-dontwarn com.badlogic.gdx.utils.GdxBuild
+-dontwarn com.badlogic.gdx.jnigen.BuildTarget*
+-dontwarn com.badlogic.gdx.graphics.g2d.freetype.FreetypeBuild
+
+-keep class com.kuaishou.akdanmaku.ecs.DanmakuContext
+-keepclasseswithmembers class * {
+    public <init>(com.kuaishou.akdanmaku.ecs.DanmakuContext);
+}
+-keepclasseswithmembers class com.kuaishou.akdanmaku.ecs.component.*
+-keep class com.kuaishou.akdanmaku.ecs.component.* {
+  <init>(...);
+}
+
+# okhttp
+-dontwarn org.bouncycastle.jsse.BCSSLParameters
+-dontwarn org.bouncycastle.jsse.BCSSLSocket
+-dontwarn org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
+-dontwarn org.conscrypt.Conscrypt$Version
+-dontwarn org.conscrypt.Conscrypt
+-dontwarn org.conscrypt.ConscryptHostnameVerifier
+-dontwarn org.openjsse.javax.net.ssl.SSLParameters
+-dontwarn org.openjsse.javax.net.ssl.SSLSocket
+-dontwarn org.openjsse.net.ssl.OpenJSSE
 
 # 保留所有注解（避免混淆导致的注解失效）
 #-keep class androidx.annotation.** { *; }

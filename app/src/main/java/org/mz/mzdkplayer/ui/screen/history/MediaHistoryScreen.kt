@@ -6,20 +6,16 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
+import androidx.paging.compose.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.tv.material3.*
-import org.mz.mzdkplayer.di.RepositoryProvider
-import org.mz.mzdkplayer.tool.viewModelWithFactory
 import org.mz.mzdkplayer.ui.screen.common.DashboardTopBarItemIndicator
 import org.mz.mzdkplayer.ui.screen.vm.MediaHistoryViewModel
-import org.mz.mzdkplayer.ui.theme.MyTabColors
 import org.mz.mzdkplayer.ui.theme.myListItemCoverColor
 import java.net.URLEncoder
 
@@ -27,15 +23,18 @@ import java.net.URLEncoder
 @Composable
 fun MediaHistoryScreen(
     navController: NavHostController,
-    viewModel: MediaHistoryViewModel  // 记得配置依赖注入工厂
+    viewModel: MediaHistoryViewModel
 ) {
-    val videoHistory by viewModel.videoHistory.collectAsState()
-    val audioHistory by viewModel.audioHistory.collectAsState()
+    // Paging 3 数据源
+    val videoHistoryItems = viewModel.videoHistory.collectAsLazyPagingItems()
+    val audioHistoryItems = viewModel.audioHistory.collectAsLazyPagingItems()
 
     // 简单的 Tab 切换状态
     var selectedTab by remember { mutableIntStateOf(0) } // 0: Video, 1: Audio
 
+    // 假设 isTabRowFocused 状态逻辑
     val isTabRowFocused by remember { mutableStateOf(false) }
+
     Column(modifier = Modifier.fillMaxSize().padding(24.dp)) {
 
         Text(text = "播放历史", style = MaterialTheme.typography.headlineMedium, color = Color.White)
@@ -56,7 +55,6 @@ fun MediaHistoryScreen(
         }) {
             Tab(
                 selected = selectedTab == 0,
-
                 onFocus = { selectedTab = 0 },
                 onClick = { selectedTab = 0 }
             ) {
@@ -64,7 +62,8 @@ fun MediaHistoryScreen(
                     targetValue = if (selectedTab == 0) Color.Black else Color.White,
                     animationSpec = tween(durationMillis = 100)
                 )
-                Text("视频 (${videoHistory.size})", modifier = Modifier.padding(12.dp),color =textColor)
+                // 修正 Tab Count
+                Text("视频 (${videoHistoryItems.itemCount})", modifier = Modifier.padding(12.dp), color = textColor)
             }
             Tab(
                 selected = selectedTab == 1,
@@ -75,7 +74,8 @@ fun MediaHistoryScreen(
                     targetValue = if (selectedTab == 1) Color.Black else Color.White,
                     animationSpec = tween(durationMillis = 100)
                 )
-                Text("音频 (${audioHistory.size})", modifier = Modifier.padding(12.dp),color =textColor,)
+                // 修正 Tab Count
+                Text("音频 (${audioHistoryItems.itemCount})", modifier = Modifier.padding(12.dp), color = textColor)
             }
         }
 
@@ -90,17 +90,33 @@ fun MediaHistoryScreen(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.fillMaxSize()
             ) {
-                items(videoHistory, key = { it.history.mediaUri }) { item ->
-                    VideoHistoryCard(
-                        historyItem = item,
-                        onClick = {
-                            val record = item.history
-                            val encodedUri = URLEncoder.encode(record.mediaUri, "UTF-8")
-                            val encodedFileName = URLEncoder.encode(record.fileName, "UTF-8")
-                            // 你的导航逻辑
-                            navController.navigate("VideoPlayer/$encodedUri/${record.protocolName}/$encodedFileName/${record.connectionName}")
-                        }
-                    )
+                // 使用 Paging 3 的 items 扩展函数，传入 videoHistoryItems
+                items(
+                    count = videoHistoryItems.itemCount,
+                    // 如果需要 key，注意这里要通过 index 获取 item
+                    key = { index ->
+                        // peek 也就是不触发加载地查看数据，防止 key 生成时触发过多加载
+                        val item = videoHistoryItems.peek(index)
+                        item?.history?.mediaUri ?: index
+                    }
+                ) { index ->
+                    val item = videoHistoryItems[index]
+                    // item 现在是 MediaHistoryItem 类型 (或 null)
+                    if (item != null) {
+                        VideoHistoryCard(
+                            historyItem = item,
+                            onClick = {
+                                val record = item.history
+                                val encodedUri = URLEncoder.encode(record.mediaUri, "UTF-8")
+                                val encodedFileName = URLEncoder.encode(record.fileName, "UTF-8")
+                                // 导航逻辑
+                                navController.navigate("VideoPlayer/$encodedUri/${record.protocolName}/$encodedFileName/${record.connectionName}")
+                            }
+                        )
+                    } else {
+                        // 可以显示一个占位符或加载动画
+                        Spacer(Modifier.height(100.dp))
+                    }
                 }
             }
         } else {
@@ -109,25 +125,35 @@ fun MediaHistoryScreen(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(audioHistory, key = { it.mediaUri }) { record ->
-                    // 这里可以复用之前的 HistoryListItem，或者稍微简化
-                    ListItem(
-                        selected = false,
-                        onClick = {
-                            // 音频导航逻辑 (参考之前的代码)
-                        },
-                        colors = myListItemCoverColor(),
-                        headlineContent = { Text(record.fileName) },
-                        supportingContent = {
-                            Text("${record.connectionName} | ${record.getPlaybackPercentage()}")
-                        },
-                        trailingContent = {
-                            Icon(
-                                painter = androidx.compose.ui.res.painterResource(org.mz.mzdkplayer.R.drawable.baseline_music_note_24),
-                                contentDescription = null
-                            )
-                        }
-                    )
+                // 使用 Paging 3 的 items 扩展函数，传入 audioHistoryItems
+                items(
+                    count = audioHistoryItems.itemCount,
+                    key = { index ->
+                        val item = audioHistoryItems.peek(index)
+                        item?.mediaUri ?: index
+                    }
+                ) { index ->
+                    val record = audioHistoryItems[index]
+                    // record 现在是 AudioHistoryRecord 类型 (或 null)
+                    if (record != null) {
+                        ListItem(
+                            selected = false,
+                            onClick = {
+                                // 音频导航逻辑 (待补充)
+                            },
+                            colors = myListItemCoverColor(),
+                            headlineContent = { Text(record.fileName) },
+                            supportingContent = {
+                                Text("${record.connectionName} | ${record.getPlaybackPercentage()}")
+                            },
+                            trailingContent = {
+                                Icon(
+                                    painter = androidx.compose.ui.res.painterResource(org.mz.mzdkplayer.R.drawable.baseline_music_note_24),
+                                    contentDescription = null
+                                )
+                            }
+                        )
+                    }
                 }
             }
         }

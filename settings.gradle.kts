@@ -29,7 +29,10 @@ dependencyResolutionManagement {
         google()
         maven { url = uri("https://jitpack.io") }
         mavenCentral()
-
+        // ✅ 在这里添加 flatDir，并且指定它位于 app 模块的 libs 目录
+        flatDir {
+            dirs("app/libs")
+        }
 
     }
 }
