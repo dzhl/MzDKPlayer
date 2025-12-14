@@ -192,136 +192,110 @@ fun HTTPLinkFileListScreen(
                                             selected = false,
                                             onClick = {
                                                 coroutineScope.launch {
+                                                    // --- 提取公共变量/准备工作 ---
+                                                    val fileExtension =
+                                                        Tools.extractFileExtension(resource.name)
+
+                                                    // 目录和文件需要不同的处理方式
                                                     if (isDirectory) {
-
-
+                                                        // 导航到子目录
                                                         // normalizedPath 已带 /，所以直接拼接 resourceName 即可
                                                         val newFullPath =
                                                             "${normalizedPath}${resourceName}"
-                                                        val encodedNewSubPath =
+                                                        val encodedNewSubPath = try {
                                                             URLEncoder.encode(newFullPath, "UTF-8")
+                                                        } catch (e: Exception) {
+                                                            Log.e("HTTPLinkFileListScreen", "目录路径编码失败: $e")
+                                                            Toast.makeText(context, "目录路径编码失败", Toast.LENGTH_SHORT).show()
+                                                            return@launch
+                                                        }
+
+                                                        // 注意：导航路由参数顺序是 connectionName 在前，encodedNewSubPath 在后
                                                         navController.navigate("HTTPLinkFileListScreen/$connectionName/$encodedNewSubPath")
+
                                                     } else {
-                                                        // 处理文件点击 - 导航到 VideoPlayer
-                                                        // 构造完整的 HTTP URL
+                                                        // --- 文件点击处理：提取公共编码变量 ---
                                                         val fullFileUrl =
-                                                            viewModel.getResourceFullUrl(
-                                                                resourceName
-                                                            )
+                                                            viewModel.getResourceFullUrl(resourceName)
 
-                                                        Log.d(
-                                                            "HTTPLinkFileListScreen",
-                                                            "Full file URL before encoding: $fullFileUrl"
-                                                        )
+                                                        Log.d("HTTPLinkFileListScreen", "Full file URL before encoding: $fullFileUrl")
 
-                                                        val encodedFileUrl =
+                                                        val encodedFileUrl = try {
                                                             URLEncoder.encode(fullFileUrl, "UTF-8")
-                                                        Log.d(
-                                                            "HTTPLinkFileListScreen",
-                                                            "Encoded file URL: $encodedFileUrl"
-                                                        )
+                                                        } catch (e: Exception) {
+                                                            Log.e("HTTPLinkFileListScreen", "文件URL编码失败: $e")
+                                                            Toast.makeText(context, "文件路径编码失败", Toast.LENGTH_SHORT).show()
+                                                            return@launch
+                                                        }
 
-                                                        val fileExtension =
-                                                            Tools.extractFileExtension(resource.name)
+                                                        val encodedResourceName = try {
+                                                            URLEncoder.encode(resource.name, "UTF-8")
+                                                        } catch (e: Exception) {
+                                                            Log.e("HTTPLinkFileListScreen", "文件名编码失败: $e")
+                                                            Toast.makeText(context, "文件名编码失败", Toast.LENGTH_SHORT).show()
+                                                            return@launch
+                                                        }
+
+                                                        val encodedConnectionName = try {
+                                                            URLEncoder.encode(connectionName, "UTF-8")
+                                                        } catch (e: Exception) {
+                                                            // 几乎不会失败，但最好处理一下
+                                                            Log.e("HTTPLinkFileListScreen", "连接名编码失败: $e")
+                                                            Toast.makeText(context, "连接名编码失败", Toast.LENGTH_SHORT).show()
+                                                            return@launch
+                                                        }
+
                                                         when {
                                                             Tools.containsVideoFormat(fileExtension) -> {
                                                                 // 导航到视频播放器
                                                                 navController.navigate(
-                                                                    "VideoPlayer/$encodedFileUrl/HTTP/${
-                                                                        URLEncoder.encode(
-                                                                            resource.name,
-                                                                            "UTF-8"
-                                                                        )
-                                                                    }/${
-                                                                        URLEncoder.encode(
-                                                                            connectionName,
-                                                                            "UTF-8"
-                                                                        )
-                                                                    }"
+                                                                    "VideoPlayer/$encodedFileUrl/HTTP/$encodedResourceName/$encodedConnectionName"
                                                                 )
                                                             }
 
                                                             Tools.containsAudioFormat(fileExtension) -> {
-                                                                //  构建音频文件列表
+                                                                //  构建音频文件列表（只包含文件）
                                                                 val audioFiles =
                                                                     fileList.filter { httpFile ->
-                                                                        Tools.containsAudioFormat(
-                                                                            Tools.extractFileExtension(
-                                                                                httpFile.name
-                                                                            )
+                                                                        !httpFile.isDirectory && Tools.containsAudioFormat(
+                                                                            Tools.extractFileExtension(httpFile.name)
                                                                         )
                                                                     }
 
-                                                                //  构建文件名到索引的映射（O(N) 一次构建）
-                                                                val nameToIndexMap =
-                                                                    audioFiles.withIndex()
-                                                                        .associateBy(
-                                                                            { it.value.name },
-                                                                            { it.index })
-
-                                                                //  快速查找索引（O(1)）
+                                                                // 快速查找索引（O(N) 一次查找）
                                                                 val currentAudioIndex =
-                                                                    nameToIndexMap[resource.name]
-                                                                        ?: -1
-                                                                if (currentAudioIndex == -1) {
-                                                                    Log.e(
-                                                                        "HTTPFileListScreen",
-                                                                        "未找到文件在音频列表中: ${resource.name}"
-                                                                    )
-                                                                    return@launch
+                                                                    audioFiles.withIndex()
+                                                                        .firstOrNull { it.value.name == resource.name }
+                                                                        ?.index ?: -1
 
+                                                                if (currentAudioIndex == -1) {
+                                                                    Log.e("HTTPFileListScreen", "未找到文件在音频列表中: ${resource.name}")
+                                                                    return@launch
                                                                 }
 
                                                                 //  构建播放列表
                                                                 val audioItems =
                                                                     audioFiles.map { httpFile ->
                                                                         AudioItem(
-                                                                            uri = viewModel.getResourceFullUrl(
-                                                                                httpFile.name
-                                                                            ),
+                                                                            uri = viewModel.getResourceFullUrl(httpFile.name),
                                                                             fileName = httpFile.name,
                                                                             dataSourceType = "HTTP"
                                                                         )
                                                                     }
-                                                                // 设置数据
-                                                                MzDkPlayerApplication.clearStringList(
-                                                                    "audio_playlist"
-                                                                )
-                                                                MzDkPlayerApplication.setStringList(
-                                                                    "audio_playlist",
-                                                                    audioItems
-                                                                )
+
+                                                                // 设置数据到全局 Application
+                                                                MzDkPlayerApplication.clearStringList("audio_playlist")
+                                                                MzDkPlayerApplication.setStringList("audio_playlist", audioItems)
+
+                                                                // 导航到音频播放器，带上播放列表索引
                                                                 navController.navigate(
-                                                                    "AudioPlayer/$encodedFileUrl/HTTP/${
-                                                                        URLEncoder.encode(
-                                                                            resource.name,
-                                                                            "UTF-8"
-                                                                        )
-                                                                    }/${
-                                                                        URLEncoder.encode(
-                                                                            connectionName,
-                                                                            "UTF-8"
-                                                                        )
-                                                                    }/$currentAudioIndex"
+                                                                    "AudioPlayer/$encodedFileUrl/HTTP/$encodedResourceName/$encodedConnectionName/$currentAudioIndex"
                                                                 )
-                                                                //navController.navigate("AudioPlayer/$encodedUri/SMB/$encodedFileName")
                                                             }
 
-                                                            Tools.containsImageFileExtension(
-                                                                fileExtension
-                                                            ) -> {
+                                                            Tools.containsImageFileExtension(fileExtension) -> {
                                                                 navController.navigate(
-                                                                    "PicViewer/$encodedFileUrl/HTTP/${
-                                                                        URLEncoder.encode(
-                                                                            resource.name,
-                                                                            "UTF-8"
-                                                                        )
-                                                                    }/${
-                                                                        URLEncoder.encode(
-                                                                            connectionName,
-                                                                            "UTF-8"
-                                                                        )
-                                                                    }"
+                                                                    "PicViewer/$encodedFileUrl/HTTP/$encodedResourceName/$encodedConnectionName"
                                                                 )
                                                             }
 

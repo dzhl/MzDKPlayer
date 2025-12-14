@@ -55,7 +55,7 @@ import org.mz.mzdkplayer.ui.screen.ftp.FTPConScreen
 import org.mz.mzdkplayer.ui.screen.ftp.FTPFileListScreen
 import org.mz.mzdkplayer.ui.screen.httplink.HTTPLinkFileListScreen
 import org.mz.mzdkplayer.ui.screen.httplink.HTTPLinkConListScreen
-import org.mz.mzdkplayer.ui.screen.localfile.LocalFileScreen
+import org.mz.mzdkplayer.ui.screen.localfile.LocalFileListScreen
 import org.mz.mzdkplayer.ui.screen.localfile.LocalFileTypeScreen
 import org.mz.mzdkplayer.ui.screen.httplink.HTTPLinkConScreen
 import org.mz.mzdkplayer.ui.screen.nfs.NFSConListScreen

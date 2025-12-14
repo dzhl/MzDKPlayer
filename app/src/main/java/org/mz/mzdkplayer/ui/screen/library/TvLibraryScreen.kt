@@ -89,7 +89,7 @@ fun TvLibraryScreen(
     if (isTvSeriesLoading) {
         LoadingScreen(modifier = Modifier.fillMaxSize())
     } else if (isTvSeriesEmpty) {
-        LibraryEmpty(navController = homeNavController)
+        LibraryEmpty(navController = homeNavController, isMovie = false)
     } else {
         // === 使用 Box 容器来实现 ImmersiveList 的效果 ===
         Box(modifier = Modifier.fillMaxSize())

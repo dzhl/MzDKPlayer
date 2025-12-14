@@ -60,7 +60,7 @@ import org.mz.mzdkplayer.ui.screen.home.FileHomeScreen
 import org.mz.mzdkplayer.ui.screen.httplink.HTTPLinkFileListScreen
 import org.mz.mzdkplayer.ui.screen.httplink.HTTPLinkConListScreen
 
-import org.mz.mzdkplayer.ui.screen.localfile.LocalFileScreen
+import org.mz.mzdkplayer.ui.screen.localfile.LocalFileListScreen
 import org.mz.mzdkplayer.ui.screen.localfile.LocalFileTypeScreen
 import org.mz.mzdkplayer.ui.screen.httplink.HTTPLinkConScreen
 import org.mz.mzdkplayer.ui.screen.library.MovieLibraryScreen
@@ -309,12 +309,12 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
         composable("LocalFileTypeScreen") { backStackEntry ->
             LocalFileTypeScreen(mainNavController)
         }
-        composable("LocalFileScreen/{path}") { backStackEntry ->
+        composable("LocalFileListScreen/{path}") { backStackEntry ->
             val encodedPath = backStackEntry.arguments?.getString("path")
             if (encodedPath != null) {
                 val path = URLDecoder.decode(encodedPath, "UTF-8")
                 Log.d("encodedPath", path)
-                LocalFileScreen(path, mainNavController)
+                LocalFileListScreen(path, mainNavController)
 
             }
         }

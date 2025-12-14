@@ -186,140 +186,115 @@ fun FTPFileListScreen(
                                             selected = false,
                                             onClick = {
                                                 coroutineScope.launch {
+                                                    // --- 目录处理 ---
                                                     if (isDirectory) {
                                                         // 构建子目录路径
-                                                        val newPath = if (path.isNullOrEmpty()) {
+                                                        val newPath = if (path.isNullOrEmpty() || path == "/") {
+                                                            // 根目录或空路径直接使用文件名
                                                             fileName
                                                         } else {
+                                                            // 当前路径 + 文件名，确保路径分隔符正确
                                                             "${path.trimEnd('/')}/$fileName"
                                                         }
-                                                        // 对路径进行编码，空路径特殊处理
-                                                        val encodedNewPath = URLEncoder.encode(
-                                                            newPath.ifEmpty { " " },
-                                                            "UTF-8"
-                                                        )
+
+                                                        // 对路径进行编码
+                                                        val encodedNewPath = try {
+                                                            URLEncoder.encode(newPath.ifEmpty { " " }, "UTF-8")
+                                                        } catch (e: Exception) {
+                                                            Log.e("FTPFileListScreen", "目录路径编码失败: $e")
+                                                            Toast.makeText(context, "目录路径编码失败", Toast.LENGTH_SHORT).show()
+                                                            return@launch
+                                                        }
+
                                                         Log.d(
                                                             "FTPFileListScreen",
                                                             "Navigating to subdirectory: $newPath (encoded: $encodedNewPath)"
                                                         )
                                                         // 导航到子目录，传递连接信息
                                                         navController.navigate("FTPFileListScreen/${ftpConnection.ip}/${ftpConnection.username}/${ftpConnection.password}/${ftpConnection.port}/$encodedNewPath/${ftpConnection.name}")
-                                                    } else {
-                                                        // 处理文件点击 - 导航到 VideoPlayer
 
-                                                        val fullFileUrl =
-                                                            viewModel.getResourceFullUrl(fileName)
-                                                        Log.d(
-                                                            "FTPFileListScreen",
-                                                            "Full file URL: $fullFileUrl"
-                                                        )
-// // 处理文件点击
-                                                        val fileExtension =
-                                                            Tools.extractFileExtension(file.name)
-                                                        val encodedFileUrl = URLEncoder.encode(
-                                                            fullFileUrl,
-                                                            "UTF-8"
-                                                        )
-                                                        //Log.d("FTPFileListScreen", "Navigating to video player: $fullFileUrl (encoded: $encodedFileUrl)")
-//
+                                                    } else {
+                                                        // --- 文件点击处理：提取公共编码变量 ---
+
+                                                        val fullFileUrl = viewModel.getResourceFullUrl(fileName)
+                                                        val fileExtension = Tools.extractFileExtension(fileName)
+
+                                                        // 统一处理 URL、文件名、连接名的编码和错误
+                                                        val encodedFileUrl = try {
+                                                            URLEncoder.encode(fullFileUrl, "UTF-8")
+                                                        } catch (e: Exception) {
+                                                            Log.e("FTPFileListScreen", "文件URL编码失败: $e")
+                                                            Toast.makeText(context, "文件路径编码失败", Toast.LENGTH_SHORT).show()
+                                                            return@launch
+                                                        }
+
+                                                        val encodedFileName = try {
+                                                            URLEncoder.encode(fileName, "UTF-8")
+                                                        } catch (e: Exception) {
+                                                            Log.e("FTPFileListScreen", "文件名编码失败: $e")
+                                                            Toast.makeText(context, "文件名编码失败", Toast.LENGTH_SHORT).show()
+                                                            return@launch
+                                                        }
+
+                                                        val encodedConnectionName = try {
+                                                            URLEncoder.encode(ftpConnection.name, "UTF-8")
+                                                        } catch (e: Exception) {
+                                                            Log.e("FTPFileListScreen", "连接名编码失败: $e")
+                                                            Toast.makeText(context, "连接名编码失败", Toast.LENGTH_SHORT).show()
+                                                            return@launch
+                                                        }
+
                                                         when {
                                                             Tools.containsVideoFormat(fileExtension) -> {
                                                                 // 导航到视频播放器
                                                                 navController.navigate(
-                                                                    "VideoPlayer/$encodedFileUrl/FTP/${
-                                                                        URLEncoder.encode(
-                                                                            fileName,
-                                                                            "UTF-8"
-                                                                        )
-                                                                    }/${
-                                                                        URLEncoder.encode(
-                                                                            ftpConnection.name,
-                                                                            "UTF-8"
-                                                                        )
-                                                                    }"
+                                                                    "VideoPlayer/$encodedFileUrl/FTP/$encodedFileName/$encodedConnectionName"
                                                                 )
                                                             }
 
                                                             Tools.containsAudioFormat(fileExtension) -> {
-                                                                // 构建音频文件列表
+                                                                // 构建音频文件列表（只包含音频文件）
                                                                 val audioFiles =
                                                                     fileList.filter { ftpFile ->
-                                                                        Tools.containsAudioFormat(
-                                                                            Tools.extractFileExtension(
-                                                                                ftpFile.name
-                                                                            )
+                                                                        !ftpFile.isDirectory && Tools.containsAudioFormat(
+                                                                            Tools.extractFileExtension(ftpFile.name)
                                                                         )
                                                                     }
 
-                                                                // 构建文件名到索引的映射（O(N) 一次构建）
-                                                                val nameToIndexMap =
-                                                                    audioFiles.withIndex()
-                                                                        .associateBy(
-                                                                            { it.value.name },
-                                                                            { it.index })
-
-                                                                // 快速查找索引（O(1)）
+                                                                // 快速查找索引
                                                                 val currentAudioIndex =
-                                                                    nameToIndexMap[file.name] ?: -1
-                                                                if (currentAudioIndex == -1) {
-                                                                    Log.e(
-                                                                        "FTPFileListScreen",
-                                                                        "未找到文件在音频列表中: ${file.name}"
-                                                                    )
-                                                                    return@launch
+                                                                    audioFiles.withIndex()
+                                                                        .firstOrNull { it.value.name == fileName }
+                                                                        ?.index ?: -1
 
+                                                                if (currentAudioIndex == -1) {
+                                                                    Log.e("FTPFileListScreen", "未找到文件在音频列表中: $fileName")
+                                                                    return@launch
                                                                 }
 
                                                                 // 构建播放列表
                                                                 val audioItems =
                                                                     audioFiles.map { ftpFile ->
                                                                         AudioItem(
-                                                                            uri = viewModel.getResourceFullUrl(
-                                                                                ftpFile.name
-                                                                            ),
+                                                                            uri = viewModel.getResourceFullUrl(ftpFile.name),
                                                                             fileName = ftpFile.name,
                                                                             dataSourceType = "FTP"
                                                                         )
                                                                     }
 
-                                                                // 设置数据
-                                                                MzDkPlayerApplication.clearStringList(
-                                                                    "audio_playlist"
-                                                                )
-                                                                MzDkPlayerApplication.setStringList(
-                                                                    "audio_playlist",
-                                                                    audioItems
-                                                                )
+                                                                // 设置数据到全局 Application
+                                                                MzDkPlayerApplication.clearStringList("audio_playlist")
+                                                                MzDkPlayerApplication.setStringList("audio_playlist", audioItems)
+
+                                                                // 导航到音频播放器，带上播放列表索引
                                                                 navController.navigate(
-                                                                    "AudioPlayer/$encodedFileUrl/FTP/${
-                                                                        URLEncoder.encode(
-                                                                            fileName,
-                                                                            "UTF-8"
-                                                                        )
-                                                                    }/${
-                                                                        URLEncoder.encode(
-                                                                            ftpConnection.name,
-                                                                            "UTF-8"
-                                                                        )
-                                                                    }/$currentAudioIndex"
+                                                                    "AudioPlayer/$encodedFileUrl/FTP/$encodedFileName/$encodedConnectionName/$currentAudioIndex"
                                                                 )
                                                             }
 
-                                                            Tools.containsImageFileExtension(
-                                                                fileExtension
-                                                            ) -> {
+                                                            Tools.containsImageFileExtension(fileExtension) -> {
                                                                 navController.navigate(
-                                                                    "PicViewer/$encodedFileUrl/FTP/${
-                                                                        URLEncoder.encode(
-                                                                            fileName,
-                                                                            "UTF-8"
-                                                                        )
-                                                                    }/${
-                                                                        URLEncoder.encode(
-                                                                            ftpConnection.name,
-                                                                            "UTF-8"
-                                                                        )
-                                                                    }"
+                                                                    "PicViewer/$encodedFileUrl/FTP/$encodedFileName/$encodedConnectionName"
                                                                 )
                                                             }
 

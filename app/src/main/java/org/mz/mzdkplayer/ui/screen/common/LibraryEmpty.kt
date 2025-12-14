@@ -49,7 +49,7 @@ fun LibraryEmpty(isMovie: Boolean =true, navController: NavController){
 
             // 标题
             Text(
-                text = if (isMovie )"暂无电影信息" else "暂无TV剧信息",
+                text = if (isMovie)"暂无电影信息" else "暂无TV剧信息",
                 style = MaterialTheme.typography.headlineSmall, // 使用 Material3 标题样式
                 fontWeight = FontWeight.Bold, // 加粗
                 color = Color.White, // 使用主题文字颜色

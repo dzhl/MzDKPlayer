@@ -66,7 +66,7 @@ fun LocalFileTypeScreen(mainNavController: NavHostController) {
                     .padding(10.dp),
                 onClick = {
                     mainNavController.navigate(
-                        "LocalFileScreen/${URLEncoder.encode(filesPaths[index], "UTF-8")}"
+                        "LocalFileListScreen/${URLEncoder.encode(filesPaths[index], "UTF-8")}"
                     )
                 },
                 colors = myCardColor(),
