@@ -5,7 +5,6 @@ import NoSearchResult
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.OptIn
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -13,15 +12,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -42,7 +37,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.ContentScale.Companion
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -60,9 +54,7 @@ import androidx.tv.material3.ListItem
 import androidx.tv.material3.ListItemDefaults
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
 import org.mz.mzdkplayer.MzDkPlayerApplication
 import org.mz.mzdkplayer.R
 import org.mz.mzdkplayer.data.model.AudioItem
@@ -71,13 +63,12 @@ import org.mz.mzdkplayer.data.repository.Resource
 import org.mz.mzdkplayer.di.RepositoryProvider
 import org.mz.mzdkplayer.tool.Tools
 import org.mz.mzdkplayer.tool.Tools.VideoBigIcon
-import org.mz.mzdkplayer.tool.builderPlayer
-import org.mz.mzdkplayer.tool.setupPlayer
 import org.mz.mzdkplayer.tool.viewModelWithFactory
 
 import org.mz.mzdkplayer.ui.screen.common.FileEmptyScreen
 
 import org.mz.mzdkplayer.ui.screen.common.LoadingScreen
+import org.mz.mzdkplayer.ui.screen.common.MyFileDialog
 import org.mz.mzdkplayer.ui.screen.common.MyIconButton
 import org.mz.mzdkplayer.ui.screen.common.VAErrorScreen
 import org.mz.mzdkplayer.ui.screen.vm.SMBConViewModel
@@ -131,9 +122,8 @@ fun SMBFileListScreen(
             }
         }
     }
-    LaunchedEffect(connectionName) {
-        Log.d("SMBFileListScreenF", "connectionNameF:$connectionName")
-    }
+    // 控制弹窗显示
+    var showEditDialog by remember { mutableStateOf(false) }
     // 处理路径变化和连接状态
     LaunchedEffect(path, connectionStatus) {
         val decodedPath = try {
@@ -174,24 +164,25 @@ fun SMBFileListScreen(
                 viewModel.listSMBFiles(smbConfig)
             }
 
-            is FileConnectionStatus.Error -> {
-                val errorMessage = (connectionStatus as FileConnectionStatus.Error).message
-                Log.e("SMBFileListScreen", "连接错误: $errorMessage")
-                Toast.makeText(context, "SMB错误: $errorMessage", Toast.LENGTH_LONG).show()
-            }
+//            is FileConnectionStatus.Error -> {
+//                val errorMessage = (connectionStatus as FileConnectionStatus.Error).message
+//                Log.e("SMBFileListScreen", "连接错误: $errorMessage")
+//                Toast.makeText(context, "SMB错误: $errorMessage", Toast.LENGTH_LONG).show()
+//            }
+//
+//            is FileConnectionStatus.LoadingFile -> {
+//                Log.d("SMBFileListScreen", "正在加载文件...")
+//            }
+//
+//            is FileConnectionStatus.FilesLoaded -> {
+//                Log.d("SMBFileListScreen", "文件加载完成")
+//            }
+//
+//            is FileConnectionStatus.Connecting -> {
+//                Log.d("SMBFileListScreen", "正在连接...")
+//            }
 
-            is FileConnectionStatus.LoadingFile -> {
-                Log.d("SMBFileListScreen", "正在加载文件...")
-            }
-
-            is FileConnectionStatus.FilesLoaded -> {
-                Log.d("SMBFileListScreen", "文件加载完成")
-            }
-
-            is FileConnectionStatus.Connecting -> {
-                Log.d("SMBFileListScreen", "正在连接...")
-            }
-
+            else -> {}
         }
     }
 
@@ -214,10 +205,6 @@ fun SMBFileListScreen(
             movieViewModel.clearFocusedMovie()
         }
     }
-    LaunchedEffect(focusedMovie) {
-        val asss = focusedMovie
-
-    }
     var mediaId by remember { mutableIntStateOf(-1) }
     // 清理资源
     DisposableEffect(Unit) {
@@ -232,7 +219,8 @@ fun SMBFileListScreen(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
-    ) {
+    )
+    {
         when (connectionStatus) {
 
             is FileConnectionStatus.FilesLoaded -> {
@@ -260,12 +248,13 @@ fun SMBFileListScreen(
 
                                 else -> {
                                     items(filteredFiles) { file ->
+                                        val fileExtension = Tools.extractFileExtension(file.name)
                                         ListItem(
                                             selected = false,
 
                                             onClick = {
                                                 // --- 提取公共变量/准备工作 ---
-                                                val fileExtension = Tools.extractFileExtension(file.name)
+
                                                 val connectionName = connectionName
 
                                                 // 构造完整的 SMB URI（含用户名/密码，用于文件访问）
@@ -277,7 +266,11 @@ fun SMBFileListScreen(
                                                     URLEncoder.encode(fullSmbUri, "UTF-8")
                                                 } catch (e: Exception) {
                                                     Log.e("SMBFileListScreen", "URI 编码失败: $e")
-                                                    Toast.makeText(context, "路径编码失败", Toast.LENGTH_SHORT).show()
+                                                    Toast.makeText(
+                                                        context,
+                                                        "路径编码失败",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
                                                     return@ListItem // 编码失败，退出点击事件
                                                 }
 
@@ -285,7 +278,11 @@ fun SMBFileListScreen(
                                                     URLEncoder.encode(file.name, "UTF-8")
                                                 } catch (e: Exception) {
                                                     Log.e("SMBFileListScreen", "文件名编码失败: $e")
-                                                    Toast.makeText(context, "文件名编码失败", Toast.LENGTH_SHORT).show()
+                                                    Toast.makeText(
+                                                        context,
+                                                        "文件名编码失败",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
                                                     return@ListItem // 编码失败，退出点击事件
                                                 }
 
@@ -304,8 +301,15 @@ fun SMBFileListScreen(
                                                         val encodedNewPath = try {
                                                             URLEncoder.encode(newPath, "UTF-8")
                                                         } catch (e: Exception) {
-                                                            Log.e("SMBFileListScreen", "路径编码失败: $e")
-                                                            Toast.makeText(context, "路径编码失败", Toast.LENGTH_SHORT).show()
+                                                            Log.e(
+                                                                "SMBFileListScreen",
+                                                                "路径编码失败: $e"
+                                                            )
+                                                            Toast.makeText(
+                                                                context,
+                                                                "路径编码失败",
+                                                                Toast.LENGTH_SHORT
+                                                            ).show()
                                                             return@ListItem
                                                         }
                                                         navController.navigate("SMBFileListScreen/$encodedNewPath/$connectionName")
@@ -313,18 +317,28 @@ fun SMBFileListScreen(
 
                                                     Tools.containsVideoFormat(fileExtension) -> {
                                                         // 处理视频文件点击
-                                                        Log.d("SMBFileListScreen", "connectionName:$connectionName")
-                                                        Log.d("SMBFileListScreen", "movieId:$mediaId") // 假设 mediaId 在外部作用域
+                                                        Log.d(
+                                                            "SMBFileListScreen",
+                                                            "connectionName:$connectionName"
+                                                        )
+                                                        Log.d(
+                                                            "SMBFileListScreen",
+                                                            "movieId:$mediaId"
+                                                        ) // 假设 mediaId 在外部作用域
 
                                                         // 检查是否有媒体信息（mediaId > 0, 且是焦点文件, 且未隐藏详情）
                                                         if (mediaId > 0 && focusedFileName == file.name && !settingsState.hideDetails) {
-                                                            val mediaInfoFN = MediaInfoExtractorFormFileName.extract(file.name)
-                                                            val route = if (mediaInfoFN.mediaType == "movie") {
-                                                                "MovieDetails/$encodedUri/SMB/$encodedFileName/${connectionName}/$mediaId"
-                                                            } else {
-                                                                // 注意：这里假设 season/episode 可以安全地转换为 Int
-                                                                "TVSeriesDetails/$encodedUri/SMB/$encodedFileName/${connectionName}/$mediaId/${mediaInfoFN.season.toInt()}/${mediaInfoFN.episode.toInt()}"
-                                                            }
+                                                            val mediaInfoFN =
+                                                                MediaInfoExtractorFormFileName.extract(
+                                                                    file.name
+                                                                )
+                                                            val route =
+                                                                if (mediaInfoFN.mediaType == "movie") {
+                                                                    "MovieDetails/$encodedUri/SMB/$encodedFileName/${connectionName}/$mediaId"
+                                                                } else {
+                                                                    // 注意：这里假设 season/episode 可以安全地转换为 Int
+                                                                    "TVSeriesDetails/$encodedUri/SMB/$encodedFileName/${connectionName}/$mediaId/${mediaInfoFN.season.toInt()}/${mediaInfoFN.episode.toInt()}"
+                                                                }
                                                             navController.navigate(route)
                                                         } else {
                                                             // 没有电影信息，直接播放
@@ -335,16 +349,24 @@ fun SMBFileListScreen(
                                                     Tools.containsAudioFormat(fileExtension) -> {
                                                         // 处理音频文件点击
                                                         val audioFiles = files.filter { smbFile ->
-                                                            Tools.containsAudioFormat(Tools.extractFileExtension(smbFile.name))
+                                                            Tools.containsAudioFormat(
+                                                                Tools.extractFileExtension(
+                                                                    smbFile.name
+                                                                )
+                                                            )
                                                         }
 
                                                         // 构建文件名到索引的映射（一次构建）
-                                                        val currentAudioIndex = audioFiles.withIndex()
-                                                            .firstOrNull { it.value.name == file.name }
-                                                            ?.index ?: -1
+                                                        val currentAudioIndex =
+                                                            audioFiles.withIndex()
+                                                                .firstOrNull { it.value.name == file.name }
+                                                                ?.index ?: -1
 
                                                         if (currentAudioIndex == -1) {
-                                                            Log.e("SMBFileListScreen", "未找到文件在音频列表中: ${file.name}")
+                                                            Log.e(
+                                                                "SMBFileListScreen",
+                                                                "未找到文件在音频列表中: ${file.name}"
+                                                            )
                                                             return@ListItem
                                                         }
 
@@ -359,7 +381,10 @@ fun SMBFileListScreen(
 
                                                         // 设置全局播放列表
                                                         MzDkPlayerApplication.clearStringList("audio_playlist")
-                                                        MzDkPlayerApplication.setStringList("audio_playlist", audioItems)
+                                                        MzDkPlayerApplication.setStringList(
+                                                            "audio_playlist",
+                                                            audioItems
+                                                        )
 
                                                         // 传递当前音频项在播放列表中的索引并导航
                                                         navController.navigate("AudioPlayer/$encodedUri/SMB/$encodedFileName/${connectionName}/$currentAudioIndex")
@@ -380,6 +405,12 @@ fun SMBFileListScreen(
                                                     }
                                                 }
                                             },
+                                            onLongClick = {
+                                                if (Tools.containsVideoFormat(
+                                                        fileExtension
+                                                    )
+                                                ) showEditDialog = true
+                                            },
                                             colors = MyFileListItemColor(),
                                             modifier = Modifier
                                                 .padding(end = 10.dp)
@@ -398,7 +429,7 @@ fun SMBFileListScreen(
                                                             "smb://${file.username}:${file.password}@${file.server}/${file.share}${file.fullPath}"
                                                         Log.d(
                                                             "SMBFileListScreen",
-                                                            "焦点变化: ${file.name}, 是目录: $focusedIsDir"
+                                                            "焦点变化: ${file.name}, 是目录: $focusedMediaUri"
                                                         )
                                                     }
                                                 },
@@ -407,13 +438,23 @@ fun SMBFileListScreen(
                                                 focusedScale = 1.01f
                                             ),
                                             leadingContent = {
-                                                val fileExtension = Tools.extractFileExtension(file.name)
+                                                val fileExtension =
+                                                    Tools.extractFileExtension(file.name)
                                                 Icon(
                                                     painter = when {
                                                         file.isDirectory -> painterResource(R.drawable.baseline_folder_24)
-                                                        Tools.containsVideoFormat(fileExtension) -> painterResource(R.drawable.moviefileicon)
-                                                        Tools.containsAudioFormat(fileExtension) -> painterResource(R.drawable.baseline_music_note_24)
-                                                        Tools.containsImageFileExtension(fileExtension) -> painterResource(R.drawable.image24dp)
+                                                        Tools.containsVideoFormat(fileExtension) -> painterResource(
+                                                            R.drawable.moviefileicon
+                                                        )
+
+                                                        Tools.containsAudioFormat(fileExtension) -> painterResource(
+                                                            R.drawable.baseline_music_note_24
+                                                        )
+
+                                                        Tools.containsImageFileExtension(
+                                                            fileExtension
+                                                        ) -> painterResource(R.drawable.image24dp)
+
                                                         else -> painterResource(R.drawable.baseline_insert_drive_file_24)
                                                     },
                                                     contentDescription = null,
@@ -593,7 +634,7 @@ fun SMBFileListScreen(
                             // 添加一个弹性空间，让内容在垂直方向上分布更均匀
                             Spacer(modifier = Modifier.weight(1f))
                             MyIconButton(
-                                if (isScanning && currentScanIndex > 0)  "正在获取信息 $currentScanIndex/$totalScanCount" else "批量获取信息",
+                                if (isScanning && currentScanIndex > 0) "正在获取信息 $currentScanIndex/$totalScanCount" else "批量获取信息",
                                 icon = R.drawable.sync24dp,
                                 onClick = {
                                     // 1. 过滤出所有的视频文件 (不递归，只取当前层级)
@@ -635,20 +676,6 @@ fun SMBFileListScreen(
                                         connectionName = connectionName
                                     )
                                 })
-                            // ↓↓↓↓↓↓ 新增进度显示文字 ↓↓↓↓↓↓
-//                            if (isScanning && currentScanIndex > 0) {
-//                                val displayMessage = "正在获取信息 $currentScanIndex/$totalScanCount"
-//
-//                                if (displayMessage.isNotEmpty()) {
-//                                    Text(
-//                                        text = displayMessage,
-//                                        color = Color.Yellow,
-//                                        fontSize = 14.sp,
-//                                        modifier = Modifier.padding(top = 8.dp)
-//                                    )
-//                                }
-//                            }
-                            // ↑↑↑↑↑↑ 新增进度显示文字 ↑↑↑↑↑↑
                         }
                     }
                 }
@@ -670,6 +697,17 @@ fun SMBFileListScreen(
                 )
             }
         }
+    }
+    if (showEditDialog) {
+        MyFileDialog(
+            onDismiss = { showEditDialog = false },
+            fileName = focusedFileName,
+            onEditClick = {
+                showEditDialog = false
+                navController.navigate("EditTMDBInfoScreen/${URLEncoder.encode(focusedMediaUri,"UTF-8")}")
+            },
+            onCloseClick = { showEditDialog = false }
+        )
     }
 }
 

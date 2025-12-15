@@ -51,6 +51,7 @@ import org.mz.mzdkplayer.tool.viewModelWithFactory
 import org.mz.mzdkplayer.ui.audioplayer.AudioPlayerScreen
 
 import org.mz.mzdkplayer.ui.picviewer.PicViewerScreen
+import org.mz.mzdkplayer.ui.screen.common.EditTMDBInfoScreen
 import org.mz.mzdkplayer.ui.screen.movie.MovieDetailsScreen
 import org.mz.mzdkplayer.ui.screen.history.MediaHistoryScreen
 import org.mz.mzdkplayer.ui.screen.ftp.FTPConListScreen
@@ -386,6 +387,11 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
                 )
             }
         }
+        composable("EditTMDBInfoScreen/{mediaUri}") { backStackEntry ->
+            val mediaUri = backStackEntry.arguments?.getString("mediaUri")
+            EditTMDBInfoScreen(URLDecoder.decode(mediaUri, "UTF-8"), navController = mainNavController)
+        }
+
         composable("SMBFileListScreen/{path}/{connectionName}") { backStackEntry ->
             val encodedPath = backStackEntry.arguments?.getString("path")
             val connectionName = backStackEntry.arguments?.getString("connectionName") ?: "未知"

@@ -12,7 +12,7 @@ data class MediaItem(
     val posterPath: String?,          // 海报路径
     val releaseDate: String?,         // 发布日期 (Movie.release_date 或 TV.first_air_date)
     val isMovie: Boolean = true,      // 类型标记
-
+    val backdropPath: String = "未知",
     // === TV 专属字段 ===
     val seasonNumber: Int = 0,        // 第几季 (用于定位文件对应的具体集数)
     val episodeNumber: Int = 0        // 第几集

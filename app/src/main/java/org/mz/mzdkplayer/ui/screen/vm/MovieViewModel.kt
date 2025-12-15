@@ -16,6 +16,7 @@ import org.mz.mzdkplayer.data.local.MediaDao
 import org.mz.mzdkplayer.data.model.MediaItem
 import org.mz.mzdkplayer.data.model.Movie
 import org.mz.mzdkplayer.data.model.MovieDetails
+import org.mz.mzdkplayer.data.model.TVData
 import org.mz.mzdkplayer.data.model.TVEpisode
 import org.mz.mzdkplayer.data.model.TVSeriesDetails
 import org.mz.mzdkplayer.data.repository.Resource
@@ -46,7 +47,9 @@ class MovieViewModel(private val repository: TmdbRepository,private val mediaDao
     // 替换原来的 _focusedMovie
     private val _focusedMovie = MutableStateFlow<Resource<MediaItem?>>(Resource.Success(null))
     val focusedMovie: StateFlow<Resource<MediaItem?>> = _focusedMovie
-
+    // [新增] 手动搜索的结果流 (避免干扰主界面的 focusedMovie 或 popularMovies)
+    private val _manualSearchResults = MutableStateFlow<Resource<List<MediaItem>>>(Resource.Success(emptyList()))
+    val manualSearchResults: StateFlow<Resource<List<MediaItem>>> = _manualSearchResults
 
     // 新增：扫描状态，用于UI显示进度或禁用按钮（可选）
     private val _isScanning = MutableStateFlow(false)
@@ -508,7 +511,37 @@ class MovieViewModel(private val repository: TmdbRepository,private val mediaDao
             }
         }
     }
-
+    /**
+     * [新增] 手动搜索电影或剧集
+     */
+    fun searchMediaManual(query: String, isMovie: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _manualSearchResults.value = Resource.Loading
+            try {
+                if (isMovie) {
+                    val result = repository.searchMovies(query, year = "") // 手动搜索通常不强制年份
+                    if (result is Resource.Success) {
+                        // 转换 Movie -> MediaItem
+                        val items = result.data.results.map { it.toMediaItem() }
+                        _manualSearchResults.value = Resource.Success(items)
+                    } else if (result is Resource.Error) {
+                        _manualSearchResults.value = Resource.Error(result.message, result.exception)
+                    }
+                } else {
+                    val result = repository.searchTV(query, year = "")
+                    if (result is Resource.Success) {
+                        // 转换 TVData -> MediaItem
+                        val items = result.data.results.map { it.toMediaItem() }
+                        _manualSearchResults.value = Resource.Success(items)
+                    } else if (result is Resource.Error) {
+                        _manualSearchResults.value = Resource.Error(result.message, result.exception)
+                    }
+                }
+            } catch (e: Exception) {
+                _manualSearchResults.value = Resource.Error("Search failed", e)
+            }
+        }
+    }
 
     /**
      * 【新增】清理媒体缓存数据库 (相当于 Kodi 的清理资料库)
@@ -530,7 +563,54 @@ class MovieViewModel(private val repository: TmdbRepository,private val mediaDao
             }
         }
     }
+    /**
+     * [新增] 手动保存/修正文件映射
+     * 这一步会直接覆写 media_cache 中该 videoUri 对应的记录
+     */
+    fun updateMediaMapping(
+        videoUri: String,
+        selectedMedia: MediaItem, // 用户选中的 TMDB 条目
+        seasonNumber: Int,        // 用户输入的季 (仅TV有效)
+        episodeNumber: Int,       // 用户输入的集 (仅TV有效)
+        originalFileName: String,
+        dataSourceType: String = "SMB", // 默认，可视情况传参
+        connectionName: String = ""     // 默认，可视情况传参
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            // 先尝试获取旧记录以保留一些元数据（如 connectionName）
+            val oldRecord = mediaDao.getMediaByUri(videoUri)
 
+            val newEntity = MediaCacheEntity(
+                videoUri = videoUri,
+                dataSourceType = oldRecord?.dataSourceType ?: dataSourceType,
+                fileName = originalFileName, // 保持原始文件名
+                connectionName = oldRecord?.connectionName ?: connectionName,
+
+                tmdbId = selectedMedia.id,
+                mediaType = if (selectedMedia.isMovie) "movie" else "tv",
+                title = selectedMedia.title?:"未知标题",
+                overview = selectedMedia.overview,
+                posterPath = selectedMedia.posterPath,
+                backdropPath = selectedMedia.backdropPath,
+                releaseDate = selectedMedia.releaseDate,
+                voteAverage = 0.0, // 简略信息暂无评分，详情页会自动更新
+
+                // TV 修正的关键字段
+                seasonNumber = if (selectedMedia.isMovie) 0 else seasonNumber,
+                episodeNumber = if (selectedMedia.isMovie) 0 else episodeNumber,
+
+                // 重置详情状态，以便下次进入详情页时重新拉取正确的详细元数据
+                isDetailsLoaded = false,
+                groupKey = if(selectedMedia.isMovie) "movie_${videoUri}" else "tv_${selectedMedia.id}"
+            )
+
+            mediaDao.insertMedia(newEntity)
+            Log.d("MovieViewModel", "手动修正映射成功: ${selectedMedia.title}")
+
+            // 可选：更新 focusedMovie 以便返回界面时立即刷新
+            _focusedMovie.value = Resource.Success(newEntity.toMediaItem())
+        }
+    }
     // 扩展函数：把 Movie/TvData 转成通用的 MediaItem
 //    private fun Movie.toMediaItem() = MediaItem(
 //        id = id,
@@ -540,7 +620,7 @@ class MovieViewModel(private val repository: TmdbRepository,private val mediaDao
 //        releaseDate = releaseDate,
 //        isMovie = true
 //    )
-
+//
 //    private fun TVData.toMediaItem() = MediaItem(
 //        id = id,
 //        title = name ?: "",
@@ -549,6 +629,17 @@ class MovieViewModel(private val repository: TmdbRepository,private val mediaDao
 //        releaseDate = firstAirDate, // TV 的 releaseDate 实际是 first_air_date
 //        isMovie = false,
 //    )
+    // 扩展函数需要放在类内部或同文件下 (如果之前没写的话)
+    private fun Movie.toMediaItem() = MediaItem(
+        id = id, title = title ?: "", overview = overview, posterPath = posterPath,
+        backdropPath = backdropPath?:"未知", releaseDate = releaseDate, isMovie = true
+    )
+
+    private fun TVData.toMediaItem() = MediaItem(
+        id = id, title = name ?: "", overview = overview, posterPath = posterPath,
+        backdropPath = backdropPath?:"未知", releaseDate = firstAirDate, isMovie = false
+    )
+
 
     // 辅助函数：检测字符串是否包含中文字符
     fun String.containsChinese(): Boolean {
