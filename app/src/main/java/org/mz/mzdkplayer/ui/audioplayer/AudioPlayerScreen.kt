@@ -50,6 +50,7 @@ import org.mz.mzdkplayer.data.model.MediaHistoryRecord
 
 import org.mz.mzdkplayer.tool.SmbUtils
 import org.mz.mzdkplayer.tool.Tools
+import org.mz.mzdkplayer.tool.Tools.saveCoverImageToInternalStorage
 import org.mz.mzdkplayer.tool.createArtworkBitmap
 import org.mz.mzdkplayer.tool.extractAudioInfoAndLyricsFromStream
 import org.mz.mzdkplayer.tool.handleDPadKeyEvents
@@ -58,6 +59,7 @@ import org.mz.mzdkplayer.ui.audioplayer.components.*
 
 
 import org.mz.mzdkplayer.ui.screen.vm.AudioPlayerViewModel
+import org.mz.mzdkplayer.ui.screen.vm.AudioViewModel
 import org.mz.mzdkplayer.ui.screen.vm.MediaHistoryViewModel
 import org.mz.mzdkplayer.ui.videoplayer.BackPress
 
@@ -79,7 +81,8 @@ fun AudioPlayerScreen(
     extraList: List<AudioItem>,
     currentIndex: String,
     connectionName: String,
-    mediaHistoryViewModel: MediaHistoryViewModel
+    mediaHistoryViewModel: MediaHistoryViewModel,
+    audioViewModel: AudioViewModel
 ) {
     val context = LocalContext.current
     val exoPlayer = rememberAudioPlayer(context, mediaUri, dataSourceType)
@@ -160,7 +163,7 @@ fun AudioPlayerScreen(
             else -> null
         }
 
-        Log.e("sampleMimeType1", currentMediaUri + (mimeTypeFromExtension?.toString() ?: "null"))
+        Log.e("sampleMimeType1", currentMediaUri + (mimeTypeFromExtension ?: "null"))
 
         // 尝试从播放器获取实际 MIME 类型
         var retryCount = 0
@@ -235,10 +238,37 @@ fun AudioPlayerScreen(
 
                 inputStream?.use { stream ->
                     // 关键：调用工具函数获取 audioInfo，其中包含 lyrics
+                    // 1. 【IO线程】耗时操作：解析流
                     val info = extractAudioInfoAndLyricsFromStream(context, stream, mimeType)
-                    audioInfo = info // 更新状态
-                    cachedAudioInfo = info // 同时缓存一份
 
+                    // 注意：虽然 Compose 允许在后台线程更新 State，但为了安全最好也在 Main 更新
+                    withContext(Dispatchers.Main) {
+                        audioInfo = info
+                        cachedAudioInfo = info
+                    }
+                    // 2. 拿到 info 后，保存封面并回写数据库
+                    if (info != null) {
+                        Log.i("AudioPlayerScreen", "开始回写元数据")
+                        // 3. 【切换回 Main 线程】获取播放器信息并提交
+                        // 2. 【IO线程】耗时操作：保存图片到本地 (这是文件操作，必须在 IO 线程)
+                        val savedCoverPath = saveCoverImageToInternalStorage(context, currentMediaUri, info.artworkData)
+                        withContext(Dispatchers.Main) {
+                            Log.i("AudioPlayerScreen", "切回主线程准备回写")
+
+                            // 只有在主线程才能安全访问 exoPlayer
+                            val currentDuration = if (exoPlayer.duration != C.TIME_UNSET) exoPlayer.duration else 0L
+
+                            // ViewModel 的调用可以在主线程，因为它内部自己会 launch(Dispatchers.IO)
+                            audioViewModel.updateAudioInfo(
+                                uri = currentMediaUri,
+                                info = info,
+                                localCoverPath = savedCoverPath,
+                                duration = currentDuration
+                            )
+                            Log.i("AudioPlayerScreen", "已触发 ViewModel 回写")
+                        }
+                        //Log.i("AudioPlayerScreen", "已回写元数据到数据库")
+                    }
                     Log.i("AudioPlayerScreen", "Loaded audio info and lyrics for $currentMediaUri")
                 } ?: Log.e("AudioPlayerScreen", "Failed to open input stream for $currentMediaUri")
             } catch (e: Exception) {

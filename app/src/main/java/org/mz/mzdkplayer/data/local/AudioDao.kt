@@ -29,4 +29,25 @@ interface AudioDao {
     suspend fun updateAudio(audio: AudioCacheEntity)
     @Query("DELETE FROM audio_cache")
     suspend fun clearAllAudio()
+
+    // 新增：只更新从流中解析出的元数据
+    @Query("""
+        UPDATE audio_cache 
+        SET title = :title, 
+            artist = :artist, 
+            album = :album, 
+            duration = :duration, 
+            lyrics = :lyrics, 
+            localCoverPath = :localCoverPath 
+        WHERE audioUri = :uri
+    """)
+    suspend fun updateAudioMetadata(
+        uri: String,
+        title: String,
+        artist: String,
+        album: String,
+        duration: Long,
+        lyrics: String?,
+        localCoverPath: String?
+    )
 }

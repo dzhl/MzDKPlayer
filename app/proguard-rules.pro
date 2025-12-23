@@ -44,7 +44,10 @@
 -keepclassmembers class * {
     @androidx.annotation.Keep *;
 }
-
+# 保持 jaudiotagger 的所有类和成员不被混淆和移除
+-dontwarn org.jaudiotagger.**
+# 保持 jaudiotagger 的所有类和成员不被混淆和移除
+-keep class org.jaudiotagger.** { *; }
 # ====================== 其他必要库的保留规则（避免兼容性问题） ======================
 ## 保留 SMB 相关类（你的 SmbDataSource 依赖）
 #-keep class com.hierynomus.smbj.** { *; }

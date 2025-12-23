@@ -1,6 +1,5 @@
 package org.mz.mzdkplayer.ui.screen.library
 
-
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -9,16 +8,21 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -27,14 +31,19 @@ import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.tv.material3.*
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import org.mz.mzdkplayer.MzDkPlayerApplication
-import org.mz.mzdkplayer.R // 确保这里引用了你的资源R
+import org.mz.mzdkplayer.R
 import org.mz.mzdkplayer.data.local.AudioCacheEntity
 import org.mz.mzdkplayer.data.model.AudioItem
 import org.mz.mzdkplayer.ui.screen.common.LibraryEmpty
 import org.mz.mzdkplayer.ui.screen.vm.AudioViewModel
-import org.mz.mzdkplayer.ui.theme.myListItemCoverColor
+import org.mz.mzdkplayer.ui.theme.MyFileListItemColor
+import java.io.File
 import java.net.URLEncoder
+import java.util.Locale
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalTvMaterial3Api::class)
@@ -46,8 +55,11 @@ fun AudioLibraryScreen(
 ) {
     val audioList by viewModel.allAudio.collectAsState()
     var focusedAudio by remember { mutableStateOf<AudioCacheEntity?>(null) }
+    val context = LocalContext.current
 
-    // 初始化焦点
+    // 预定义缺省图 Painter
+    val placeholderPainter = rememberVectorPainter(ImageVector.vectorResource(R.drawable.baseline_music_note_24))
+
     LaunchedEffect(audioList) {
         if (focusedAudio == null && audioList.isNotEmpty()) {
             focusedAudio = audioList.first()
@@ -55,150 +67,143 @@ fun AudioLibraryScreen(
     }
 
     if (audioList.isEmpty()) {
-        LibraryEmpty(navController = homeNavController, type = "music",)
+        LibraryEmpty(navController = homeNavController, type = "music")
     } else {
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
 
-            // 1. 背景层 (用颜色渐变代替封面)
+            // --- 1. 沉浸式动态背景 ---
             AnimatedContent(
-                targetState = focusedAudio,
-                transitionSpec = { fadeIn(tween(500)) togetherWith fadeOut(tween(500)) },
-                modifier = Modifier.fillMaxSize()
-            ) { au ->
-                // 搞一个暗色的动态背景
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(Color(0xFF2A2A2A), Color(0xFF111111))
-                            )
+                targetState = focusedAudio?.localCoverPath,
+                transitionSpec = { fadeIn(tween(800)) togetherWith fadeOut(tween(800)) },
+                label = "BgAnim"
+            ) { path ->
+                Box(modifier = Modifier.fillMaxSize()) {
+                    if (path != null) {
+                        AsyncImage(
+                            model = ImageRequest.Builder(context).data(File(path)).build(),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize().blur(40.dp).alpha(0.5f)
                         )
-                )
+                    }
+                    Box(modifier = Modifier.fillMaxSize().background(
+                        Brush.verticalGradient(listOf(Color.Transparent, Color.Black))
+                    ))
+                }
             }
 
-            // 2. 内容层
-            Row(modifier = Modifier.fillMaxSize()) {
-
-                // 左侧：信息展示区
+            // --- 2. 主内容布局 ---
+            Row(
+                modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // 左侧预览区 (增加专辑显示)
                 Column(
-                    modifier = Modifier
-                        .weight(0.35f)
-                        .padding(start = 56.dp, top = 80.dp, end = 20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally // 居中显示唱片
+                    modifier = Modifier.weight(0.4f).padding(end = 64.dp),
+                    horizontalAlignment = Alignment.Start // 靠左对齐，与电影页更契合
                 ) {
-                    Text(
-                        text = "音乐库",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = Color.LightGray,
-                        modifier = Modifier.align(Alignment.Start)
-                    )
-                    Spacer(modifier = Modifier.height(40.dp))
-
-                    // 模拟唱片封面 (由于没有真实图片，用一个圆形容器+图标)
                     Box(
                         modifier = Modifier
-                            .size(220.dp)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.radialGradient(
-                                    colors = listOf(Color(0xFF333333), Color.Black)
-                                )
-                            )
-                            .padding(4.dp) // 边框效果
-                            .background(Color.Black, CircleShape),
-                        contentAlignment = Alignment.Center
+                            .fillMaxWidth(0.9f)
+                            .aspectRatio(1f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFF1A1A1A))
                     ) {
-                        // 这里可以用你的 R.drawable.baseline_music_note_24 或者类似的图标
-                        Icon(
-                            imageVector = ImageVector.vectorResource(R.drawable.baseline_music_note_24),
+                        AsyncImage(
+                            model = focusedAudio?.localCoverPath?.let { File(it) },
                             contentDescription = null,
-                            tint = Color.Gray,
-                            modifier = Modifier.size(80.dp)
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize(),
+                            error = placeholderPainter,
+                            placeholder = placeholderPainter
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(30.dp))
+                    Spacer(modifier = Modifier.height(28.dp))
 
-                    // 歌名
                     Text(
-                        text = focusedAudio?.title ?: "",
+                        text = focusedAudio?.title ?: "未知歌曲",
+                        style = MaterialTheme.typography.displaySmall,
+                        color = Color(255, 248, 240),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+                    Text(
+                        text = focusedAudio?.artist ?: "未知艺术家",
                         style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        maxLines = 2,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        color = Color(255, 248, 240).copy(0.7f),
+                        maxLines = 1
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
 
-                    // 歌手 - 专辑
-                    Text(
-                        text = "${focusedAudio?.artist}",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Color(0xFFFFD700)
-                    )
-                    Text(
-                        text = focusedAudio?.album ?: "",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(0.7f),
-                        modifier = Modifier.padding(top=4.dp)
-                    )
+                    if (!focusedAudio?.album.isNullOrBlank()) {
+                        Text(
+                            text = "${focusedAudio?.album}",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Color(255, 248, 240).copy(0.4f),
+                            maxLines = 1,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
                 }
 
-                // 右侧：列表区
+                // 右侧列表区 (紧凑单行模式)
                 LazyColumn(
-                    contentPadding = PaddingValues(top = 80.dp, bottom = 40.dp, end = 40.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.weight(0.65f)
+                    modifier = Modifier.weight(0.6f),
+                    contentPadding = PaddingValues(vertical = 48.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(audioList) { audio ->
-                        val index = audioList.indexOf(audio)
-                        audio.audioUri
+                    itemsIndexed(audioList) { index, audio ->
+                        val isFocused = focusedAudio?.audioUri == audio.audioUri
+
                         ListItem(
                             selected = false,
                             onClick = {
-                                // 播放逻辑
                                 val encodedUri = URLEncoder.encode(audio.audioUri, "UTF-8")
                                 val encodedFn = URLEncoder.encode(audio.fileName, "UTF-8")
                                 val encodedConn = URLEncoder.encode(audio.connectionName, "UTF-8")
-                                // 1. 构建播放列表数据 (将数据库 Entity 映射为 AudioItem)
-                                val audioItems = audioList.map { entity ->
-                                    AudioItem(
-                                        uri = entity.audioUri, // 直接使用数据库存储的完整 URI
-                                        fileName = entity.fileName,
-                                        dataSourceType = entity.dataSourceType
-                                    )
-                                }
-
-                                // 2. 设置全局播放列表
-                                MzDkPlayerApplication.clearStringList("audio_playlist")
-                                MzDkPlayerApplication.setStringList(
-                                    "audio_playlist",
-                                    audioItems
-                                )
-
+                                val audioItems = audioList.map { AudioItem(it.audioUri, it.fileName, it.dataSourceType) }
+                                MzDkPlayerApplication.setStringList("audio_playlist", audioItems)
                                 mainNavController.navigate("AudioPlayer/$encodedUri/${audio.dataSourceType}/$encodedFn/$encodedConn/$index")
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .onFocusChanged { if (it.isFocused) focusedAudio = audio },
-                            colors = myListItemCoverColor(),
-                            headlineContent = {
-                                Text(audio.title, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            },
-                            supportingContent = {
-                                Text(audio.artist, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            },
+                            colors = MyFileListItemColor(),
+                            shape = ListItemDefaults.shape(RoundedCornerShape(8.dp)),
                             leadingContent = {
+                                // 去掉了封面，用序号代替，显得更专业整洁
                                 Text(
-                                    text = "${index + 1}",
-                                    color = Color.Gray,
-                                    modifier = Modifier.padding(end = 8.dp)
+                                    text = String.format("%02d", index + 1),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = if (isFocused) Color.Black.copy(0.5f) else Color.Gray
                                 )
                             },
+                            headlineContent = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = audio.title,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        maxLines = 1,
+                                        modifier = Modifier.weight(1f, fill = false)
+                                    )
+                                    if (audio.artist.isNotBlank()) {
+                                        Text(
+                                            text = " - ${audio.artist}",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            maxLines = 1,
+                                            modifier = Modifier.padding(start = 8.dp)
+                                        )
+                                    }
+                                }
+                            },
                             trailingContent = {
-                                // 由于时长是0，暂时不显示或显示占位符
-                                // Text("--:--")
+                                if (audio.duration > 0) {
+                                    Text(
+                                        text = formatMillis(audio.duration),
+                                        style = MaterialTheme.typography.labelMedium
+                                    )
+                                }
                             }
                         )
                     }
@@ -206,4 +211,9 @@ fun AudioLibraryScreen(
             }
         }
     }
+}
+
+private fun formatMillis(millis: Long): String {
+    val totalSeconds = millis / 1000
+    return String.format(Locale.getDefault(), "%02d:%02d", totalSeconds / 60, totalSeconds % 60)
 }

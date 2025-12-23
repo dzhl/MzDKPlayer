@@ -164,25 +164,11 @@ fun SMBFileListScreen(
                 Log.d("SMBFileListScreen", "已连接，列出文件: ${smbConfig.path}")
                 viewModel.listSMBFiles(smbConfig)
             }
-
-//            is FileConnectionStatus.Error -> {
-//                val errorMessage = (connectionStatus as FileConnectionStatus.Error).message
-//                Log.e("SMBFileListScreen", "连接错误: $errorMessage")
-//                Toast.makeText(context, "SMB错误: $errorMessage", Toast.LENGTH_LONG).show()
-//            }
-//
-//            is FileConnectionStatus.LoadingFile -> {
-//                Log.d("SMBFileListScreen", "正在加载文件...")
-//            }
-//
-//            is FileConnectionStatus.FilesLoaded -> {
-//                Log.d("SMBFileListScreen", "文件加载完成")
-//            }
-//
-//            is FileConnectionStatus.Connecting -> {
-//                Log.d("SMBFileListScreen", "正在连接...")
-//            }
-
+            is FileConnectionStatus.Error -> {
+                val errorMessage = (connectionStatus as FileConnectionStatus.Error).message
+                Log.e("SMBFileListScreen", "连接错误: $errorMessage")
+                Toast.makeText(context, "SMB错误: $errorMessage", Toast.LENGTH_LONG).show()
+            }
             else -> {}
         }
     }
@@ -237,88 +223,8 @@ fun SMBFileListScreen(
                     Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
                         Column( modifier = Modifier
                             .fillMaxHeight()
-                            .weight(0.7f),) {
-                            // 工具栏区
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp) // 按钮间距
-                            ) {
-                                // --- 视频扫描按钮 ---
-                                MyIconButton(
-                                    if (isScanning && currentScanIndex > 0) "正在获取信息 $currentScanIndex/$totalScanCount" else "批量获取信息",
-                                    icon = R.drawable.sync24dp,
-                                    onClick = {
-                                        // 1. 过滤出所有的视频文件 (不递归，只取当前层级)
-                                        val videoFilesToScan = files.filter { file ->
-                                            !file.isDirectory &&
-                                                    Tools.containsVideoFormat(
-                                                        Tools.extractFileExtension(
-                                                            file.name
-                                                        )
-                                                    )
-                                        }
-
-                                        if (videoFilesToScan.isEmpty()) {
-                                            Toast.makeText(
-                                                context,
-                                                "当前目录没有视频文件",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                            return@MyIconButton
-                                        }
-
-                                        // 2. 构建数据列表 Pair(fileName, fullUri)
-                                        // 注意：URI 的构建规则必须和 LazyColumn 里点击时的规则完全一致
-                                        val scanList = videoFilesToScan.map { file ->
-                                            val uri =
-                                                "smb://${file.username}:${file.password}@${file.server}/${file.share}${file.fullPath}"
-                                            file.name to uri
-                                        }
-
-                                        // 3. 调用 ViewModel 开始后台任务
-                                        Toast.makeText(
-                                            context,
-                                            "开始后台获取信息，请稍候...",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                        movieViewModel.batchScrapeVideoInfo(
-                                            videoList = scanList,
-                                            dataSourceType = "SMB",
-                                            connectionName = connectionName
-                                        )
-                                    })
-                                // --- 音乐扫描按钮 ---
-                                MyIconButton(
-                                    text = if (isAudioScanning) "正在解析文件名..." else "批量添加到音乐库",
-                                    icon = R.drawable.baseline_music_note_24,
-                                    onClick = {
-                                        // 1. 过滤音频文件
-                                        val audioFiles = files.filter {
-                                            !it.isDirectory && Tools.containsAudioFormat(Tools.extractFileExtension(it.name))
-                                        }
-
-                                        if (audioFiles.isEmpty()) {
-                                            Toast.makeText(context, "没有发现音频文件", Toast.LENGTH_SHORT).show()
-                                            return@MyIconButton
-                                        }
-
-                                        // 2. 只有文件名和URI是必须的
-                                        val list = audioFiles.map {
-                                            it.name to "smb://${it.username}:${it.password}@${it.server}/${it.share}${it.fullPath}"
-                                        }
-
-                                        // 3. 直接调用，瞬间完成
-                                        audioViewModel.batchScrapeAudioInfo(
-                                            audioList = list,
-                                            dataSourceType = "SMB",
-                                            connectionName = connectionName
-                                        )
-                                        Toast.makeText(context, "已在后台添加 ${list.size} 首音乐", Toast.LENGTH_SHORT).show()
-                                    }
-                                )
-                            }
+                            .weight(0.7f),)
+                        {
 
                             LazyColumn(
                                 modifier = Modifier
@@ -738,6 +644,88 @@ fun SMBFileListScreen(
 
                             // 添加一个弹性空间，让内容在垂直方向上分布更均匀
                             Spacer(modifier = Modifier.weight(1f))
+// 工具栏区
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally), // 按钮间距
+                            )
+                            {
+                                // --- 视频扫描按钮 ---
+                                MyIconButton(
+                                    if (isScanning && currentScanIndex > 0) "正在获取信息 $currentScanIndex/$totalScanCount" else "批量添加到视频库",
+                                    icon = R.drawable.sync24dp,
+                                    onClick = {
+                                        // 1. 过滤出所有的视频文件 (不递归，只取当前层级)
+                                        val videoFilesToScan = files.filter { file ->
+                                            !file.isDirectory &&
+                                                    Tools.containsVideoFormat(
+                                                        Tools.extractFileExtension(
+                                                            file.name
+                                                        )
+                                                    )
+                                        }
+
+                                        if (videoFilesToScan.isEmpty()) {
+                                            Toast.makeText(
+                                                context,
+                                                "当前目录没有视频文件",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                            return@MyIconButton
+                                        }
+
+                                        // 2. 构建数据列表 Pair(fileName, fullUri)
+                                        // 注意：URI 的构建规则必须和 LazyColumn 里点击时的规则完全一致
+                                        val scanList = videoFilesToScan.map { file ->
+                                            val uri =
+                                                "smb://${file.username}:${file.password}@${file.server}/${file.share}${file.fullPath}"
+                                            file.name to uri
+                                        }
+
+                                        // 3. 调用 ViewModel 开始后台任务
+                                        Toast.makeText(
+                                            context,
+                                            "开始后台获取信息，请稍候...",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        movieViewModel.batchScrapeVideoInfo(
+                                            videoList = scanList,
+                                            dataSourceType = "SMB",
+                                            connectionName = connectionName
+                                        )
+                                    }, isFileBut = true)
+                                // --- 音乐扫描按钮 ---
+                                MyIconButton(
+                                    text = if (isAudioScanning) "正在解析文件名..." else "批量添加到音乐库",
+                                    icon = R.drawable.sync24dp,
+                                    onClick = {
+                                        // 1. 过滤音频文件
+                                        val audioFiles = files.filter {
+                                            !it.isDirectory && Tools.containsAudioFormat(Tools.extractFileExtension(it.name))
+                                        }
+
+                                        if (audioFiles.isEmpty()) {
+                                            Toast.makeText(context, "没有发现音频文件", Toast.LENGTH_SHORT).show()
+                                            return@MyIconButton
+                                        }
+
+                                        // 2. 只有文件名和URI是必须的
+                                        val list = audioFiles.map {
+                                            it.name to "smb://${it.username}:${it.password}@${it.server}/${it.share}${it.fullPath}"
+                                        }
+
+                                        // 3. 直接调用，瞬间完成
+                                        audioViewModel.batchScrapeAudioInfo(
+                                            audioList = list,
+                                            dataSourceType = "SMB",
+                                            connectionName = connectionName
+                                        )
+                                        Toast.makeText(context, "已在后台添加 ${list.size} 首音乐", Toast.LENGTH_SHORT).show()
+                                    },isFileBut = true
+                                )
+                            }
 
                         }
                     }

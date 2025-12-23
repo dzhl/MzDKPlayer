@@ -2,6 +2,7 @@ package org.mz.mzdkplayer.tool
 
 
 import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.compose.foundation.Image
@@ -10,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 
 import androidx.media3.common.Format
-import androidx.media3.common.util.Log
+
 import androidx.media3.common.util.UnstableApi
 
 
@@ -123,7 +124,7 @@ object Tools {
     }
 
     fun containsAudioFormat(input: String): Boolean {
-        val audioFormats = listOf("MP3", "FLAC","WAV")
+        val audioFormats = listOf("MP3", "FLAC","WAV","AAC")
         return audioFormats.any { format ->
             input.contains(format, ignoreCase = true)
         }
@@ -559,6 +560,31 @@ object Tools {
         }
     }
 
+
+    fun saveCoverImageToInternalStorage(context: android.content.Context, uri: String, artworkData: ByteArray?): String? {
+        if (artworkData == null || artworkData.isEmpty()) return null
+
+        try {
+            // 使用 URI 的哈希值作为文件名，避免特殊字符问题
+            val fileName = "cover_${uri.hashCode()}.jpg"
+            val directory = java.io.File(context.filesDir, "audio_covers")
+            if (!directory.exists()) {
+                directory.mkdirs()
+            }
+
+            val file = java.io.File(directory, fileName)
+            // 如果文件已存在，可以根据需求决定是否覆盖。这里为了性能，如果存在就不写了
+            if (file.exists()) return file.absolutePath
+
+            java.io.FileOutputStream(file).use { fos ->
+                fos.write(artworkData)
+            }
+            return file.absolutePath
+        } catch (e: Exception) {
+            Log.e("AudioPlayerScreen", "保存封面失败", e)
+            return null
+        }
+    }
 }
 
 

@@ -88,6 +88,31 @@ class AudioViewModel(
             }
         }
     }
+    /**
+     * 回写音频元数据到数据库
+     */
+    fun updateAudioInfo(
+        uri: String,
+        info: org.mz.mzdkplayer.data.model.AudioInfo,
+        localCoverPath: String?,
+        duration: Long
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            // 防止无效更新
+            if (uri.isBlank()) return@launch
+
+            audioDao.updateAudioMetadata(
+                uri = uri,
+                title = info.title ?: "未知标题", // 没解析出来保持原样或默认值，根据需求调整
+                artist = info.artist ?: "未知艺术家",
+                album = info.album ?: "未知专辑",
+                duration = duration,
+                lyrics = info.lyrics,
+                localCoverPath = localCoverPath
+            )
+            Log.d("AudioViewModel", "数据库已更新元数据: $uri")
+        }
+    }
 
     fun clearLibrary() {
         viewModelScope.launch(Dispatchers.IO) {

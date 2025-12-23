@@ -6,6 +6,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -35,9 +36,11 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.tv.material3.Border
 import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
+
 import androidx.tv.material3.ClickableSurfaceColors
 import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.ExperimentalTvMaterial3Api
@@ -116,6 +119,7 @@ fun TvTextField(
                             KeyEvent.KEYCODE_DPAD_DOWN -> {
                                 focusManager.moveFocus(FocusDirection.Down)
                             }
+
                             KeyEvent.KEYCODE_DPAD_CENTER -> {
                                 focusManager.moveFocus(FocusDirection.Enter)
                             }
@@ -170,25 +174,36 @@ fun MyIconButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
     enabled: Boolean = true,
+    isFileBut: Boolean = false
 ) {
+    val buttonWithIconContentPadding =
+        PaddingValues(
+            start = 6.dp,
+            top = 4.dp,
+            end = 10.dp,
+            bottom = 4.dp
+        )
     Button( // 明确指定是 Tv Material3 的 Button
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
-        contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+        contentPadding = if (isFileBut) buttonWithIconContentPadding else ButtonDefaults.ButtonWithIconContentPadding,
         shape = ButtonDefaults.shape(shape = ShapeDefaults.ExtraSmall),
-        scale = ButtonDefaults.scale( focusedScale = 1.03f),
+        scale = ButtonDefaults.scale(focusedScale = 1.03f),
         colors = MyIconButtonColor()
 
     ) {
         Icon(
             painter = painterResource(icon),
+            modifier = if (isFileBut) Modifier.size(16.dp) else Modifier,
             contentDescription = null
         )
-        Spacer(Modifier.size(8.dp))
+        Spacer(Modifier.size(6.dp))
         Text(
             text = text,
-            style = MaterialTheme.typography.titleSmall
+            style = if (isFileBut) MaterialTheme.typography.titleSmall.copy(
+                fontSize = 10.sp
+            ) else MaterialTheme.typography.titleSmall
         )
     }
 }

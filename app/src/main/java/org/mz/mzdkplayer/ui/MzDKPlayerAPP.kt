@@ -380,7 +380,8 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
                     extraList,
                     currentIndex = currentIndex,
                     URLDecoder.decode(connectionName, "UTF-8"),
-                    mediaHistoryViewModel
+                    mediaHistoryViewModel,
+                    audioViewModel = audioViewModel
 
                 )
             }
