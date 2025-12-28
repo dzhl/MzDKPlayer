@@ -331,10 +331,6 @@ fun AudioPlayerScreen(
 
     LaunchedEffect(exoPlayer) {
         exoPlayer.addListener(object : Player.Listener {
-            override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
-                super.onMediaMetadataChanged(mediaMetadata)
-                // 不再单独处理 metadata，因为所有信息都从 audioInfo 获取
-            }
 
             override fun onPlaybackStateChanged(playbackState: Int) {
                 when (playbackState) {
@@ -602,7 +598,7 @@ fun AudioPlayerScreen(
         if (isPlaying && currentAudioSessionId > 0) {
             AudioVisualizer(
                 audioSessionId = currentAudioSessionId,
-                isPlaying = isPlaying,
+                isPlaying = true,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
@@ -747,10 +743,10 @@ fun AudioPlayerScreen(
                 .align(AbsoluteAlignment.CenterRight)
                 .background(Color.Black.copy(0.95f)) // 背景稍微加深一点
                 .handleDPadKeyEvents(
-                    onRight = { true },
-                    onUp = { true },
-                    onDown = { true },
-                    onLeft = { true }
+                    onRight = {  },
+                    onUp = {  },
+                    onDown = {  },
+                    onLeft = {  }
                 )
                 .onFocusChanged { focusState ->
                     audioPlayerViewModel.atpFocus = focusState.isFocused
@@ -852,19 +848,19 @@ private fun Modifier.dPadEvents(
 }
 
 // 格式化时长的工具函数
-fun formatDuration(durationMs: Int?): String {
-    // 处理 null 或无效值
-    if (durationMs == null || durationMs <= 0) return "--:--"
-    val totalSeconds = durationMs / 1000
-    val minutes = totalSeconds / 60
-    val seconds = totalSeconds % 60
-    return String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds)
-}
+//fun formatDuration(durationMs: Int?): String {
+//    // 处理 null 或无效值
+//    if (durationMs == null || durationMs <= 0) return "--:--"
+//    val totalSeconds = durationMs / 1000
+//    val minutes = totalSeconds / 60
+//    val seconds = totalSeconds % 60
+//    return String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds)
+//}
 
 
 // ✅ 新增：苹果风格音频参数徽章组件
 @Composable
-fun AudioInfoBadge(audioInfo: org.mz.mzdkplayer.data.model.AudioInfo?) {
+fun AudioInfoBadge(audioInfo: AudioInfo?) {
     // 格式化文本：16 BIT · 44.1 KHZ · 850 KBPS
     val sampleRateValue = audioInfo?.sampleRate?.toIntOrNull()
     val infoText = "${audioInfo?.bitsPerSample ?: "--"} BIT · ${
