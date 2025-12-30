@@ -63,6 +63,7 @@ import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import androidx.media3.ui.compose.ContentFrame
 import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
 
@@ -139,7 +140,7 @@ fun VideoPlayerScreen(
     // 获取当前 Compose 上下文
     val context = LocalContext.current
     // 记住并创建 ExoPlayer 实例
-    val exoPlayer = rememberPlayer(context, mediaUri, dataSourceType,settingsViewModel)
+    val exoPlayer = rememberPlayer(context, mediaUri, dataSourceType, settingsViewModel)
     // 记住并创建视频播放器状态管理器
     val videoPlayerState = rememberVideoPlayerState(hideSeconds = 6)
     // 获取 ViewModel 实例
@@ -195,7 +196,7 @@ fun VideoPlayerScreen(
     var hasTriggeredTimer by remember { mutableStateOf(false) }
 
     // 构建播放器 (设置媒体源等)
-    BuilderMzPlayer(context, mediaUri, exoPlayer, dataSourceType,settingsViewModel)
+    BuilderMzPlayer(context, mediaUri, exoPlayer, dataSourceType, settingsViewModel)
     // 当 Composable 离开组合时，释放资源
     DisposableEffect(Unit) {
         onDispose {
@@ -301,11 +302,11 @@ fun VideoPlayerScreen(
                     // 打开 HTTP 输入流
                     when (dataSourceType) {
                         "WEBDAV" -> {
-                            SmbUtils.openWebDavFileInputStream(danmakuUri,"video")
+                            SmbUtils.openWebDavFileInputStream(danmakuUri, "video")
                         }
 
                         "HTTP" -> {
-                            SmbUtils.openHTTPLinkXmlInputStream(danmakuUri.toString(),"video")
+                            SmbUtils.openHTTPLinkXmlInputStream(danmakuUri.toString(), "video")
                         }
 
                         else -> {
@@ -322,11 +323,11 @@ fun VideoPlayerScreen(
 
                 "ftp" -> {
                     // 使用 SMB 工具打开输入流
-                    SmbUtils.openFtpFileInputStream(danmakuUri,"video")
+                    SmbUtils.openFtpFileInputStream(danmakuUri, "video")
                 }
 
                 "nfs" -> {
-                    SmbUtils.openNfsFileInputStream(danmakuUri,"video")
+                    SmbUtils.openNfsFileInputStream(danmakuUri, "video")
                 }
 
                 else -> {
@@ -567,33 +568,39 @@ fun VideoPlayerScreen(
         }
 
         // AndroidView 包裹 PlayerView，用于显示视频 - 这是关键，确保底层渲染不受干扰
-        AndroidView(
-            factory = { context ->
-                PlayerView(context).apply {
-                    useController = false // 禁用默认控制器
-                    player = exoPlayer // 设置 ExoPlayer
-                    // 根据 ViewModel 状态设置字幕视图可见性
-                    subtitleView?.visibility = videoPlayerViewModel.isSubtitleViewVis
-                }
-            },
-            update = { playView ->
-                // 更新 PlayerView
-                playView.player = exoPlayer
-                //playView.resizeMode
-                playView.subtitleView?.visibility = videoPlayerViewModel.isSubtitleViewVis
-            },
-
-            modifier = Modifier
-                .fillMaxSize()
-                .onSizeChanged { size ->
+//        AndroidView(
+//            factory = { context ->
+//                PlayerView(context).apply {
+//                    useController = false // 禁用默认控制器
+//                    player = exoPlayer // 设置 ExoPlayer
+//                    // 根据 ViewModel 状态设置字幕视图可见性
+//                    subtitleView?.visibility = videoPlayerViewModel.isSubtitleViewVis
+//                }
+//            },
+//            update = { playView ->
+//                // 更新 PlayerView
+//                playView.player = exoPlayer
+//                //playView.resizeMode
+//                playView.subtitleView?.visibility = videoPlayerViewModel.isSubtitleViewVis
+//            },
+//
+//            modifier = Modifier
+//                .fillMaxSize()
+//                .onSizeChanged { size ->
+//                    videoSizePx = size
+//                    Log.d("playViewSize", videoSizePx.toString())
+//                }, // 填充整个父容器
+//            onRelease = {
+//                // 释放资源
+//                exoPlayer.release()
+//            }
+//        )
+        ContentFrame(
+            exoPlayer,
+            Modifier.fillMaxSize().align(Alignment.Center).onSizeChanged { size ->
                     videoSizePx = size
                     Log.d("playViewSize", videoSizePx.toString())
-                }, // 填充整个父容器
-            onRelease = {
-                // 释放资源
-                exoPlayer.release()
-            }
-        )
+                })
 
         // 显示 SRT/PSG/ ASS(ASS暂时由PlayerView显示,SubtitleView不显示)
         if (videoPlayerViewModel.isCusSubtitleViewVis) {
@@ -601,7 +608,9 @@ fun VideoPlayerScreen(
             SubtitleView(
                 cueGroup = currentCueGroup, // 传递当前字幕组
                 subtitleStyle = customSubtitleStyle, // 使用自定义字幕样式(只影响srt字幕)
-                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = settingsState.subBottomPadding.dp), // 底部居中对齐(只影响srt字幕)
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = settingsState.subBottomPadding.dp), // 底部居中对齐(只影响srt字幕)
                 videoSizeDp = videoSizeDp,
                 backgroundColor = Color(settingsState.subBgColor),// 背景色(只影响srt字幕)
                 exoPlayer = exoPlayer,
@@ -619,7 +628,7 @@ fun VideoPlayerScreen(
         )
 
         // 实时网速显示
-        if (isPlaying&&!settingsState.hideNetworkSpeed) {
+        if (isPlaying && !settingsState.hideNetworkSpeed) {
             NetworkSpeedIndicator(
                 networkSpeed = networkSpeed, // 传递网络速度
                 modifier = Modifier
@@ -703,7 +712,8 @@ fun VideoPlayerScreen(
             }
         }
         LaunchedEffect(videoPlayerViewModel.conFocus) {
-            Log.d("conFocus",videoPlayerViewModel.conFocus.toString()) }
+            Log.d("conFocus", videoPlayerViewModel.conFocus.toString())
+        }
 //        BackHandler(backPressState == BackPress.Idle) { // 移除 !videoPlayerState.controlsVisible 条件
 //
 //
@@ -722,19 +732,18 @@ fun VideoPlayerScreen(
 //                // 如果控制栏不显示，则执行退出逻辑
 //                videoPlayerState.hideControls()
 //            }else{
-                if (backPressState == BackPress.Idle&&!videoPlayerState.controlsVisible) {
-                    backPressState = BackPress.InitialTouch
-                    showToast = true
-                }
+            if (backPressState == BackPress.Idle && !videoPlayerState.controlsVisible) {
+                backPressState = BackPress.InitialTouch
+                showToast = true
+            }
 
 
         }
         BackHandler(videoPlayerState.controlsVisible) {
-            if(!videoPlayerViewModel.conFocus){
+            if (!videoPlayerViewModel.conFocus) {
                 videoPlayerState.hideControls()
             }
         }
-
 
 
         // 音轨/字幕选择面板的动画可见性
@@ -773,8 +782,7 @@ fun VideoPlayerScreen(
                     }
                 }) {
             // 根据 ViewModel 中的选择显示不同的面板
-            when (videoPlayerViewModel.selectedAorVorS)
-            {
+            when (videoPlayerViewModel.selectedAorVorS) {
                 "A" -> AudioTrackPanel(
                     videoPlayerViewModel.selectedAtIndex, // 当前选中的音频轨道索引
                     onSelectedIndexChange = {
