@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration // 👈 记得导入
 import androidx.sqlite.db.SupportSQLiteDatabase // 👈 记得导入
 
-@Database(entities = [MediaCacheEntity::class,MediaHistoryEntity::class,AudioCacheEntity::class ], version = 7, exportSchema = false) // 👈 版本改为 4
+@Database(entities = [MediaCacheEntity::class,MediaHistoryEntity::class,AudioCacheEntity::class ], version = 8, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun mediaDao(): MediaDao
     abstract fun mediaHistoryDao(): MediaHistoryDao // 新增
@@ -115,6 +115,15 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE audio_cache ADD COLUMN bitsPerSample INTEGER NOT NULL DEFAULT 16")
             }
         }
+        // 新增：V7 到 V8 的迁移，创建 title 和 dateAdded 的索引
+        val MIGRATION_7_8: Migration = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // 为 audio_cache 创建 title 索引
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_audio_cache_title` ON `audio_cache` (`title`)")
+                // 为 audio_cache 创建 dateAdded 索引
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_audio_cache_dateAdded` ON `audio_cache` (`dateAdded`)")
+            }
+        }
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -122,7 +131,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "mzdk_player_database"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3,MIGRATION_3_4,MIGRATION_4_5,MIGRATION_5_6,MIGRATION_6_7) // 添加迁移
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3,MIGRATION_3_4,MIGRATION_4_5,MIGRATION_5_6,MIGRATION_6_7,MIGRATION_7_8) // 添加迁移
                     .build()
                 INSTANCE = instance
                 instance

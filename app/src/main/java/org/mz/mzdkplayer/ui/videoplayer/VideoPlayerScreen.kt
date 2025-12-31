@@ -58,11 +58,11 @@ import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.text.Cue
 import androidx.media3.common.text.CueGroup
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.ui.PlayerView
 import androidx.media3.ui.compose.ContentFrame
 import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
@@ -119,6 +119,7 @@ import java.io.InputStream
 import java.net.URL
 import java.util.Locale
 import kotlin.concurrent.thread
+import kotlin.math.abs
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
@@ -185,8 +186,7 @@ fun VideoPlayerScreen(
 
     // 从 SettingsViewModel 中获取字幕相关的状态
     val settingsState by settingsViewModel.uiState.collectAsState()
-    // 1. 在 VideoPlayerScreen 开头定义一个变量记录历史进度
-    var pendingSeekPosition by remember { mutableLongStateOf(-1L) }
+
 
     // 记录从数据库查到的历史进度
     var historySeekPos by remember { mutableLongStateOf(0L) }
@@ -194,6 +194,9 @@ fun VideoPlayerScreen(
     var showHistoryTip by remember { mutableStateOf(false) }
     // 增加一个标记，确保只在第一次准备好时触发计时
     var hasTriggeredTimer by remember { mutableStateOf(false) }
+
+    var lastPresentationTimeUs by remember { mutableLongStateOf(-1L) }
+    val pgsAccumulator = remember { mutableListOf<Cue>() }
 
     // 构建播放器 (设置媒体源等)
     BuilderMzPlayer(context, mediaUri, exoPlayer, dataSourceType, settingsViewModel)

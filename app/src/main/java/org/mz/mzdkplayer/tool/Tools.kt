@@ -25,6 +25,8 @@ import java.io.FileOutputStream
 import java.util.Locale
 import androidx.core.graphics.scale
 import androidx.core.graphics.createBitmap
+import kotlin.math.log10
+import kotlin.math.pow
 
 object Tools {
     fun extractFileExtension(fileName: String?): String {
@@ -652,6 +654,16 @@ object Tools {
             }
         }
         return inSampleSize
+    }
+
+    /**
+     * 将字节大小转换为人类可读的格式 (B, KB, MB, GB)
+     */
+    fun formatFileSize(bytes: Long): String {
+        if (bytes <= 0) return "0 B"
+        val units = arrayOf("B", "KB", "MB", "GB", "TB")
+        val digitGroups = (log10(bytes.toDouble()) / log10(1024.0)).toInt()
+        return String.format(Locale.getDefault(),"%.2f %s", bytes / 1024.0.pow(digitGroups.toDouble()), units[digitGroups])
     }
 }
 

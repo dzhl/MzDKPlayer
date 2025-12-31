@@ -74,10 +74,8 @@ class AudioViewModel(
                     )
                 }
 
-                // 4. 插入数据库 (建议在 DAO 里加一个 @Insert insertAll(list) 提高性能)
-                newEntities.forEach {
-                    audioDao.insertAudio(it)
-                }
+                // 直接调用批量插入，IGNORE 策略会自动跳过已存在的记录
+                audioDao.insertAll(newEntities)
 
                 Log.d("AudioViewModel", "扫描完成，新增入库: ${newEntities.size} 首")
 

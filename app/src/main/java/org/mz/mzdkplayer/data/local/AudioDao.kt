@@ -13,11 +13,16 @@ interface AudioDao {
     @Query("SELECT * FROM audio_cache WHERE audioUri = :uri LIMIT 1")
     suspend fun getAudioByUri(uri: String): AudioCacheEntity?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    // 修改点 1：将 REPLACE 改为 IGNORE，防止覆盖已有记录
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertAudio(audio: AudioCacheEntity)
 
+    // 修改点 2：新增批量插入支持，同样使用 IGNORE 策略
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertAll(audioList: List<AudioCacheEntity>)
+
     // 列表页使用：按添加时间倒序
-    @Query("SELECT * FROM audio_cache ORDER BY dateAdded DESC")
+    @Query("SELECT * FROM audio_cache ORDER BY title ASC, artist ASC")
     fun getAllAudio(): Flow<List<AudioCacheEntity>>
 
     // 搜索功能 (可选)

@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -63,6 +64,7 @@ import org.mz.mzdkplayer.data.repository.Resource
 import org.mz.mzdkplayer.di.RepositoryProvider
 import org.mz.mzdkplayer.tool.Tools
 import org.mz.mzdkplayer.tool.Tools.VideoBigIcon
+import org.mz.mzdkplayer.tool.Tools.formatFileSize
 import org.mz.mzdkplayer.tool.viewModelWithFactory
 
 import org.mz.mzdkplayer.ui.screen.common.FileEmptyScreen
@@ -476,6 +478,33 @@ fun SMBFileListScreen(
                                                         overflow = TextOverflow.Ellipsis,
                                                         fontSize = 10.sp
                                                     )
+                                                },
+                                                trailingContent = {
+                                                    // 只有文件才显示大小，目录可以留空或显示项数
+                                                    if (!file.isDirectory) {
+                                                        Box(
+                                                            modifier = Modifier.widthIn(min = 60.dp), // 设置最小宽度，确保单位对齐
+                                                            contentAlignment = Alignment.CenterEnd    // 文字靠右对齐
+                                                        ) {
+                                                            Text(
+                                                                text = formatFileSize(file.fileSize),
+                                                                maxLines = 1,
+                                                                style = TextStyle(
+                                                                    fontSize = 10.sp,
+                                                                    textAlign = TextAlign.End,
+                                                                    color = Color.Gray
+                                                                )
+                                                            )
+                                                        }
+                                                    } else {
+                                                         //如果是目录，可以显示一个小箭头或者保持空白
+                                                        Icon(
+                                                            painter = painterResource(R.drawable.arrowright24dp),
+                                                            contentDescription = null,
+                                                            modifier = Modifier.size(24.dp),
+                                                            tint = Color.Gray
+                                                        )
+                                                    }
                                                 }
                                             )
 

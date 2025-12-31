@@ -1,11 +1,14 @@
 package org.mz.mzdkplayer.data.local
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "audio_cache",indices = [
-    androidx.room.Index(value = ["album"]),    // 加速按专辑分组
-    androidx.room.Index(value = ["artist"])    // 加速按艺术家分组
+    Index(value = ["title"]),
+    Index(value = ["album"]),
+    Index(value = ["artist"]),
+    Index(value = ["dateAdded"]) // 新增：加速按添加时间排序
 ])
 data class AudioCacheEntity(
     @PrimaryKey

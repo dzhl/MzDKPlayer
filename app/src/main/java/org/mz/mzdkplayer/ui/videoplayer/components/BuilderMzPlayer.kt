@@ -9,7 +9,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.C
@@ -63,6 +65,8 @@ fun BuilderMzPlayer(
     val videoPlayerViewModel: VideoPlayerViewModel = viewModel()
     // 从 SettingsViewModel 中获取字幕与音轨相关的状态
     val settingsState by settingsViewModel.uiState.collectAsState()
+    // 声明一个标记位，防止重复强制重置
+    var isFirstTrackAutoSelected by remember { mutableStateOf(false) }
 // ⚠️ 重点：获取与 rememberPlayer 中使用的相同的 DataSourceFactory 逻辑
     val dataSourceFactory =
         remember { selectedDataSourceFactory(mediaUri, dataSourceType, context) }
@@ -194,7 +198,8 @@ fun BuilderMzPlayer(
 //                    }
                     }
                 }
-                if (videoPlayerViewModel.mutableSetOfTextTrackGroups.isNotEmpty() && settingsState.subLang.isEmpty()) {
+                if (videoPlayerViewModel.mutableSetOfTextTrackGroups.isNotEmpty() && settingsState.subLang.isEmpty()&&
+                    !isFirstTrackAutoSelected) {
                     Log.i("SD1","自动选择第一个")
                     exoPlayer.trackSelectionParameters =
                         exoPlayer.trackSelectionParameters.buildUpon().setOverrideForType(
@@ -203,6 +208,7 @@ fun BuilderMzPlayer(
                                 0
                             )
                         ).build()
+                    isFirstTrackAutoSelected = true // 标记已经选过了，之后手动切换就不会被这里覆盖
                 }
                 if (videoPlayerViewModel.mutableSetOfAudioTrackGroups.isNotEmpty()) {
                     for ((index, atGroup) in videoPlayerViewModel.mutableSetOfAudioTrackGroups.withIndex()) {
@@ -242,7 +248,7 @@ fun rememberPlayer(
     mediaUri: String,
     dataSourceType: String,
     settingsViewModel: SettingsViewModel
-) =
+): ExoPlayer =
     remember(mediaUri, settingsViewModel.uiState.collectAsState().value.enableTunneling) {
         val settingsState = settingsViewModel.uiState.value // 获取当前的设置状态
         // 配置 RenderersFactory

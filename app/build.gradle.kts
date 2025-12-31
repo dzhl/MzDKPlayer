@@ -15,8 +15,8 @@ android {
         applicationId = "org.mz.mzdkplayer"
         minSdk = 23
         targetSdk = 36
-        versionCode = 15
-        versionName = "1.12.8"
+        versionCode = 16
+        versionName = "1.12.9"
         ndk {
             //noinspection ChromeOsAbiSupport
             abiFilters += listOf("armeabi-v7a", "x86")
@@ -72,7 +72,6 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
-    implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.navigation.compose)
     debugImplementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.tv.foundation)
@@ -81,7 +80,7 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.media3.exoplayer)
 //    implementation(libs.androidx.media3.exoplayer.dash)
-    implementation(libs.androidx.media3.ui)
+    //implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.media3.ui.compose)
     //implementation(files("libs/lib-decoder-ffmpeg-release.aar"))
     implementation(libs.androidx.palette.ktx)
