@@ -584,7 +584,8 @@ fun SMBFileListScreen(
                                     .fillMaxWidth()
                                     .padding(bottom = 16.dp), // 距离底部边缘一点间距
                                 horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
+                            )
+                            {
                                 // 进度显示区：固定高度 30.dp 左右，避免布局跳动
 
                                         // 进度显示区：固定高度 30.dp 左右，避免布局跳动

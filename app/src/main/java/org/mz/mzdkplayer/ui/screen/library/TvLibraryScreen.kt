@@ -291,7 +291,7 @@ fun TvLibraryScreen(
                     .padding(bottom = 3.dp)
             ) {
                 Text(
-                    text = "向右滚动以查看更多内容 →",
+                    text = "长按遥控器OK键可以调出更多操作 向右滚动以查看更多内容 →",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White.copy(alpha = 0.5f), // 半透明
                     modifier = Modifier.align(Alignment.Center)
