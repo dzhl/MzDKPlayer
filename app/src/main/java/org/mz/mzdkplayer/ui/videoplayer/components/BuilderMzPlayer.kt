@@ -16,6 +16,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
@@ -25,8 +26,11 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.decoder.ffmpeg.FfmpegAudioRenderer
+import androidx.media3.decoder.ffmpeg.FfmpegLibrary
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
+import androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON
 import androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
@@ -123,7 +127,8 @@ fun BuilderMzPlayer(
 //            Log.d("SubtitleLoader", "Deferred adding of ${externalSubtitles.size} external subtitles via updateMediaItem.")
 //        }
         exoPlayer.addListener(object : Player.Listener {
-            override fun onTracksChanged(tracks: Tracks) {
+            override fun onTracksChanged(tracks: Tracks)
+            {
                 // Update UI using current tracks.
                 val trackGroups = exoPlayer.currentTracks.groups
                 videoPlayerViewModel.mutableSetOfAudioTrackGroups.clear()
@@ -235,7 +240,14 @@ fun BuilderMzPlayer(
                 }
                 videoPlayerViewModel.onTracksChangedState = 1
             }
-
+            override fun onPlayerError(error: PlaybackException) {
+                // 打印更详细的堆栈，看 FFmpeg 是否真的被尝试过
+                val isLoaded = FfmpegLibrary.isAvailable()
+                val supportsEac3 = FfmpegLibrary.supportsFormat("audio/eac3")
+                Log.d("FFmpegCheck", "FFmpeg Library Available: $isLoaded")
+                Log.d("FFmpegCheck", "Supports E-AC3: $supportsEac3")
+                Log.e("PlayerError", "Cause: ${error.cause}")
+            }
 
         })
     }
@@ -255,7 +267,7 @@ fun rememberPlayer(
         val renderersFactory =
             DefaultRenderersFactory(context).forceEnableMediaCodecAsynchronousQueueing().apply {
                 //setMediaCodecSelector(avcAwareCodecSelector)
-                setExtensionRendererMode(EXTENSION_RENDERER_MODE_PREFER)
+                setExtensionRendererMode(EXTENSION_RENDERER_MODE_ON)
 
             }
 
@@ -331,7 +343,6 @@ fun rememberPlayer(
                 )
             )
         }
-
         ExoPlayer.Builder(context).setSeekForwardIncrementMs(30000).setSeekBackIncrementMs(30000)
             .setTrackSelector(trackSelector).setMediaSourceFactory(
                 mediaSource

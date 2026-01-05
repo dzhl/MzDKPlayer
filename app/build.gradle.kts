@@ -83,7 +83,7 @@ dependencies {
 //    implementation(libs.androidx.media3.exoplayer.dash)
     //implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.media3.ui.compose)
-    //implementation(files("libs/lib-decoder-ffmpeg-release.aar"))
+    implementation(files("libs/lib-decoder-ffmpeg-release.aar"))
     implementation(libs.androidx.palette.ktx)
     implementation(libs.akdanmaku)
     implementation(libs.accompanist.permissions)

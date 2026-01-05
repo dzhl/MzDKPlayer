@@ -53,6 +53,7 @@ import org.mz.mzdkplayer.ui.screen.common.FileSize
 import org.mz.mzdkplayer.ui.screen.common.LoadingScreen
 import org.mz.mzdkplayer.ui.screen.common.MediaFocusedFileName
 import org.mz.mzdkplayer.ui.screen.common.MediaInfoLoading
+import org.mz.mzdkplayer.ui.screen.common.MediaPreviewSection
 import org.mz.mzdkplayer.ui.screen.common.MediaReleaseDate
 import org.mz.mzdkplayer.ui.screen.common.MediaTitle
 import org.mz.mzdkplayer.ui.screen.common.VAErrorScreen
@@ -479,92 +480,15 @@ fun HTTPLinkFileListScreen(
                                 textStyle = TextStyle(color = Color.White),
                             )
                             // 2. 中间的海报和文字区域（包裹在一个 Column 里）
-                            Column(
-                                modifier = Modifier.weight(1f), // 关键：让中间区域占据所有剩余空间
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center // 海报在剩余空间里垂直居中
+                            MediaPreviewSection(
+                                focusedMovie = focusedMovie,
+                                focusedFileName = focusedFileName,
+                                focusedIsDir = focusedIsDir,
+                                modifier = Modifier.weight(1f),
+                                onMediaIdResolved = { id ->
+                                    mediaId = id // 更新父组件持有的状态，供 ListItem 点击逻辑使用
+                                }
                             )
-                            {
-
-                                when (val movieResult = focusedMovie) {
-                                    is Resource.Success -> {
-                                        val movie = movieResult.data
-
-                                        if (movie != null && movie.posterPath != null) {
-                                            mediaId = movie.id
-                                            // 显示电影海报
-                                            Box(
-                                                Modifier
-                                                    .widthIn(180.dp, 200.dp)
-                                                    .border(
-                                                        width = 2.dp,
-                                                        color = Color.Gray.copy(alpha = 0.5f),
-                                                        shape = RoundedCornerShape(20.dp)
-                                                    )
-                                            ) {
-                                                AsyncImage(
-                                                    model = "https://image.tmdb.org/t/p/w500${movie.posterPath}",
-                                                    contentDescription = movie.title,
-                                                    contentScale = ContentScale.Fit,
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .clip(RoundedCornerShape(20.dp)) // 增大圆角
-                                                )
-                                            }
-
-                                        } else {
-                                            // 没有电影海报，显示默认视频图标
-                                            VideoBigIcon(
-                                                focusedIsDir,
-                                                focusedFileName,
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .height(200.dp)
-
-                                            )
-                                        }
-                                    }
-
-                                    is Resource.Loading -> {
-                                        MediaInfoLoading()
-                                    }
-
-                                    is Resource.Error -> {
-                                        VideoBigIcon(
-                                            focusedIsDir,
-                                            focusedFileName,
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .height(200.dp)
-
-                                        )
-                                    }
-                                }
-
-                                // 电影信息区域 - 居中显示
-                                when (val movieResult = focusedMovie) {
-                                    is Resource.Success -> {
-                                        val movie = movieResult.data
-                                        if (movie != null) {
-                                            Column(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(horizontal = 16.dp),
-                                                horizontalAlignment = Alignment.CenterHorizontally
-                                            ) {
-                                                MediaTitle(movie.title)
-                                                MediaReleaseDate(movie.releaseDate)
-                                            }
-                                        } else {
-                                            MediaFocusedFileName(focusedFileName)
-                                        }
-                                    }
-
-                                    else -> {
-                                        MediaFocusedFileName(focusedFileName)
-                                    }
-                                }
-                            }
                             // 3. 底部的进度和按钮区域
                             // 不再嵌套在上面的 Column 里，而是直接放在最外层 Column 的底部
                             Column(
@@ -607,84 +531,102 @@ fun HTTPLinkFileListScreen(
                                         tooltip = if (isScanning && totalScanCount > 0)
                                             "正在获取信息 $currentScanIndex/$totalScanCount"
                                         else "批量添加到视频库",
+                                        enable = settingsState.http,
                                         onClick = {
-                                            // 1. 过滤出所有的视频文件 (不递归，只取当前层级)
-                                            val videoFilesToScan = fileList.filter { file ->
-                                                !file.isDirectory &&
-                                                        Tools.containsVideoFormat(
-                                                            Tools.extractFileExtension(
-                                                                file.name
-                                                            )
-                                                        )
-                                            }
-
-                                            if (videoFilesToScan.isEmpty()) {
+                                            if (!settingsState.http) {
                                                 Toast.makeText(
                                                     context,
-                                                    "当前目录没有视频文件",
+                                                    "当前数据源未开启刮削功能 请在设置中开启",
                                                     Toast.LENGTH_SHORT
                                                 ).show()
-                                                return@CirCleIconButton
-                                            }
+                                            } else {
+                                                // 1. 过滤出所有的视频文件 (不递归，只取当前层级)
+                                                val videoFilesToScan = fileList.filter { file ->
+                                                    !file.isDirectory &&
+                                                            Tools.containsVideoFormat(
+                                                                Tools.extractFileExtension(
+                                                                    file.name
+                                                                )
+                                                            )
+                                                }
 
-                                            // 2. 构建数据列表 Pair(fileName, fullUri)
-                                            // 注意：URI 的构建规则必须和 LazyColumn 里点击时的规则完全一致
-                                            val scanList = videoFilesToScan.map { file ->
-                                                file.name to viewModel.getResourceFullUrl(file.name)
-                                            }
+                                                if (videoFilesToScan.isEmpty()) {
+                                                    Toast.makeText(
+                                                        context,
+                                                        "当前目录没有视频文件",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+                                                    return@CirCleIconButton
+                                                }
 
-                                            // 3. 调用 ViewModel 开始后台任务
-                                            Toast.makeText(
-                                                context,
-                                                "开始后台获取信息，请稍候...",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                            movieViewModel.batchScrapeVideoInfo(
-                                                videoList = scanList,
-                                                dataSourceType = "HTTP",
-                                                connectionName = connectionName
-                                            )
+                                                // 2. 构建数据列表 Pair(fileName, fullUri)
+                                                // 注意：URI 的构建规则必须和 LazyColumn 里点击时的规则完全一致
+                                                val scanList = videoFilesToScan.map { file ->
+                                                    file.name to viewModel.getResourceFullUrl(file.name)
+                                                }
+
+                                                // 3. 调用 ViewModel 开始后台任务
+                                                Toast.makeText(
+                                                    context,
+                                                    "开始后台获取信息，请稍候...",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                                movieViewModel.batchScrapeVideoInfo(
+                                                    videoList = scanList,
+                                                    dataSourceType = "HTTP",
+                                                    connectionName = connectionName
+                                                )
+                                            }
                                         }
                                     )
                                     // --- 音乐扫描按钮 ---
                                     CirCleIconButton(
                                         icon = painterResource(R.drawable.musicnoteadd_24dp),
                                         tooltip = if (isAudioScanning) "正在解析文件名..." else "批量添加到音乐库",
+                                        enable = settingsState.http,
                                         onClick = {
-                                            // 1. 过滤音频文件
-                                            val audioFiles = fileList.filter {
-                                                !it.isDirectory && Tools.containsAudioFormat(
-                                                    Tools.extractFileExtension(
-                                                        it.name
-                                                    )
-                                                )
-                                            }
-
-                                            if (audioFiles.isEmpty()) {
+                                            if (!settingsState.http) {
                                                 Toast.makeText(
                                                     context,
-                                                    "没有发现音频文件",
+                                                    "当前数据源未开启刮削功能 请在设置中开启",
                                                     Toast.LENGTH_SHORT
                                                 ).show()
-                                                return@CirCleIconButton
-                                            }
+                                            } else {
+                                                // 1. 过滤音频文件
+                                                val audioFiles = fileList.filter {
+                                                    !it.isDirectory && Tools.containsAudioFormat(
+                                                        Tools.extractFileExtension(
+                                                            it.name
+                                                        )
+                                                    )
+                                                }
 
-                                            // 2. 只有文件名和URI是必须的
-                                            val list = audioFiles.map {
-                                                it.name to viewModel.getResourceFullUrl(it.name)
-                                            }
+                                                if (audioFiles.isEmpty()) {
+                                                    Toast.makeText(
+                                                        context,
+                                                        "没有发现音频文件",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+                                                    return@CirCleIconButton
+                                                }
 
-                                            // 3. 直接调用，瞬间完成
-                                            audioViewModel.batchScrapeAudioInfo(
-                                                audioList = list,
-                                                dataSourceType = "HTTP",
-                                                connectionName = connectionName
-                                            )
-                                            Toast.makeText(
-                                                context,
-                                                "已在后台添加 ${list.size} 首音乐",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
+                                                // 2. 只有文件名和URI是必须的
+                                                val list = audioFiles.map {
+                                                    it.name to viewModel.getResourceFullUrl(it.name)
+                                                }
+
+                                                // 3. 直接调用，瞬间完成
+                                                audioViewModel.batchScrapeAudioInfo(
+                                                    audioList = list,
+                                                    dataSourceType = "HTTP",
+                                                    connectionName = connectionName
+                                                )
+                                                Toast.makeText(
+                                                    context,
+                                                    "已在后台添加 ${list.size} 首音乐",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
                                         }
                                     )
                                 }

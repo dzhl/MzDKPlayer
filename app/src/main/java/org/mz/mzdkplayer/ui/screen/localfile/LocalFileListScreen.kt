@@ -74,6 +74,7 @@ import org.mz.mzdkplayer.ui.screen.common.FileSize
 import org.mz.mzdkplayer.ui.screen.common.LoadingScreen
 import org.mz.mzdkplayer.ui.screen.common.MediaFocusedFileName
 import org.mz.mzdkplayer.ui.screen.common.MediaInfoLoading
+import org.mz.mzdkplayer.ui.screen.common.MediaPreviewSection
 import org.mz.mzdkplayer.ui.screen.common.MediaReleaseDate
 import org.mz.mzdkplayer.ui.screen.common.MediaTitle
 import org.mz.mzdkplayer.ui.screen.common.VAErrorScreen
@@ -167,29 +168,38 @@ fun LocalFileListScreen(path: String?, navController: NavHostController, setting
         }
     }
     // 处理焦点变化和媒体播放
-    LaunchedEffect(focusedFileName, focusedIsDir, focusedIsVideo,settingsState.local) {
-        if (focusedFileName != null && !focusedIsDir && focusedIsVideo && settingsState.local) {
-            // 非目录文件，触发电影搜索
-            // [修改] 传入 focusedMediaUri 以便查询数据库
-            Log.d("LocalFileListScreen", "触发电影搜索: $focusedFileName")
-            movieViewModel.searchFocusedMovie(
-                focusedFileName!!,
-                false,
-                focusedMediaUri,
-                dataSourceType = "LOCAL",
-                connectionName = "本地文件"
-            )
-        } else if (focusedFileName != null && !focusedIsDir && focusedIsVideo) {
-            movieViewModel.getFocusedInfo(
-                focusedFileName!!,
-                false,
-                focusedMediaUri,
-                dataSourceType = "LOCAL",
-                connectionName = "本地文件"
-            )
-        } else{
-            // 目录或无焦点，清空电影信息
+    LaunchedEffect(focusedFileName, focusedIsDir, focusedIsVideo, settingsState.local) {
+        // 1. 基础校验：如果是目录、无文件名、或者不是视频，直接清空信息
+        if (focusedFileName == null || focusedIsDir || !focusedIsVideo) {
             movieViewModel.clearFocusedMovie()
+            return@LaunchedEffect
+        }
+
+        // 2. 根据设置决定策略
+        // settingsState.local 为 false 代表 "禁止自动刮削/仅本地数据" (防止重复入库)
+        if (settingsState.local) {
+            // === 模式 A：自动刮削 (主数据源) ===
+            // 场景：这是用户的主要观看路径，允许自动联网获取信息。
+            Log.d("LocalFileListScreen", "自动模式: 触发搜索/刮削: $focusedFileName")
+            movieViewModel.searchFocusedMovie(
+                movieName = focusedFileName,
+                isDirectory = false,
+                videoUri = focusedMediaUri,
+                dataSourceType = "LOCAL",
+                connectionName = "本地文件"
+            )
+
+        } else {
+            // === 模式 B：仅查询数据库 (防重复) ===
+            // 场景：用户不希望此协议自动产生新数据，但如果之前"手动批量扫描"过，这里应该显示出来。
+            Log.d("LocalFileListScreen", "禁止自动刮削模式: 仅查询数据库: $focusedFileName")
+            movieViewModel.getFocusedInfo(
+                movieName = focusedFileName,
+                isDirectory = false,
+                videoUri = focusedMediaUri,
+                dataSourceType = "LOCAL",
+                connectionName = "本地文件"
+            )
         }
     }
     Box(
@@ -452,92 +462,15 @@ fun LocalFileListScreen(path: String?, navController: NavHostController, setting
                                 textStyle = TextStyle(color = Color.White),
                             )
                             // 2. 中间的海报和文字区域（包裹在一个 Column 里）
-                            Column(
-                                modifier = Modifier.weight(1f), // 关键：让中间区域占据所有剩余空间
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center // 海报在剩余空间里垂直居中
+                            MediaPreviewSection(
+                                focusedMovie = focusedMovie,
+                                focusedFileName = focusedFileName,
+                                focusedIsDir = focusedIsDir,
+                                modifier = Modifier.weight(1f),
+                                onMediaIdResolved = { id ->
+                                    mediaId = id // 更新父组件持有的状态，供 ListItem 点击逻辑使用
+                                }
                             )
-                            {
-
-                                when (val movieResult = focusedMovie) {
-                                    is Resource.Success -> {
-                                        val movie = movieResult.data
-
-                                        if (movie != null && movie.posterPath != null) {
-                                            mediaId = movie.id
-                                            // 显示电影海报
-                                            Box(
-                                                Modifier
-                                                    .widthIn(180.dp, 200.dp)
-                                                    .border(
-                                                        width = 2.dp,
-                                                        color = Color.Gray.copy(alpha = 0.5f),
-                                                        shape = RoundedCornerShape(20.dp)
-                                                    )
-                                            ) {
-                                                AsyncImage(
-                                                    model = "https://image.tmdb.org/t/p/w500${movie.posterPath}",
-                                                    contentDescription = movie.title,
-                                                    contentScale = ContentScale.Fit,
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .clip(RoundedCornerShape(20.dp)) // 增大圆角
-                                                )
-                                            }
-
-                                        } else {
-                                            // 没有电影海报，显示默认视频图标
-                                            VideoBigIcon(
-                                                focusedIsDir,
-                                                focusedFileName,
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .height(200.dp)
-
-                                            )
-                                        }
-                                    }
-
-                                    is Resource.Loading -> {
-                                        MediaInfoLoading()
-                                    }
-
-                                    is Resource.Error -> {
-                                        VideoBigIcon(
-                                            focusedIsDir,
-                                            focusedFileName,
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .height(200.dp)
-
-                                        )
-                                    }
-                                }
-
-                                // 电影信息区域 - 居中显示
-                                when (val movieResult = focusedMovie) {
-                                    is Resource.Success -> {
-                                        val movie = movieResult.data
-                                        if (movie != null) {
-                                            Column(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(horizontal = 16.dp),
-                                                horizontalAlignment = Alignment.CenterHorizontally
-                                            ) {
-                                                MediaTitle(movie.title)
-                                                MediaReleaseDate(movie.releaseDate)
-                                            }
-                                        } else {
-                                            MediaFocusedFileName(focusedFileName)
-                                        }
-                                    }
-
-                                    else -> {
-                                        MediaFocusedFileName(focusedFileName)
-                                    }
-                                }
-                            }
                             // 3. 底部的进度和按钮区域
                             // 不再嵌套在上面的 Column 里，而是直接放在最外层 Column 的底部
                             Column(

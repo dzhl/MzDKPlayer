@@ -55,6 +55,7 @@ import org.mz.mzdkplayer.ui.screen.common.FileSize
 import org.mz.mzdkplayer.ui.screen.common.LoadingScreen
 import org.mz.mzdkplayer.ui.screen.common.MediaFocusedFileName
 import org.mz.mzdkplayer.ui.screen.common.MediaInfoLoading
+import org.mz.mzdkplayer.ui.screen.common.MediaPreviewSection
 import org.mz.mzdkplayer.ui.screen.common.MediaReleaseDate
 import org.mz.mzdkplayer.ui.screen.common.MediaTitle
 import org.mz.mzdkplayer.ui.screen.common.VAErrorScreen
@@ -395,89 +396,15 @@ fun WebDavFileListScreen(
                                 textStyle = TextStyle(color = Color.White),
                             )
                             // 添加弹性空间，让海报区域在垂直方向上居中
-                            // 2. 中间的海报和文字区域（包裹在一个 Column 里）
-                            Column(
-                                modifier = Modifier.weight(1f), // 关键：让中间区域占据所有剩余空间
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center // 海报在剩余空间里垂直居中
-                            ) {
-                                when (val movieResult = focusedMovie) {
-                                    is Resource.Success -> {
-                                        val movie = movieResult.data
-
-                                        if (movie != null && movie.posterPath != null) {
-                                            mediaId = movie.id
-                                            // 显示电影海报
-                                            Box(
-                                                Modifier
-                                                    .widthIn(180.dp, 200.dp)
-                                                    .border(
-                                                        width = 2.dp,
-                                                        color = Color.Gray.copy(alpha = 0.5f),
-                                                        shape = RoundedCornerShape(20.dp)
-                                                    )
-                                            ) {
-                                                AsyncImage(
-                                                    model = "https://image.tmdb.org/t/p/w500${movie.posterPath}",
-                                                    contentDescription = movie.title,
-                                                    contentScale = ContentScale.Fit,
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .clip(RoundedCornerShape(20.dp)) // 增大圆角
-                                                )
-                                            }
-
-                                        } else {
-                                            // 没有电影海报，显示默认视频图标
-                                            VideoBigIcon(
-                                                focusedIsDir,
-                                                focusedFileName,
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .height(200.dp)
-
-                                            )
-                                        }
-                                    }
-
-                                    is Resource.Loading -> {
-                                        MediaInfoLoading()
-                                    }
-
-                                    is Resource.Error -> {
-                                        VideoBigIcon(
-                                            focusedIsDir,
-                                            focusedFileName,
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .height(200.dp)
-
-                                        )
-                                    }
+                            MediaPreviewSection(
+                                focusedMovie = focusedMovie,
+                                focusedFileName = focusedFileName,
+                                focusedIsDir = focusedIsDir,
+                                modifier = Modifier.weight(1f),
+                                onMediaIdResolved = { id ->
+                                    mediaId = id // 更新父组件持有的状态，供 ListItem 点击逻辑使用
                                 }
-                                when (val movieResult = focusedMovie) {
-                                    is Resource.Success -> {
-                                        val movie = movieResult.data
-                                        if (movie != null) {
-                                            Column(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(horizontal = 16.dp),
-                                                horizontalAlignment = Alignment.CenterHorizontally
-                                            ) {
-                                                MediaTitle(movie.title)
-                                                MediaReleaseDate(movie.releaseDate)
-                                            }
-                                        } else {
-                                            MediaFocusedFileName(focusedFileName)
-                                        }
-                                    }
-
-                                    else -> {
-                                        MediaFocusedFileName(focusedFileName)
-                                    }
-                                }
-                            }
+                            )
                             // 3. 底部的进度和按钮区域
                             // 不再嵌套在上面的 Column 里，而是直接放在最外层 Column 的底部
                             Column(

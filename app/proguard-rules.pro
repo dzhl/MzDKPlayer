@@ -44,6 +44,8 @@
 -keepclassmembers class * {
     @androidx.annotation.Keep *;
 }
+-keep class androidx.media3.decoder.ffmpeg.** { *; }
+-keepnames class androidx.media3.decoder.ffmpeg.** { *; }
 # 保持 jaudiotagger 的所有类和成员不被混淆和移除
 -dontwarn org.jaudiotagger.**
 # 保持 jaudiotagger 的所有类和成员不被混淆和移除

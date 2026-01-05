@@ -127,6 +127,10 @@ class MovieViewModel(private val repository: TmdbRepository,private val mediaDao
             }
         }
     }
+    /**
+     * [修改] 仅查询数据库获取焦点信息 (用于"禁止自动刮削"模式)
+     * 如果数据库有记录，返回记录；如果没有，返回 null (清空 UI)
+     */
     fun getFocusedInfo(
         movieName: String?,
         isDirectory: Boolean,
@@ -134,19 +138,20 @@ class MovieViewModel(private val repository: TmdbRepository,private val mediaDao
         dataSourceType: String,
         connectionName: String
     ) {
-        if (isDirectory) {
+        // 1. 如果是文件夹 或 文件名为空，直接清空并返回
+        if (isDirectory || movieName == null) {
             _focusedMovie.value = Resource.Success(null)
             return
         }
-        viewModelScope.launch(Dispatchers.IO) {
-            // 1. 先检查本地数据库
-            val cachedMedia = mediaDao.getMediaByUri(videoUri)
-            if (cachedMedia != null) {
-                Log.d("MovieViewModel", "Hit Cache for: $movieName")
-                _focusedMovie.value = Resource.Success(cachedMedia.toMediaItem())
 
-                // [优化] 如果缓存里只是基础信息(isDetailsLoaded=false)，这里可以静默去更新一下详情
-                // 如果不需要自动补全详情，可以把下面这段 if 去掉
+        viewModelScope.launch(Dispatchers.IO) {
+            // 2. 检查本地数据库
+            val cachedMedia = mediaDao.getMediaByUri(videoUri)
+
+            if (cachedMedia != null) {
+                // 命中缓存：显示数据库里的信息
+                Log.d("MovieViewModel", "Hit Cache (Read-Only) for: $movieName")
+                _focusedMovie.value = Resource.Success(cachedMedia.toMediaItem())
                 if (!cachedMedia.isDetailsLoaded) {
                     val mediaInfo = MediaInfoExtractorFormFileName.extract(movieName ?: "")
                     searchAndFetchFullDetails(mediaInfo, videoUri, dataSourceType, fileName = movieName ?: "", connectionName)
@@ -154,7 +159,10 @@ class MovieViewModel(private val repository: TmdbRepository,private val mediaDao
                     val updated = mediaDao.getMediaByUri(videoUri)
                     if (updated != null) _focusedMovie.value = Resource.Success(updated.toMediaItem())
                 }
-                return@launch
+            } else {
+                // [关键修改]：数据库没查到，必须显式返回 null
+                // 这样 UI 才会把海报区清空，而不是显示上一个文件的信息，也不是强制去联网搜索
+                _focusedMovie.value = Resource.Success(null)
             }
         }
     }

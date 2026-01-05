@@ -163,7 +163,8 @@ fun CirCleIconButton(
     icon: Painter,
     tooltip: String = "",
     contentDescription: String? = null,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    enable: Boolean = true
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
