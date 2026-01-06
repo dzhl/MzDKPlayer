@@ -514,50 +514,42 @@ fun LocalFileListScreen(path: String?, navController: NavHostController, setting
                                             "正在获取信息 $currentScanIndex/$totalScanCount"
                                         else "批量添加到视频库",
                                         onClick = {
-                                            if (!settingsState.local) {
-                                                Toast.makeText(
-                                                    context,
-                                                    "当前数据源未开启刮削功能 请在设置中开启",
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            } else {
-                                                // 1. 过滤出所有的视频文件 (不递归，只取当前层级)
-                                                val videoFilesToScan = files.filter { file ->
-                                                    !file.isDirectory &&
-                                                            Tools.containsVideoFormat(
-                                                                Tools.extractFileExtension(
-                                                                    file.name
-                                                                )
+                                            // 1. 过滤出所有的视频文件 (不递归，只取当前层级)
+                                            val videoFilesToScan = files.filter { file ->
+                                                !file.isDirectory &&
+                                                        Tools.containsVideoFormat(
+                                                            Tools.extractFileExtension(
+                                                                file.name
                                                             )
-                                                }
+                                                        )
+                                            }
 
-                                                if (videoFilesToScan.isEmpty()) {
-                                                    Toast.makeText(
-                                                        context,
-                                                        "当前目录没有视频文件",
-                                                        Toast.LENGTH_SHORT
-                                                    ).show()
-                                                    return@CirCleIconButton
-                                                }
-
-                                                // 2. 构建数据列表 Pair(fileName, fullUri)
-                                                // 注意：URI 的构建规则必须和 LazyColumn 里点击时的规则完全一致
-                                                val scanList = videoFilesToScan.map { file ->
-                                                    file.name to "file://${file.absolutePath}"
-                                                }
-
-                                                // 3. 调用 ViewModel 开始后台任务
+                                            if (videoFilesToScan.isEmpty()) {
                                                 Toast.makeText(
                                                     context,
-                                                    "开始后台获取信息，请稍候...",
+                                                    "当前目录没有视频文件",
                                                     Toast.LENGTH_SHORT
                                                 ).show()
-                                                movieViewModel.batchScrapeVideoInfo(
-                                                    videoList = scanList,
-                                                    dataSourceType = "LOCAL",
-                                                    connectionName = "本地文件"
-                                                )
+                                                return@CirCleIconButton
                                             }
+
+                                            // 2. 构建数据列表 Pair(fileName, fullUri)
+                                            // 注意：URI 的构建规则必须和 LazyColumn 里点击时的规则完全一致
+                                            val scanList = videoFilesToScan.map { file ->
+                                                file.name to "file://${file.absolutePath}"
+                                            }
+
+                                            // 3. 调用 ViewModel 开始后台任务
+                                            Toast.makeText(
+                                                context,
+                                                "开始后台获取信息，请稍候...",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                            movieViewModel.batchScrapeVideoInfo(
+                                                videoList = scanList,
+                                                dataSourceType = "LOCAL",
+                                                connectionName = "本地文件"
+                                            )
                                         }
                                     )
                                     // --- 音乐扫描按钮 ---
@@ -565,48 +557,40 @@ fun LocalFileListScreen(path: String?, navController: NavHostController, setting
                                         icon = painterResource(R.drawable.musicnoteadd_24dp),
                                         tooltip = if (isAudioScanning) "正在解析文件名..." else "批量添加到音乐库",
                                         onClick = {
-                                            if (!settingsState.local) {
-                                                Toast.makeText(
-                                                    context,
-                                                    "当前数据源未开启刮削功能 请在设置中开启",
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            } else {
-                                                // 1. 过滤音频文件
-                                                val audioFiles = files.filter {
-                                                    !it.isDirectory && Tools.containsAudioFormat(
-                                                        Tools.extractFileExtension(
-                                                            it.name
-                                                        )
+                                            // 1. 过滤音频文件
+                                            val audioFiles = files.filter {
+                                                !it.isDirectory && Tools.containsAudioFormat(
+                                                    Tools.extractFileExtension(
+                                                        it.name
                                                     )
-                                                }
-
-                                                if (audioFiles.isEmpty()) {
-                                                    Toast.makeText(
-                                                        context,
-                                                        "没有发现音频文件",
-                                                        Toast.LENGTH_SHORT
-                                                    ).show()
-                                                    return@CirCleIconButton
-                                                }
-
-                                                // 2. 只有文件名和URI是必须的
-                                                val list = audioFiles.map {
-                                                    it.name to "file://${it.absolutePath}"
-                                                }
-
-                                                // 3. 直接调用，瞬间完成
-                                                audioViewModel.batchScrapeAudioInfo(
-                                                    audioList = list,
-                                                    dataSourceType = "LOCAL",
-                                                    connectionName = "本地文件"
                                                 )
+                                            }
+
+                                            if (audioFiles.isEmpty()) {
                                                 Toast.makeText(
                                                     context,
-                                                    "已在后台添加 ${list.size} 首音乐",
+                                                    "没有发现音频文件",
                                                     Toast.LENGTH_SHORT
                                                 ).show()
+                                                return@CirCleIconButton
                                             }
+
+                                            // 2. 只有文件名和URI是必须的
+                                            val list = audioFiles.map {
+                                                it.name to "file://${it.absolutePath}"
+                                            }
+
+                                            // 3. 直接调用，瞬间完成
+                                            audioViewModel.batchScrapeAudioInfo(
+                                                audioList = list,
+                                                dataSourceType = "LOCAL",
+                                                connectionName = "本地文件"
+                                            )
+                                            Toast.makeText(
+                                                context,
+                                                "已在后台添加 ${list.size} 首音乐",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
                                         }
                                     )
                                 }

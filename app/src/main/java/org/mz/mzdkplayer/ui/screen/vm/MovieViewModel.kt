@@ -153,8 +153,8 @@ class MovieViewModel(private val repository: TmdbRepository,private val mediaDao
                 Log.d("MovieViewModel", "Hit Cache (Read-Only) for: $movieName")
                 _focusedMovie.value = Resource.Success(cachedMedia.toMediaItem())
                 if (!cachedMedia.isDetailsLoaded) {
-                    val mediaInfo = MediaInfoExtractorFormFileName.extract(movieName)
-                    searchAndFetchFullDetails(mediaInfo, videoUri, dataSourceType, fileName = movieName, connectionName)
+                    val mediaInfo = MediaInfoExtractorFormFileName.extract(movieName ?: "")
+                    searchAndFetchFullDetails(mediaInfo, videoUri, dataSourceType, fileName = movieName ?: "", connectionName)
                     // 更新完后重新发个通知给 UI
                     val updated = mediaDao.getMediaByUri(videoUri)
                     if (updated != null) _focusedMovie.value = Resource.Success(updated.toMediaItem())
@@ -165,6 +165,22 @@ class MovieViewModel(private val repository: TmdbRepository,private val mediaDao
                 _focusedMovie.value = Resource.Success(null)
             }
         }
+    }
+    fun getFocusedMediaInfoIsExisted(
+        isDirectory: Boolean,
+        videoUri: String,
+    ): MediaCacheEntity?{
+        if (isDirectory) {
+            _focusedMovie.value = Resource.Success(null)
+            return null
+        }
+        var re:MediaCacheEntity ?= null
+        viewModelScope.launch(Dispatchers.IO) {
+            // 1. 先检查本地数据库
+            val cachedMedia = mediaDao.getMediaByUri(videoUri)
+            re = cachedMedia
+        }
+        return re
     }
     /**
      * 获取电影详情 (带缓存更新)
