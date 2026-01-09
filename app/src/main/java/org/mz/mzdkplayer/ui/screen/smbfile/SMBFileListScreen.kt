@@ -373,27 +373,11 @@ fun SMBFileListScreen(
                                                                     navController.navigate(route)
                                                                 } else {
                                                                     // 如果虽然有 mediaId 但对象为空（理论不应发生），降级直接播放
-                                                                    val isM2ts = file.name.endsWith(".m2ts", ignoreCase = true) || file.name.endsWith(".mkv", ignoreCase = true) || file.name.endsWith(".iso", ignoreCase = true)
-
-                                                                    if (isM2ts) {
-                                                                        // 跳转到 VLC 测试界面
-                                                                        navController.navigate("VLCVideoPlayer/$encodedUri/$encodedFileName")
-                                                                    } else {
-                                                                        // 原有的 ExoPlayer 逻辑
-                                                                        navController.navigate("VideoPlayer/$encodedUri/SMB/$encodedFileName/${connectionName}")
-                                                                    }
+                                                                    navController.navigate("VideoPlayer/$encodedUri/SMB/$encodedFileName/${connectionName}")
                                                                 }
                                                             } else {
                                                                 // 没有电影信息，直接播放
-                                                                val isM2ts = file.name.endsWith(".m2ts", ignoreCase = true)|| file.name.endsWith(".mkv", ignoreCase = true)  || file.name.endsWith(".iso", ignoreCase = true)
-
-                                                                if (isM2ts) {
-                                                                    // 跳转到 VLC 测试界面
-                                                                    navController.navigate("VLCVideoPlayer/$encodedUri/$encodedFileName")
-                                                                } else {
-                                                                    // 原有的 ExoPlayer 逻辑
-                                                                    navController.navigate("VideoPlayer/$encodedUri/SMB/$encodedFileName/${connectionName}")
-                                                                }
+                                                                navController.navigate("VideoPlayer/$encodedUri/SMB/$encodedFileName/${connectionName}")
                                                             }
                                                         }
 
