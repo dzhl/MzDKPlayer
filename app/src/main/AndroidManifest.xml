@@ -29,13 +29,13 @@
         android:banner="@mipmap/ic_banner"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true"
-
         android:largeHeap="true"
         android:requestLegacyExternalStorage="true"
         android:windowSoftInputMode="stateAlwaysHidden"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.MzDKPlayer">
+        android:theme="@style/Theme.MzDKPlayer"
+        >
         <activity
             android:name=".MainActivity"
             android:banner="@mipmap/ic_banner"

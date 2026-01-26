@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.core.view.WindowCompat
 import androidx.media3.common.util.UnstableApi
 import org.mz.mzdkplayer.data.repository.SettingsRepository
 import org.mz.mzdkplayer.di.RepositoryProvider
@@ -94,6 +95,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // 1. 开启沉浸式，让布局延伸到系统栏下方
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         handleIntent(intent)
         RepositoryProvider.init(this)
         SettingsRepository.init(this)
