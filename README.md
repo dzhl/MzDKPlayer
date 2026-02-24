@@ -1,4 +1,5 @@
-# MzDKPlayer - 安卓TV本地弹幕音视频播放器
+# MzDKPlayer - 安卓TV本地弹幕音视频播放器 
+[English](README_en.md) | 中文
 > GitHub https://github.com/mzhsy1/MzDKPlayer Gitee 镜像站点 https://gitee.com/mzhsy/MzDKPlayer
 
 > MzDKPlayer 是一款专为安卓电视（Android TV）设计的本地音乐与视频播放器，支持弹幕功能、多种网络协议播放及音频视频格式播放。
