@@ -15,8 +15,8 @@ android {
         applicationId = "org.mz.mzdkplayer"
         minSdk = 23
         targetSdk = 36
-        versionCode = 19
-        versionName = "1.13.3"
+        versionCode = 20
+        versionName = "1.15.0"
         ndk {
             //noinspection ChromeOsAbiSupport
             abiFilters += listOf("armeabi-v7a", "arm64-v8a","x86")
@@ -44,6 +44,17 @@ android {
             // 是否创建一个包含所有架构的“通用包”？
             // 如果设为 true，会多生成一个全架构的 APK
             isUniversalApk = true
+        }
+    }
+    packaging {
+        jniLibs {
+            // 压缩 .so 文件到 APK 中（不解压安装）
+            // 设为 true 则 APK 变小，但安装后占用空间变大
+            // 设为 false 则 APK 略大，但在现代 Android 上运行更高效
+            useLegacyPackaging = true
+
+            // 如果遇到重复的 so 文件报错，可以用 pickFirst
+            pickFirsts.add("lib/**/libc++_shared.so")
         }
     }
     buildTypes {

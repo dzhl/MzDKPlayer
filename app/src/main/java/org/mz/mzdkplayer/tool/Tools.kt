@@ -137,7 +137,7 @@ object Tools {
     }
 
     fun containsVideoFormat(input: String): Boolean {
-        val videoFormats = listOf("MP4", "MKV","M2TS", "3GP", "AVI", "MOV", "TS", "FLV")
+        val videoFormats = listOf("MP4", "MKV","M2TS", "3GP", "AVI", "MOV", "TS", "FLV","ISO")
         return videoFormats.any { format ->
             input.contains(format, ignoreCase = true)
         }
@@ -294,7 +294,6 @@ object Tools {
 
 
 
-
     /**
      * 将语言代码转换为中文语言名称（特别细化中文区分）
      */
@@ -429,13 +428,13 @@ object Tools {
     }
 
     /**
-    * 验证连接参数
-    * @param context 上下文用于显示Toast
-    * @param serverAddress 服务器地址
-    * @param shareName 分享文件名称
-    * @return 如果验证通过返回true，否则返回false
-    */
-     fun validateConnectionParams(context: Context, serverAddress: String, shareName: String,aliasName: String): Boolean {
+     * 验证连接参数
+     * @param context 上下文用于显示Toast
+     * @param serverAddress 服务器地址
+     * @param shareName 分享文件名称
+     * @return 如果验证通过返回true，否则返回false
+     */
+    fun validateConnectionParams(context: Context, serverAddress: String, shareName: String,aliasName: String): Boolean {
         if (serverAddress.isBlank()) {
             Toast.makeText(context, "请输入服务器地址", Toast.LENGTH_SHORT).show()
             return false
@@ -546,7 +545,7 @@ object Tools {
         }
     }
 
-     fun getCountryName(countryCode: String): String {
+    fun getCountryName(countryCode: String): String {
         return when (countryCode.uppercase()) {
             "US" -> "美国"
             "CN" -> "中国"
