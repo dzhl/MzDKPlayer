@@ -106,3 +106,15 @@
 
 # 3. 如果你使用了通用型 Server，也可以直接保护整个 tool 包
 -keep class org.mz.mzdkplayer.tool.** { *; }
+
+# 保护 VLC 内核及相关类
+-keep class org.videolan.** { *; }
+-keep interface org.videolan.** { *; }
+
+# 如果你用了 lib-decoder-ffmpeg
+-keep class com.google.android.exoplayer2.ext.ffmpeg.** { *; }
+
+# 保持所有 Native 方法
+-keepclasseswithmembernames class * {
+    native <methods>;
+}

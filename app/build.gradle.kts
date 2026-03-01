@@ -54,7 +54,7 @@ android {
             useLegacyPackaging = true
 
             // 如果遇到重复的 so 文件报错，可以用 pickFirst
-            pickFirsts.add("lib/**/libc++_shared.so")
+            //pickFirsts.add("lib/**/libc++_shared.so")
         }
     }
     buildTypes {

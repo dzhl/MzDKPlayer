@@ -1,71 +1,75 @@
-# MzDKPlayer - Android TV Local Media Player with Danmaku Support
-English | [中文](README.md)
+# MzDKPlayer - Android TV Local Danmaku Media Player
+
+中文 | [English](https://www.google.com/search?q=README_en.md)
 
 > GitHub: [https://github.com/mzhsy1/MzDKPlayer](https://github.com/mzhsy1/MzDKPlayer)
 > Gitee Mirror: [https://gitee.com/mzhsy/MzDKPlayer](https://gitee.com/mzhsy/MzDKPlayer)
 
-**MzDKPlayer** is a local music and video player specifically designed for Android TV. It supports danmaku (bullet chat), various network protocols, and a wide range of audio/video formats.
+**MzDKPlayer** is a local music and video player specifically designed for **Android TV**. It features Danmaku (bullet comment) support, various network protocol integration, and wide-ranging audio/video format compatibility.
 
 ---
 
 ## Features
 
-### Core Functions
+### Core Capabilities
 
-* 🎬 **Video Playback** - Supports local and network protocol playback for multiple video formats.
-* 🎵 **Audio Playback** - Supports local/network audio, lyrics display, album art, music info, and playlist management.
-* 🖼️ **Image Viewer** - View local and network images in various formats.
-* 🏡 **Media Library** - Includes Movie, TV Series, and Music libraries with metadata fetched from TMDB.
-* 🕛 **History** - Playback history for both audio and video.
-* 🔍 **Search** - Quickly find movies and TV shows.
-* 💬 **Danmaku** - Bilibili-style danmaku display with customization options.
-* ⚙️ **Settings** - Basic application and playback configurations.
+* 🎬 **Video Playback** - Supports local and network streaming for various video formats.
+* 🎵 **Audio Playback** - High-fidelity playback with lyrics, album art, metadata display, and playlist management.
+* 🖼️ **Image Viewer** - Browse local and network images.
+* 🏡 **Media Library** - Integrated Movies/TV Shows/Music libraries with automated metadata fetching from **TMDB**.
+* 🕛 **History** - Keep track of your recently played videos and audio.
+* 🔍 **Search** - Quickly find movies or TV series in your library.
+* 💬 **Danmaku Support** - Bilibili-style danmaku display with deep customization options.
+* ⚙️ **Settings** - Flexible configuration for the app and playback engine.
 * 🌐 **Network Protocols**:
 * ✅ **SMB** (Supported)
 * ✅ **FTP** (Supported)
-* ✅ **WebDAV** (Supported; Note: Some local WebDAV services like PNnas only support HTTP, while public clouds like Aliyun support HTTPS).
+* ✅ **WebDAV** (Supported; Note: LAN services like freenas/feiniu may only support HTTP, while public clouds like Aliyun support HTTPS).
 * ✅ **NFS** (Supported)
 * ✅ **HTTP** (Supported via NGINX servers)
 
 
-* 🎚️ **Multi-track Selection** - Support for switching audio tracks, video tracks, and subtitle tracks.
+* 🎚️ **Track Switching** - Seamless switching between audio tracks, video tracks, and subtitle tracks.
 
-### Advanced Encoding Support
+### Format Support
 
-* **Video Encoding**:
-* Dolby Vision Hardware Decoding
-* HDR Video Hardware Decoding
+#### 📺 Video
 
+* **Containers**: MP4, MKV, MOV, AVI, WMV, FLV, WebM
+* **Blu-ray/Pro**: **ISO (Blu-ray Image)**, **M2TS**, **MTS**, TS, VOB
+* **Codecs**: H.264 (AVC), **H.265 (HEVC)**, **AV1**, VP9, MPEG-2
+* **Features**: 4K/8K UHD, HDR10/HLG, **Dolby Vision**
 
-* **Audio Encoding**:
-* Full Dolby Audio Passthrough (Requires hardware support)
-* Full DTS Audio Passthrough (Requires hardware support)
+#### 🎵 Audio
 
+* **Lossless/Hi-Fi**: **FLAC**, WAV, ALAC (Apple Lossless)
+* **General**: MP3, AAC, OGG, Opus, WMA
+* **Cinema Grade**: **DTS**, **DTS-HD**, **TrueHD**, AC3 (Dolby Digital), E-AC3
 
-* **Subtitles**:
-* ASS/SSA format support
-* SRT and other common subtitle formats
+#### 🖼️ Image
 
+* **Standard**: JPEG (JPG), PNG, WebP, BMP
+* **Modern**: HEIC / HEIF
+* *Note: Apple Live Photos are currently not supported.*
 
+#### 💬 Subtitles
 
-### Movie & TV Show Details (New ✨)
+* **External**: **SRT**, **ASS**, **SSA**, VTT
+* **Embedded**: MKV Internal, **PGS (Blu-ray)**, DVB, Teletext
 
-When a video file is clicked, the app automatically parses the title and year to fetch detailed information from TMDB:
+---
 
-* Supports both Movies and TV Series.
-* **Movie Details**: Displays posters, ratings, synopsis, release year, country, genres, etc.
-* **TV Show Details**: Displays posters, ratings, synopsis, total seasons/episodes, and current episode info.
-* **Filename Cleaning**: Optimized Chinese matching (e.g., `Avatar.2009.mkv` → "Avatar 2009").
-* **Graceful Degradation**: Reverts to default icons and original filenames during network issues.
+> ⚠️ **Note**: Accessing TMDB in certain regions may require a proxy or Host modification for stability.
 
-> ⚠️ **Note**: TMDB access may require a proxy or Hosts modification in certain regions.
+> 💡 **Tip 1**: For the best experience, set MzDKPlayer as your system's default video player.
 
-### External App Integration (New ✨)
+> 💡 **Tip 2**: If your device has limited performance, enabling Danmaku while playing 70-80GB Blu-ray files may cause lag.
 
-* 🚀 **Third-party Invocation** - Open videos directly from apps like Xunlei, Aliyun Drive, Baidu Netdisk, ES File Explorer, or Chrome.
-* 🔌 **Dolby Vision + Atmos Support** - External calls still benefit from full hardware decoding and Atmos flags (hardware permitting).
-* 📡 **Versatile Link Handling** - Supports Web links (http/https), local files (file://), and shared content (content://).
-* ⚠️ **Danmaku Limitation** - Danmaku is **automatically disabled** when triggered from external apps because external apps usually only pass the video link, not the directory path. Please use the internal file browser for danmaku support.
+---
+
+## App Preview
+
+*(Screenshots omitted in this text, please refer to the Chinese README for visuals)*
 
 ---
 
@@ -73,18 +77,18 @@ When a video file is clicked, the app automatically parses the title and year to
 
 ### Tech Stack
 
-* **Media Playback**: ExoPlayer + Custom Extensions
+* **Media Engine**: ExoPlayer + Custom Extensions
 * **UI Framework**: Jetpack Compose for TV
 * **Danmaku Engine**: AKDanmaku
-* **Subtitle Rendering**: Libass-based rendering
-* **Network Protocols**: Custom implementations for SMB, FTP, WebDAV, and NFS
+* **Subtitle Rendering**: ASS Subtitle Library
+* **Networking**: Custom implementations for SMB/FTP/WebDAV/NFS
 
-### Core Components
+### Key Components
 
-* `VideoPlayerScreen`: Main playback interface.
-* `BuilderMzPlayer`: Player construction and configuration.
-* `AkDanmakuPlayer`: Danmaku playback component.
-* `MovieDetailsScreen` / `TVSeriesDetailsScreen`: Metadata display pages.
+* `VideoPlayerScreen` - Main playback interface
+* `BuilderMzPlayer` - Player construction and configuration
+* `AkDanmakuPlayer` - Danmaku logic handler
+* `MovieDetailsScreen` / `TVSeriesDetailsScreen` - TMDB-powered detail pages
 
 ---
 
@@ -92,23 +96,23 @@ When a video file is clicked, the app automatically parses the title and year to
 
 ### Recommended
 
-* **Chipset**: Amlogic S928X-J
-* **RAM**: 4GB or higher
+* **SoC**: Amlogic S928X-J
+* **RAM**: 4GB+
 * **OS**: Android TV 11+
 
-### General
+### Balanced
 
-* **Chipset**: MT9653 or equivalent
+* **SoC**: MT9653 or equivalent
 * **RAM**: 2GB
 * **OS**: Android TV 7+
 
 ### Minimum
 
-* **Chipset**: Amlogic S905L or equivalent
+* **SoC**: Amlogic S905L or equivalent
 * **RAM**: 1GB
 * **OS**: Android TV 7+
 
-> ⚠️ **Disclaimer**: The code is currently unoptimized. If it runs, it's a success. Bugs are expected. Underpowered hardware may cause stuttering when playing high-bitrate videos with danmaku enabled.
+> ⚠️ **Disclaimer**: The code is a work in progress (and honestly a bit messy). Expect bugs. If your hardware is weak, high-bitrate videos or danmaku might stutter.
 
 ---
 
@@ -116,50 +120,51 @@ When a video file is clicked, the app automatically parses the title and year to
 
 ### Build Requirements
 
-* Latest Android Studio
+* Android Studio (Latest Version)
 * Android SDK 36+
 * Java 17
 
 ### Build Steps
 
 1. Clone the repository.
-2. Open the project in Android Studio.
-3. Connect an Android TV device with ADB debugging enabled.
+2. Open with Android Studio.
+3. Connect your Android TV via ADB.
 4. Build and Run.
 
-### Remote Control Guide
+### Remote Control Shortcuts
 
-* **Left/Right**: Seek backward/forward.
-* **Center (OK)**: Pause/Play.
-* **Menu**: Show control interface.
-* **Up**: Danmaku settings.
-* **Down**: Audio track selection.
+* **Left/Right**: Seek backward/forward
+* **Center/OK**: Play/Pause
+* **Menu**: Show control panel
+* **Up**: Danmaku settings
+* **Down**: Audio track selection
 
 ---
 
-## Project Status
+## Roadmap
 
-⚠️ **Development Phase**: Early stage, known bugs exist.
-
-### Roadmap
+⚠️ **Status**: Early Development (Alpha)
 
 * [x] FTP / WebDAV / NFS Support
 * [x] Audio and Image file support
 * [x] Playlist management
-* [x] Movie/TV Detail pages
-* [ ] Online Danmaku loading
+* [x] Movie/TV Show detail pages
+* [ ] **Online Danmaku fetching**
 * [ ] Settings UI optimization
 
 ---
 
-## Contribution
+## Contributing
 
-Issues and Pull Requests are welcome. Contributions regarding **playback stability** are especially appreciated!
+Issues and Pull Requests are more than welcome! We especially appreciate help with **playback stability** and optimization.
+
+---
+
+## License
+
+For educational and exchange purposes only. Do not use for commercial purposes. The developer is not responsible for any issues arising from the use of this software.
 
 ---
 
-## Disclaimer
+**Note**: Features like Dolby Vision, Atmos, and DTS-HD require compatible hardware.
 
-This software is for educational and exchange purposes only. Do not use it for commercial purposes. The developer is not responsible for any issues caused by the use of this software.
-
----
