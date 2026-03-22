@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
+import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -19,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -46,14 +48,14 @@ import org.mz.mzdkplayer.ui.theme.myListItemCoverColor
 import org.mz.mzdkplayer.ui.theme.mySideFilterChipColor
 
 // 定义左侧菜单分类
-enum class SettingCategory(val title: String, val iconRes: Int? = null) {
-    General("常规设置"),
-    Playback("播放与视频"),
-    Audio("音频设置"),
-    Subtitle("字幕外观"),
-    Source("数据源刮削"),
-    Tools("工具与权限"),
-    About("关于软件")
+enum class SettingCategory(@param:StringRes val titleRes: Int, val iconRes: Int? = null) {
+    General(R.string.cat_general),
+    Playback(R.string.cat_playback),
+    Audio(R.string.cat_audio),
+    Subtitle(R.string.cat_subtitle),
+    Source(R.string.cat_source),
+    Tools(R.string.cat_tools),
+    About(R.string.cat_about)
 }
 
 @Composable
@@ -105,7 +107,7 @@ fun SettingsScreen(
         {
             item {
                 Text(
-                    text = "设置",
+                    text = stringResource(R.string.settings_title),
                     style = MaterialTheme.typography.displaySmall,
                     color = Color.White,
                     modifier = Modifier.padding(bottom = 24.dp, start = 12.dp)
@@ -144,7 +146,7 @@ fun SettingsScreen(
                 item {
                     // 右侧顶部的标题提示
                     Text(
-                        text = selectedCategory.title,
+                        text = stringResource(selectedCategory.titleRes),
                         style = MaterialTheme.typography.headlineMedium,
                         color = Color.White,
                         modifier = Modifier.padding(bottom = 24.dp)
@@ -197,7 +199,7 @@ fun CategoryItem(
     ListItem(
         selected = isSelected,
         onClick = onClick,
-        headlineContent = { Text(category.title) },
+        headlineContent = { Text(stringResource(category.titleRes)) },
         colors = myListItemCoverColor(),
         trailingContent = {
             if (isSelected) {
@@ -214,19 +216,19 @@ fun CategoryItem(
 fun GeneralSection(state: SettingsUiState, settingsVM: SettingsViewModel,context: Context) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         SwitchSettingItem(
-            title = "隐藏详情页",
-            subtitle = "直接播放，不显示电影/电视剧详情",
+            title = stringResource(R.string.setting_hide_details),
+            subtitle = stringResource(R.string.setting_hide_details_sub),
             checked = state.hideDetails,
             onCheckedChange = { settingsVM.toggleHideDetails(it) }
         )
 
         SwitchSettingItem(
-            title = "隐藏播放页网速显示",
+            title = stringResource(R.string.setting_hide_net_speed),
             checked = state.hideNetworkSpeed,
             onCheckedChange = { settingsVM.toggleHideNetWorkSpeed(it) }
         )
         ActionSettingItem(
-            title = "App语言",
+            title = stringResource(R.string.setting_app_lang),
             value = formatAppLang(state.appLang),
             onClick = {
                 val next = when(state.appLang){
@@ -246,7 +248,7 @@ fun PlaybackSection(state: SettingsUiState, settingsVM: SettingsViewModel) {
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         ActionSettingItem(
-            title = "音频首选语言",
+            title = stringResource(R.string.setting_audio_lang),
             value = formatLang(state.audioLang),
             onClick = {
                 val next = when (state.audioLang) {
@@ -257,7 +259,7 @@ fun PlaybackSection(state: SettingsUiState, settingsVM: SettingsViewModel) {
         )
         // ==================== 新增：播放器内核选择 ====================
         ActionSettingItem(
-            title = "默认播放器内核",
+            title = stringResource(R.string.setting_default_player),
             value = if (state.defaultPlayer == "vlc") "VLC" else "ExoPlayer",
             onClick = {
                 val next = if (state.defaultPlayer == "exo") "vlc" else "exo"
@@ -265,7 +267,7 @@ fun PlaybackSection(state: SettingsUiState, settingsVM: SettingsViewModel) {
             }
         )
         ActionSettingItem(
-            title = "字幕首选语言",
+            title = stringResource(R.string.setting_sub_lang),
             value = formatLang(state.subLang),
             onClick = {
                 val next = when (state.subLang) {
@@ -275,8 +277,8 @@ fun PlaybackSection(state: SettingsUiState, settingsVM: SettingsViewModel) {
             }
         )
         SwitchSettingItem(
-            title = "视频隧道模式 (Tunneling)",
-            subtitle = "可能改善 4K/HDR 播放性能，但可能存在兼容性问题",
+            title = stringResource(R.string.setting_tunneling),
+            subtitle = stringResource(R.string.setting_tunneling_sub),
             checked = state.enableTunneling,
             onCheckedChange = { settingsVM.toggleTunneling(it) }
         )
@@ -287,8 +289,8 @@ fun PlaybackSection(state: SettingsUiState, settingsVM: SettingsViewModel) {
 fun AudioSection(state: SettingsUiState, settingsVM: SettingsViewModel) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         SwitchSettingItem(
-            title = "音频透传 (Passthrough)",
-            subtitle = "开启后，音频将源码直传至功放或解码设备。注意：此设置仅对 VLC 播放器生效（ExoPlayer 会自动智能匹配）。若播放时遇到静音，请尝试关闭此开关。",
+            title =stringResource(R.string.setting_passthrough),
+            subtitle = stringResource(R.string.setting_passthrough_sub),
             checked = state.enablePassthrough,
             onCheckedChange = { settingsVM.togglePassthrough(it) }
         )
@@ -301,7 +303,7 @@ fun SubtitleSection(state: SettingsUiState, settingsVM: SettingsViewModel) {
         // 字体大小
         val sizeOpts = listOf(18f, 22f, 26f, 30f, 40f)
         ActionSettingItem(
-            title = "字体大小",
+            title = stringResource(R.string.setting_font_size),
             value = "${state.subFontSize.toInt()} sp",
             onClick = {
                 val idx = sizeOpts.indexOf(state.subFontSize)
@@ -311,8 +313,8 @@ fun SubtitleSection(state: SettingsUiState, settingsVM: SettingsViewModel) {
         )
         // 字体颜色
         ActionSettingItem(
-            title = "字体颜色",
-            value = if (state.subColor == 0xFFFFFFFF) "白色" else "黄色",
+            title = stringResource(R.string.setting_font_color),
+            value = if (state.subColor == 0xFFFFFFFF) stringResource(R.string.color_white) else stringResource(R.string.color_yellow),
             onClick = {
                 val next = if (state.subColor == 0xFFFFFFFF) 0xFFFFFF00 else 0xFFFFFFFF
                 settingsVM.setSubColor(next)
@@ -320,7 +322,7 @@ fun SubtitleSection(state: SettingsUiState, settingsVM: SettingsViewModel) {
         )
         // 背景颜色
         ActionSettingItem(
-            title = "背景颜色",
+            title = stringResource(R.string.setting_bg_color),
             value = parseBgColorName(state.subBgColor),
             onClick = {
                 val next = when (state.subBgColor) {
@@ -334,7 +336,7 @@ fun SubtitleSection(state: SettingsUiState, settingsVM: SettingsViewModel) {
         )
         // 距离底部
         ActionSettingItem(
-            title = "距离底部位置",
+            title = stringResource(R.string.setting_bottom_padding),
             value = "${state.subBottomPadding.toInt()} dp",
             onClick = {
                 val next = if (state.subBottomPadding >= 100f) 10f else state.subBottomPadding + 10f
@@ -342,8 +344,8 @@ fun SubtitleSection(state: SettingsUiState, settingsVM: SettingsViewModel) {
             }
         )
         SwitchSettingItem(
-            title = "强制 PGS 字幕居中",
-            subtitle = "仅对图形字幕生效",
+            title = stringResource(R.string.setting_force_pgs_center),
+            subtitle = stringResource(R.string.setting_force_pgs_center_sub),
             checked = state.forcePgsCenter,
             onCheckedChange = { settingsVM.togglePgsCenter(it) }
         )
@@ -393,14 +395,14 @@ fun ToolsSection(movieVM: MovieViewModel, audioViewModel: AudioViewModel) {
             FilePermissionScreen() // 如果需要可以取消注释
         }
         MyIconButton(
-            text = "清理电影与TV媒体资料库",
+            text = stringResource(R.string.btn_clear_movie_db),
             icon = R.drawable.close24dp,
             modifier = Modifier.align(Alignment.CenterHorizontally),
             onClick = { movieVM.clearMediaLibrary() }
         )
         Spacer(Modifier.height(16.dp))
         MyIconButton(
-            text = "清理音乐资料库",
+            text = stringResource(R.string.btn_clear_audio_db),
             icon = R.drawable.close24dp,
             modifier = Modifier.align(Alignment.CenterHorizontally),
             onClick = { audioViewModel.clearLibrary() }
@@ -556,24 +558,25 @@ fun AboutSection(context: Context, navController: NavHostController) {
 }
 
 // --- Helper Functions ---
+@Composable
 fun formatLang(code: String): String = when (code) {
     "zh" -> "中文"
     "en" -> "English"
-    else -> "自动 (ExoPlayer默认)"
+    else -> stringResource(R.string.lang_auto)
 }
-
+@Composable
 fun parseBgColorName(color: Long): String = when (color) {
-    0x80000000 -> "黑色 (50%)"
-    0x80FFFFFF -> "白色 (50%)"
-    0x80FFFF00 -> "黄色 (50%)"
-    0x00000000L -> "透明"
+    0x80000000 -> stringResource(R.string.color_black_50)
+    0x80FFFFFF -> stringResource(R.string.color_white_50)
+    0x80FFFF00 -> stringResource(R.string.color_yellow_50)
+    0x00000000L -> stringResource(R.string.color_transparent)
     else -> "自定义"
 }
-
+@Composable
 fun formatAppLang(code: String): String = when(code){
     "" -> "Auto (System)"
     "zh" -> "中文"
     "en" -> "English"
     "ja" -> "日本語"
-    else -> "Auto"
+    else -> stringResource(R.string.lang_auto)
 }

@@ -349,7 +349,7 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
                 //Log.d("dataSourceType", dataSourceType)
                 val decodedUri = URLDecoder.decode(sourceUri, "UTF-8")
                 val extension = decodedUri.substringAfterLast('.').lowercase()
-                val forceVlcByExtension = extension in listOf("m2ts", "iso", "m2t", "mts")
+                val forceVlcByExtension = extension in listOf("m2ts", "iso", "m2t", "mts","ts")
                 Log.d("VideoPlayer", "✅ Decoded MRL（传给 VLC）: $decodedUri")   // ← 关键！
                 val shouldUseVlc = forceVlcByExtension || (settingsState.defaultPlayer == "vlc")
                 VideoPlayerScreen(
