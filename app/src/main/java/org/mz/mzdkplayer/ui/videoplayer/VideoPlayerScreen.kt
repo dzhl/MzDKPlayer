@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -50,6 +51,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -84,12 +86,14 @@ import org.mz.mzdkplayer.data.model.MediaHistoryRecord
 
 import org.mz.mzdkplayer.data.repository.DanmakuSettingsManager
 import org.mz.mzdkplayer.player.core.IMzPlayer
+import org.mz.mzdkplayer.player.core.MzIsoTitle
 import org.mz.mzdkplayer.player.exo.MzExoPlayer
 import org.mz.mzdkplayer.player.vlc.MzVlcPlayer
 import org.mz.mzdkplayer.tool.FtpDataSource
 import org.mz.mzdkplayer.tool.SmbDataSource
 import org.mz.mzdkplayer.tool.SmbUtils
 import org.mz.mzdkplayer.tool.SubtitleView
+import org.mz.mzdkplayer.tool.Tools
 import org.mz.mzdkplayer.tool.Tools.toSafeInt
 import org.mz.mzdkplayer.tool.WebDavDataSource
 import org.mz.mzdkplayer.tool.handleDPadKeyEvents
@@ -105,6 +109,7 @@ import org.mz.mzdkplayer.ui.theme.myIconButtonColor
 import org.mz.mzdkplayer.ui.videoplayer.components.AkDanmakuPlayer
 import org.mz.mzdkplayer.ui.videoplayer.components.AudioTrackPanel
 import org.mz.mzdkplayer.ui.videoplayer.components.DanmakuPanel
+import org.mz.mzdkplayer.ui.videoplayer.components.IsoTitlePanel
 import org.mz.mzdkplayer.ui.videoplayer.components.SubtitleTrackPanel
 import org.mz.mzdkplayer.ui.videoplayer.components.VideoPlayerControlsIcon
 import org.mz.mzdkplayer.ui.videoplayer.components.VideoPlayerMainFrame
@@ -209,10 +214,13 @@ fun VideoPlayerScreen(
 
     // 👇 新增：标记是否是首次加载
     var isFirstLoad by remember { mutableStateOf(true) }
-
+    var isExoSubtitleVis by remember { mutableStateOf(true) }
     val videoTracks by player.videoTracks.collectAsState()
     val audioTracks by player.audioTracks.collectAsState()
     val subtitleTracks by player.subtitleTracks.collectAsState()
+
+    // 新增这一行
+    val isoTitles by player.isoTitles.collectAsState()
 
     val isPlayerPlaying by player.isPlayingFlow.collectAsState()
     val playerStatus by player.playerStatus.collectAsState()
@@ -254,9 +262,11 @@ fun VideoPlayerScreen(
             // 统一释放所有协议的全局连接
             thread {
                 try {
-                    SmbDataSource.releaseGlobalResources()
-                    WebDavDataSource.releaseGlobalResources()
-                    FtpDataSource.releaseGlobalResources()
+                    if (!useVlc){
+                        SmbDataSource.releaseGlobalResources()
+                        WebDavDataSource.releaseGlobalResources()
+                        FtpDataSource.releaseGlobalResources()
+                    }
                 } catch (e: Exception) {
                     android.util.Log.e("VideoPlayer", "Async release failed", e)
                 }
@@ -649,7 +659,10 @@ fun VideoPlayerScreen(
                     statusText, // 副标题 (示例)
                     "2022/1/20", // 第三行文本 (示例)
                     videoPlayerViewModel, // ViewModel
+                    isoTitles=isoTitles,
+                    mediaUri = mediaUri,
                     mDanmakuPlayer, // 弹幕播放器
+
                     settingsManager, // 弹幕设置管理器，用于保存可见性状态
                     ::getDanmakuConfig // 传递获取配置的方法
                 )
@@ -790,11 +803,35 @@ fun VideoPlayerScreen(
                     mDanmakuPlayer, // 弹幕播放器
                     videoPlayerViewModel,
                 )
-
+// 👇 新增这个分支
+                "ISO" -> IsoTitlePanel(
+                    lists = isoTitles,
+                    onTitleSelected = { title ->
+                        player.selectIsoTitle(title.index)
+                    }
+                )
                 else -> {
                     SubtitleTrackPanel(
                         lists = subtitleTracks, onTrackSelected = { track ->
                             player.selectSubtitleTrack(track)
+                        },onLoadExternalSubtitle = {
+                            // 1. 拿到当前正在播的视频 URI
+                            val videoUri = mediaUri // 这个变量你应该能从 ViewModel 或数据层拿到
+
+                            // 2. 盲猜同目录下可能的字幕文件
+                            val lastDotIndex = videoUri.lastIndexOf('.')
+                            if (lastDotIndex > 0) {
+                                val basePath = videoUri.substring(0, lastDotIndex)
+                                val extensions = listOf("ass", "srt", "ssa", "vtt")
+
+                                // 构造字幕列表：Pair(URI路径, 显示名称)
+                                val subList = extensions.map { ext ->
+                                    "$basePath.$ext" to "[外部加载]$ext"
+                                }
+
+                                // 3. 调用播放器接口批量添加
+                                player.addExternalSubtitles(subList)
+                            }
                         }
                     )
                 }
@@ -827,9 +864,11 @@ fun VideoPlayerScreen(
                     LoadingScreen(
                         stringResource(id = R.string.ui_label_buffering_now),
                         modifier = Modifier
-                            .width(90.dp)
+                            .width(95.dp)
                             .height(95.dp)
                             .align(Alignment.Center)
+                            // 🔑 保留这一行：将缓冲框整体向上偏移 80dp，避开中间的快进图标
+                            .offset(y = (-68).dp)
                             .background(
                                 Color.Black.copy(0.5f),
                                 shape = RoundedCornerShape(8.dp)
@@ -928,6 +967,8 @@ private fun Modifier.dPadEvents(
             if (!videoPlayerState.controlsVisible) {
                 player.seekBack() // 调用接口方法
                 pulseState.setType(VideoPlayerPulse.Type.BACK)
+                // 👇 新增这行：触发快退时显示底部进度条
+                videoPlayerState.showControls()
             }
         },
         onRight = {
@@ -935,6 +976,8 @@ private fun Modifier.dPadEvents(
             if (!videoPlayerState.controlsVisible) {
                 player.seekForward() // 调用接口方法
                 pulseState.setType(VideoPlayerPulse.Type.FORWARD)
+                // 👇 新增这行：触发快退时显示底部进度条
+                videoPlayerState.showControls()
             }
         },
         onUp = {
@@ -981,7 +1024,6 @@ private fun Modifier.dPadEvents(
  *
  * @param isPlaying 当前播放状态
  * @param contentCurrentPosition 当前播放位置
- * @param exoPlayer ExoPlayer 实例
  * @param state 视频播放器状态
  * @param focusRequester 焦点请求器
  * @param title 标题
@@ -1002,6 +1044,8 @@ fun VideoPlayerControls(
     focusRequester: FocusRequester,
     title: String, secondaryText: String, tertiaryText: String,
     videoPlayerViewModel: VideoPlayerViewModel,
+    isoTitles: List<MzIsoTitle>,
+    mediaUri: String,
     danmakuPlayer: DanmakuPlayer,
     settingsManager: DanmakuSettingsManager, // 添加设置管理器参数
     getDanmakuConfig: () -> DanmakuConfig // 添加获取配置的方法参数
@@ -1033,12 +1077,18 @@ fun VideoPlayerControls(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 VideoPlayerControlsIcon(
-                    icon = painterResource(id = R.drawable.baseline_hd_24), // 高清图标
+                    icon = if (isoTitles.isEmpty()&& !(Tools.extractFileExtension(mediaUri)
+                            .uppercase(Locale.getDefault()) =="ISO")) painterResource(id = R.drawable.baseline_hd_24) else painterResource(R.drawable.blu_ray_disc) , // 高清图标
                     state = state,
                     isPlaying = isPlaying,
                     onClick = {
                         // 点击高清图标，显示视频轨道选择面板
-                        videoPlayerViewModel.selectedAorVorS = "V"
+                        // 如果底层解析出了 titles，说明是包含了多视频的 ISO/DVD 文件
+                        if (isoTitles.isNotEmpty()) {
+                            videoPlayerViewModel.selectedAorVorS = "ISO" // 走新的 ISO 视频列表
+                        } else {
+                            videoPlayerViewModel.selectedAorVorS = "V"   // 走普通的视频轨道
+                        }
                         videoPlayerViewModel.atpVisibility = !videoPlayerViewModel.atpVisibility;
                         focusRequester.requestFocus()
                     }
@@ -1120,6 +1170,17 @@ fun VideoPlayerControls(
                         videoPlayerViewModel.selectedAorVorS = "D"
                         videoPlayerViewModel.atpVisibility = !videoPlayerViewModel.atpVisibility;
                         focusRequester.requestFocus()
+                    }
+                )
+
+                VideoPlayerControlsIcon(
+                    modifier = Modifier.padding(start = 12.dp),
+                    icon = painterResource(id = R.drawable.subtitles_off_24dp), // 字幕图标
+                    state = state,
+                    isPlaying = isPlaying,
+                    onClick = {
+                        // 点击字幕图标，显示字幕轨道选择面板
+                        videoPlayerViewModel.isCusSubtitleViewVis = !videoPlayerViewModel.isCusSubtitleViewVis;
                     }
                 )
             }

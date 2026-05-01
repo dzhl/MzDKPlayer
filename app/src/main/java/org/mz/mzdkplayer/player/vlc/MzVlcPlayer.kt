@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.mz.mzdkplayer.player.core.IMzPlayer
 import org.mz.mzdkplayer.player.core.MzBasicTrack
+import org.mz.mzdkplayer.player.core.MzIsoTitle
 import org.mz.mzdkplayer.player.core.MzVideoTrack
 import org.mz.mzdkplayer.tool.Tools
 import org.mz.mzdkplayer.ui.screen.vm.SettingsViewModel
@@ -85,7 +86,9 @@ class MzVlcPlayer(
 
     private val _subtitleTracks = MutableStateFlow<List<MzBasicTrack>>(emptyList())
     override val subtitleTracks: StateFlow<List<MzBasicTrack>> = _subtitleTracks.asStateFlow()
-
+    // 1. 增加变量
+    private val _isoTitles = MutableStateFlow<List<MzIsoTitle>>(emptyList())
+    override val isoTitles: StateFlow<List<MzIsoTitle>> = _isoTitles.asStateFlow()
     // 3. 接口回调
     override var onError: ((String) -> Unit)? = null
     override var onCuesChanged: ((Any) -> Unit)? = null // VLC 不需要，留空
@@ -272,6 +275,27 @@ class MzVlcPlayer(
                     rawData = track.id
                 )
             }
+
+        // 新增：读取蓝光/DVD的 Titles
+        val titles = mediaPlayer.titles
+        if (titles != null && titles.isNotEmpty()) {
+            val currentTitleIdx = mediaPlayer.title
+            _isoTitles.value = titles.mapIndexed { index, title ->
+                MzIsoTitle(
+                    index = index,
+                    name = title.name ?: "视频片段 ${index + 1}",
+                    isSelected = index == currentTitleIdx,
+                    durationText = Tools.formatTime(title.duration),
+
+                )
+            }
+        }
+    }
+
+    // 3. 实现接口方法
+    override fun selectIsoTitle(index: Int) {
+        mediaPlayer.title = index
+        updateTracks() // 切换后刷新一下选中状态
     }
 
     override val isPlaying: Boolean get() = mediaPlayer.isPlaying
@@ -330,6 +354,13 @@ class MzVlcPlayer(
                 mediaPlayer.detachViews()
             }
         )
+    }
+
+    override fun addExternalSubtitles(subtitles: List<Pair<String, String>>) {
+        subtitles.forEach { (uri, _) ->
+            // true 表示优先选中最后添加的那个
+            mediaPlayer.addSlave(IMedia.Slave.Type.Subtitle, uri.toUri(), true)
+        }
     }
 }
 //private fun fourccToString(fourcc: Int): String {

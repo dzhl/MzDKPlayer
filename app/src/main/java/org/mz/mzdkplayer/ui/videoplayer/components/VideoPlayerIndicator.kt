@@ -72,14 +72,18 @@ fun RowScope.VideoPlayerControllerIndicator(
     val handleSeekEventModifier = Modifier.handleDPadKeyEvents(
         onEnter = {
             onSeek(seekProgress)
+            state.showControls()
+
         },
         onLeft = {
             seekProgress = (seekProgress - 0.016f).coerceAtLeast(0f)
             onSeek(seekProgress)
+            state.showControls()
         },
         onRight = {
             seekProgress = (seekProgress + 0.016f).coerceAtMost(1f)
             onSeek(seekProgress)
+            state.showControls()
         }
 
         )
@@ -87,11 +91,13 @@ fun RowScope.VideoPlayerControllerIndicator(
     val handleDpadCenterClickModifier = Modifier.handleDPadKeyEvents(
         onEnter = {
             seekProgress = progress
+            state.showControls() // 🔑 重置隐藏计时器[cite: 3]
         },
         onLeft = {
             seekProgress = progress
             seekProgress = (seekProgress - 0.016f).coerceAtLeast(0f)
             onSeek(seekProgress)
+            state.showControls() // 🔑 每次按下确认，重置隐藏计时器[cite: 3]
 
 
         },
@@ -99,6 +105,7 @@ fun RowScope.VideoPlayerControllerIndicator(
             seekProgress = progress
             seekProgress = (seekProgress + 0.016f).coerceAtMost(1f)
             onSeek(seekProgress)
+            state.showControls() // 🔑 每次按下确认，重置隐藏计时器[cite: 3]
 
         },
     )
@@ -113,6 +120,8 @@ fun RowScope.VideoPlayerControllerIndicator(
             ).focusable(interactionSource = interactionSource),
         onDraw = {
             val yOffset = size.height.div(2)
+            // 算出当前进度的 X 坐标
+            val currentProgressX = size.width.times(if (isSelected) seekProgress else progress)
             drawLine(
                 color = color.copy(alpha = 0.24f),
                 start = Offset(x = 0f, y = yOffset),
@@ -129,6 +138,13 @@ fun RowScope.VideoPlayerControllerIndicator(
                 ),
                 strokeWidth = size.height,
                 cap = StrokeCap.Round
+            )
+            // 3. 👇 新增：在进度条末尾画一个小圆球
+            drawCircle(
+                color = color,
+                // 圆球的半径稍微比线条高一点，看起来会更饱满，比例你可以自己微调
+                radius = size.height * 0.8f,
+                center = Offset(x = currentProgressX, y = yOffset)
             )
         }
     )

@@ -1,6 +1,7 @@
 package org.mz.mzdkplayer.player.exo
 
 import android.content.Context
+import android.net.Uri
 import android.util.Log
 import androidx.annotation.OptIn
 import androidx.compose.foundation.layout.fillMaxSize
@@ -8,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.TrackSelectionOverride
@@ -27,6 +29,7 @@ import org.mz.mzdkplayer.ui.videoplayer.components.selectedDataSourceFactory
 
 import org.mz.mzdkplayer.player.core.IMzPlayer
 import org.mz.mzdkplayer.player.core.MzBasicTrack
+import org.mz.mzdkplayer.player.core.MzIsoTitle
 import org.mz.mzdkplayer.player.core.MzVideoTrack
 import org.mz.mzdkplayer.ui.screen.vm.VideoPlayerStatus
 
@@ -163,6 +166,14 @@ class MzExoPlayer(
 
     override val videoHeight: Int
         get() = if (exoPlayer.videoSize.height > 0) exoPlayer.videoSize.height else 1080
+
+    override val isoTitles: StateFlow<List<MzIsoTitle>>
+        get() = MutableStateFlow(emptyList())
+
+    override fun selectIsoTitle(index: Int) {
+
+    }
+
     private fun autoSelectFirstSubtitle(tracks: Tracks) {
         val textGroups = tracks.groups.filter { it.type == C.TRACK_TYPE_TEXT }
         if (textGroups.isNotEmpty()) {
@@ -227,11 +238,17 @@ class MzExoPlayer(
                 }
 
                 C.TRACK_TYPE_TEXT -> {
+                    // 优先取 label，如果没有 label 再取内置的 id，最后才用兜底名称
+                    val displayName = when {
+                        !format.label.isNullOrEmpty() -> format.label!! // ✅ 关键：这才会拿到 "[外部加载] ass"
+                        !format.id.isNullOrEmpty() -> "Subtitle ${format.id}"
+                        else -> "Subtitle $groupIndex"
+                    }
                     sTracks.add(
                         MzBasicTrack(
                             format.id ?: groupIndex.toString(),
                             groupIndex,
-                            "Subtitle $groupIndex",
+                            name = displayName,
                             isSelected,
                             format.language.orEmpty(),
                             trackGroup.getTrackFormat(0).codecs.toString(),
@@ -282,7 +299,39 @@ class MzExoPlayer(
     override fun release() {
         exoPlayer.release()
     }
+    override fun addExternalSubtitles(subtitles: List<Pair<String, String>>) {
+        val currentMediaItem = exoPlayer.currentMediaItem ?: return
+        val currentPos = exoPlayer.currentPosition
 
+        // 批量生成字幕配置
+        val newConfigs = subtitles.map { (uri, name) ->
+            val mimeType = when {
+                uri.endsWith(".ass", ignoreCase = true) || uri.endsWith(".ssa", ignoreCase = true) -> MimeTypes.TEXT_SSA
+                uri.endsWith(".srt", ignoreCase = true) -> MimeTypes.APPLICATION_SUBRIP
+                uri.endsWith(".vtt", ignoreCase = true) -> MimeTypes.TEXT_VTT
+                else -> MimeTypes.APPLICATION_SUBRIP
+            }
+
+            MediaItem.SubtitleConfiguration.Builder(Uri.parse(uri))
+                .setMimeType(mimeType)
+                .setLanguage("zh")
+                .setLabel(name)
+                .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
+                .build()
+        }
+
+        val existingSubtitles = currentMediaItem.localConfiguration?.subtitleConfigurations ?: emptyList()
+        val allSubtitles = existingSubtitles + newConfigs
+
+        // 一次性重载，防止卡顿
+        val newMediaItem = currentMediaItem.buildUpon()
+            .setSubtitleConfigurations(allSubtitles)
+            .build()
+
+        exoPlayer.setMediaItem(newMediaItem, currentPos)
+        exoPlayer.prepare()
+        exoPlayer.play()
+    }
     @Composable
     override fun PlayerView(modifier: Modifier) {
         ContentFrame(

@@ -43,4 +43,50 @@ interface IMzPlayer {
     // 核心：把渲染视图交给实现类去做，Compose里直接调用
     @Composable
     fun PlayerView(modifier: Modifier)
+
+    // 批量添加外部字幕，避免播放器频繁重启
+    fun addExternalSubtitles(subtitles: List<Pair<String, String>>)
+
+    // ISO 标题流 (用于蓝光ISO文件)
+    val isoTitles: StateFlow<List<MzIsoTitle>>
+    // 切换 ISO 标题
+    fun selectIsoTitle(index: Int)
 }
+
+fun autoLoadSameNameSubtitles(videoUri: String, player: IMzPlayer) {
+    val lastDotIndex = videoUri.lastIndexOf('.')
+    if (lastDotIndex <= 0) return
+
+    val basePath = videoUri.substring(0, lastDotIndex)
+    val exts = listOf("ass", "srt", "ssa", "vtt")
+
+    val validSubs = mutableListOf<Pair<String, String>>()
+
+    exts.forEach { ext ->
+        val subUri = "$basePath.$ext"
+
+        if (videoUri.startsWith("file:///")) {
+            // 本地文件：顺手查一下文件存不存在，这步不涉及扫目录，基本不耗时
+            val path = subUri.removePrefix("file:///")
+            if (java.io.File(path).exists()) {
+                validSubs.add(subUri to "[外部加载] $ext")
+            }
+        } else {
+            // 网络协议 (smb/http等)：不扫描，直接莽，交给播放器底层去碰壁
+            validSubs.add(subUri to "[外部加载] $ext")
+        }
+    }
+
+    // 塞给播放器
+    if (validSubs.isNotEmpty()) {
+        player.addExternalSubtitles(validSubs)
+    }
+}
+
+// 1. 在 IMzPlayer.kt 文件中增加一个新的数据类
+data class MzIsoTitle(
+    val index: Int,
+    val name: String,
+    val durationText: String, // 🌟 新增：格式化后的时长，如 "02:15:30"
+    val isSelected: Boolean
+)

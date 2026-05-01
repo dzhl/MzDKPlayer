@@ -39,7 +39,7 @@ import org.mz.mzdkplayer.ui.theme.myListItemCoverColor
 fun SubtitleTrackPanel(
     lists: List<MzBasicTrack>,
     onTrackSelected: (MzBasicTrack) -> Unit,
-    //onLoadExternalSubtitle: () -> Unit // 新增：将加载外部字幕的逻辑交给调用者（PlayerScreen）去处理
+    onLoadExternalSubtitle: () -> Unit // 新增：将加载外部字幕的逻辑交给调用者（PlayerScreen）去处理
 ) {
     val focusRequester = remember { FocusRequester() }
     val isVis = remember { mutableStateOf(false) }
@@ -66,7 +66,7 @@ fun SubtitleTrackPanel(
                 text = stringResource(R.string.ui_label_load_external_subtitles),
                 icon = R.drawable.baseline_search_24,
                 onClick = {
-                    // onLoadExternalSubtitle() // 直接调用回调，解耦到底层实现
+                    onLoadExternalSubtitle() // 直接调用回调，解耦到底层实现
                 }
             )
         }
@@ -91,8 +91,12 @@ fun SubtitleTrackPanel(
                     val trackLang = track.language
                     val trackMimeType = track.mimeType.ifEmpty {stringResource(R.string.ui_label_unknown_format) }
 
-                    val isExternalAutoSearch = trackLabel.startsWith("[外部加载]")
-                    val labelText = if (isExternalAutoSearch) trackLabel.replace("[外部加载] ", "") else trackLabel
+                    val isExternalAutoSearch = trackLabel.contains("[外部加载]")
+                    val labelText = if (isExternalAutoSearch) {
+                        trackLabel.substringAfter("[外部加载]").trim()
+                    } else {
+                        trackLabel
+                    }
                     val languageText = Tools.getFullLanguageName(trackLang)
 
                     val titleText = when {
@@ -100,7 +104,7 @@ fun SubtitleTrackPanel(
                         trackLabel.isNotEmpty() -> "$languageText $labelText"
                         else -> "$languageText ${stringResource(R.string.ui_label_language_subtitles)}"
                     }
-
+                    println("TrackDebug: name='$trackLabel', isExternal=$isExternalAutoSearch")
                     ListItem(
                         modifier = Modifier
                             .padding(start = 15.dp, end = 15.dp, top = 10.dp, bottom = 10.dp)

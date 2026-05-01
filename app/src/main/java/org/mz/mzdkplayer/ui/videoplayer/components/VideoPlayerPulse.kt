@@ -17,9 +17,13 @@
 package org.mz.mzdkplayer.ui.videoplayer.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -54,14 +58,21 @@ fun VideoPlayerPulse(
         VideoPlayerPulse.Type.NONE -> null
     }
     if (icon != null) {
+        // === 核心修改点：使风格与 LoadingScreen 保持统一 ===
         Icon(
-            icon,
+            painter = icon,
             contentDescription = null,
+            // 🔑 修改图标本身颜色为白色，与 Loading 菊花颜色一致
+            tint = Color.White,
             modifier = Modifier
-                .background(Color.White.copy(alpha = 0.6f), CircleShape)
-                .size(88.dp)
+                // 🔑 1. 修改背景：由白改黑，使用与 Loading 一致的 0.5f 透明度
+                // 🔑 2. 修改形状：由 CircleShape 改为 8dp 圆角矩形，与 Loading 框一致
+                .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                // 🔑 3. 增加内边距，使图标在黑框内有呼吸感，大小更接近 Loading 框
+                .padding(5.dp)
+                // 下面保持原样，控制图标本身大小
                 .wrapContentSize()
-                .size(48.dp)
+                .width(85.dp).height(30.dp)
         )
     }
 }

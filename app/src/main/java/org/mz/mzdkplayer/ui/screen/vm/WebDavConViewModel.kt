@@ -23,10 +23,13 @@ import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 import androidx.core.net.toUri
+import okhttp3.Dns
 import org.mz.mzdkplayer.tool.Tools
 import org.mz.mzdkplayer.tool.WebDavHttpClient
 import org.mz.mzdkplayer.tool.WebDavHttpClient.Companion.restrictedTrustOkHttpClient
+import java.net.Inet4Address
 import java.net.URLEncoder
+import java.util.concurrent.TimeUnit
 
 class WebDavConViewModel : ViewModel() {
 
@@ -61,7 +64,12 @@ class WebDavConViewModel : ViewModel() {
                 try {
                     withContext(Dispatchers.IO) {
 
-
+                        val client = OkHttpClient.Builder()
+                            .connectTimeout(5, TimeUnit.SECONDS) // 缩短连接超时
+                            .readTimeout(10, TimeUnit.SECONDS)
+                            .writeTimeout(10, TimeUnit.SECONDS)
+                            // 强制使用 IPv4 避免 IPv6 导致的 40 秒等待（如果怀疑是 IPv6 的锅）
+                            .build()
                         sardine = OkHttpSardine()
                         sardine?.setCredentials(username, password)
 

@@ -206,27 +206,21 @@ fun SubtitleView(
                                 val videoOffsetY = displayedVideoRect.offsetYDp * density
 
                                 val (targetWidthPx, targetHeightPx) = run {
-                                    val targetW = if (!forcePGSCenter && cue.size != Cue.DIMEN_UNSET) {
-                                        videoRectWidthPx * cue.size
+                                    if (forcePGSCenter) {
+                                        bitmap.width.toFloat() to bitmap.height.toFloat()
+                                    } else if (cue.size != Cue.DIMEN_UNSET) {
+                                        // 🔑 核心修复点：优先以宽度为基准，高度直接根据 PGS 图片原始比例推算。
+                                        // 彻底抛弃 cue.bitmapHeight，防止 21:9 视频的偏小高度把字幕宽度横向挤压。
+                                        val targetW = videoRectWidthPx * cue.size
+                                        targetW to (targetW / originalBitmapAspectRatio)
+                                    } else if (cue.bitmapHeight != Cue.DIMEN_UNSET) {
+                                        // 只有在没给宽度的情况下，才用高度反推
+                                        val targetH = videoRectHeightPx * cue.bitmapHeight
+                                        (targetH * originalBitmapAspectRatio) to targetH
                                     } else {
-                                        bitmap.width.toFloat()
-                                    }
-
-                                    val targetH = if (!forcePGSCenter && cue.bitmapHeight != Cue.DIMEN_UNSET) {
-                                        videoRectHeightPx * cue.bitmapHeight
-                                    } else {
-                                        bitmap.height.toFloat()
-                                    }
-
-                                    when {
-                                        !forcePGSCenter && cue.size != Cue.DIMEN_UNSET && cue.bitmapHeight != Cue.DIMEN_UNSET -> {
-                                            val widthBasedHeight = targetW / originalBitmapAspectRatio
-                                            val heightBasedWidth = targetH * originalBitmapAspectRatio
-                                            if (widthBasedHeight <= targetH) targetW to widthBasedHeight else heightBasedWidth to targetH
-                                        }
-                                        !forcePGSCenter && cue.size != Cue.DIMEN_UNSET -> targetW to (targetW / originalBitmapAspectRatio)
-                                        !forcePGSCenter && cue.bitmapHeight != Cue.DIMEN_UNSET -> (targetH * originalBitmapAspectRatio) to targetH
-                                        else -> bitmap.width.toFloat() to bitmap.height.toFloat()
+                                        // 兜底方案：如果什么都没给，按视频真实分辨率和当前容器的比例来缩放原图
+                                        val scale = if (videoSourceWidth > 0) videoRectWidthPx / videoSourceWidth.toFloat() else 1f
+                                        (bitmap.width * scale) to (bitmap.height * scale)
                                     }
                                 }
 

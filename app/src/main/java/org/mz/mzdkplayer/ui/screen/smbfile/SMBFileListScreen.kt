@@ -68,6 +68,7 @@ import org.mz.mzdkplayer.ui.screen.common.FileEmptyScreen
 import org.mz.mzdkplayer.ui.screen.common.FileIcon
 import org.mz.mzdkplayer.ui.screen.common.FileName
 import org.mz.mzdkplayer.ui.screen.common.FileSize
+import org.mz.mzdkplayer.ui.screen.common.ISODialog
 
 import org.mz.mzdkplayer.ui.screen.common.LoadingScreen
 import org.mz.mzdkplayer.ui.screen.common.MediaFocusedFileName
@@ -122,6 +123,10 @@ fun SMBFileListScreen(
     val isAudioScanning by audioViewModel.isScanning.collectAsState()
     var seaText by remember { mutableStateOf("") }
     var mediaId by remember { mutableIntStateOf(-1) }
+    var showISODialog by remember { mutableStateOf(false) }
+    var isoTitles by remember { mutableStateOf<List<String>>(emptyList()) }
+    var currentISOUri by remember { mutableStateOf("") }
+    var currentISOFileName by remember { mutableStateOf<String?>(null) }
     //  新增：过滤后的文件列表
     val filteredFiles by remember(files, seaText) {
         derivedStateOf {
@@ -344,6 +349,25 @@ fun SMBFileListScreen(
                                                         }
 
                                                         Tools.containsVideoFormat(fileExtension) -> {
+                                                            val isIso = fileExtension.lowercase() == "iso"
+                                                            if (isIso) {
+                                                                // ====================== ISO 特殊处理 ======================
+                                                                currentISOFileName = file.name
+                                                                currentISOUri = fullSmbUri
+
+                                                                // TODO: 这里未来可以接入 LibVLC 实时解析 ISO 的 Title 列表
+                                                                // 目前先使用占位数据，替换成真实解析结果即可
+                                                                // 示例解析逻辑可参考 MzVlcPlayer.kt 中的 parseAsync + media.getTracks()
+                                                                isoTitles = listOf(
+                                                                    "Title 0 - 主电影 (Main Feature)",
+                                                                    "Title 1 - 额外内容 (Extras)",
+                                                                    "Title 2 - 菜单 (Menu)",
+                                                                    "Title 3 - 预告片 (Trailer)"
+                                                                )
+
+                                                                showISODialog = true
+                                                                return@ListItem
+                                                            }
                                                             // 处理视频文件点击
                                                             Log.d(
                                                                 "SMBFileListScreen",
@@ -695,6 +719,43 @@ fun SMBFileListScreen(
                 )
             },
             onCloseClick = { showEditDialog = false }
+        )
+    }
+    if (showISODialog) {
+        ISODialog(
+            onDismiss = {
+                showISODialog = false
+                isoTitles = emptyList() // 清理数据
+            },
+            fileName = currentISOFileName,
+            titles = isoTitles,
+            currentUri = currentISOUri,
+            onTitleSelected = { selectedTitle ->
+                showISODialog = false
+                isoTitles = emptyList()
+
+                // TODO: 如果你想支持指定 Title 播放，可以在这里把 title 索引传给 VideoPlayer
+                // 例如修改导航为 "VideoPlayer/$encodedUri/SMB/$encodedFileName/${connectionName}?title=0"
+                // 然后在 MzVlcPlayer.kt 的 options 或 media.addOption(":dvd-title=${index}") 里使用
+                val encodedUri = try {
+                    URLEncoder.encode(currentISOUri, "UTF-8")
+                } catch (e: Exception) {
+                    Log.e("SMBFileListScreen", "ISO URI 编码失败: $e")
+                    return@ISODialog
+                }
+                val encodedFileName = try {
+                    URLEncoder.encode(currentISOFileName ?: "", "UTF-8")
+                } catch (e: Exception) {
+                    Log.e("SMBFileListScreen", "ISO 文件名编码失败: $e")
+                    return@ISODialog
+                }
+
+                navController.navigate("VideoPlayer/$encodedUri/SMB/$encodedFileName/${connectionName}")
+            },
+            onCloseClick = {
+                showISODialog = false
+                isoTitles = emptyList()
+            }
         )
     }
 }

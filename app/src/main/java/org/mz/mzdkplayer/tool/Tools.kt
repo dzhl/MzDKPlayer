@@ -786,6 +786,42 @@ object Tools {
             path // 降级处理
         }
     }
+
+    /**
+     * 将毫秒转为可读的时间格式 (例如: 01:25:30 或 05:12)
+     * @param ms 毫秒数
+     */
+    fun formatTime(ms: Long): String {
+        if (ms <= 0) return "00:00"
+
+        val totalSeconds = ms / 1000
+        val seconds = totalSeconds % 60
+        val minutes = (totalSeconds / 60) % 60
+        val hours = totalSeconds / 3600
+
+        return if (hours > 0) {
+            // 超过1小时，显示 HH:mm:ss
+            String.format("%02d:%02d:%02d", hours, minutes, seconds)
+        } else {
+            // 不足1小时，显示 mm:ss
+            String.format("%02d:%02d", minutes, seconds)
+        }
+    }
+    /**
+     * 更加人性化的时间显示
+     * 如果是短视频片段显示 00:30
+     * 如果是长片显示 2h 15m
+     */
+    fun formatFriendlyTime(ms: Long): String {
+        val totalSeconds = ms / 1000
+        val minutes = (totalSeconds / 60) % 60
+        val hours = totalSeconds / 3600
+
+        return when {
+            hours > 0 -> "${hours}h ${minutes}m"
+            else -> formatTime(ms) // 调用上面的基础版显示 mm:ss
+        }
+    }
 }
 
 
