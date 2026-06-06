@@ -25,7 +25,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -51,10 +53,12 @@ import org.mz.mzdkplayer.ui.screen.common.ConnectionCard
 import org.mz.mzdkplayer.ui.screen.common.ConnectionCardInfo
 import org.mz.mzdkplayer.ui.screen.common.ConnectionListEmpty
 import org.mz.mzdkplayer.ui.screen.common.ConnectionListTitle
+import org.mz.mzdkplayer.ui.screen.common.DeleteConfirmDialog
 import org.mz.mzdkplayer.ui.screen.common.FCLMainTitle
 import org.mz.mzdkplayer.ui.screen.vm.SMBListViewModel
 
 import java.net.URLEncoder
+import kotlin.time.Duration.Companion.milliseconds
 
 @SuppressLint("StateFlowValueCalledInComposition")
 @Composable
@@ -66,7 +70,8 @@ fun SMBConListScreen(mainNavController: NavHostController,smbListViewModel: SMBL
     val selectedId by smbListViewModel.selectedId.collectAsState()
     val listState = rememberLazyListState()
     //val context = LocalContext.current
-
+// 专门用来控制删除弹窗的状态
+    var showDeleteDialog by remember { mutableStateOf(false) }
     LaunchedEffect(isOPanelShow) {
         Log.d("isOPanelShow", isOPanelShow.toString())
     }
@@ -79,7 +84,7 @@ fun SMBConListScreen(mainNavController: NavHostController,smbListViewModel: SMBL
 
     LaunchedEffect(isOPanelShow) {
         if (isOPanelShow) {
-            delay(350) // 200ms动画 + 100ms保险
+            delay(350.milliseconds) // 200ms动画 + 100ms保险
             panelFocusRequester.requestFocus()
         } else {
             if (selectedIndex != -1) {
@@ -87,7 +92,7 @@ fun SMBConListScreen(mainNavController: NavHostController,smbListViewModel: SMBL
             }
             // 精确等待滚动完成
             while (listState.isScrollInProgress) {
-                delay(200)
+                delay(200.milliseconds)
             }
             panelFocusRequester.freeFocus()
             listFocusRequester.requestFocus()
@@ -219,15 +224,32 @@ fun SMBConListScreen(mainNavController: NavHostController,smbListViewModel: SMBL
             isOPanelShow,
             panelFocusRequester,
             onClickForDel = {
-                Log.d("selectedId",selectedId)
-                smbListViewModel.deleteConnection(selectedId)
+                showDeleteDialog = true
                 smbListViewModel.closeOPanel()
             },
             onClickForCancel = {
                 smbListViewModel.closeOPanel()
             })
 
+        // 把弹窗挂载在最外层，保证它不会随着面板的消失而消失
+        if (showDeleteDialog) {
+            DeleteConfirmDialog(
+                title = "删除连接",
+                message = "确定要删除这个 SMB 连接吗？",
+                onConfirm = {
+                    // 点击确认后，才真正执行删除操作
+                    // 这里的 selectedId 需要根据你父组件的逻辑传过来
+                    Log.d("selectedId",selectedId)
+                    smbListViewModel.deleteConnection(selectedId)
 
+
+                },
+                onDismiss = {
+                    // 关闭弹窗
+                    showDeleteDialog = false
+                }
+            )
+        }
 
 
     }

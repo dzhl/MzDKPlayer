@@ -51,9 +51,9 @@ import java.util.UUID
  * WebDAV 连接界面
  */
 @Composable
-fun WebDavConScreen() {
+fun WebDavConScreen(webDavListViewModel: WebDavListViewModel) {
     val webDavConViewModel: WebDavConViewModel = viewModel()
-    val webDavListViewModel: WebDavListViewModel = viewModel()
+    //val webDavListViewModel: WebDavListViewModel = viewModel()
 
     // UI 状态由 ViewModel 管理
     val connectionStatus by webDavConViewModel.connectionStatus.collectAsState()

@@ -53,13 +53,11 @@ import java.util.UUID
  * NFS 连接与文件浏览界面
  */
 @Composable
-fun NFSConScreen(
-    // 可以在这里添加导航控制器等参数，如果需要的话
-) {
+fun NFSConScreen(nfsListViewModel: NFSListViewModel) {
     // 使用 NFS 的 ViewModel
     val nfsConViewModel: NFSConViewModel = viewModel()
     // 假设你也有一个管理连接列表的 ViewModel
-    val nfsListViewModel: NFSListViewModel = viewModel() // 如果不需要保存功能，可以移除
+    //val nfsListViewModel: NFSListViewModel = viewModel() // 如果不需要保存功能，可以移除
 
     // UI 状态由 ViewModel 管理
     val connectionStatus by nfsConViewModel.connectionStatus.collectAsState()

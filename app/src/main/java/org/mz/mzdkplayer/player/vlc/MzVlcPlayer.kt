@@ -30,6 +30,7 @@ import org.videolan.libvlc.MediaPlayer
 import org.videolan.libvlc.interfaces.IMedia
 import org.videolan.libvlc.util.VLCVideoLayout
 import kotlin.collections.mapIndexed
+import kotlin.time.Duration.Companion.milliseconds
 
 class MzVlcPlayer(
     private val context: Context,
@@ -224,7 +225,7 @@ class MzVlcPlayer(
                     // updateTracks()
                     //Toast.makeText(context,"添加成功，找到外部字幕", Toast.LENGTH_SHORT).show()
                     CoroutineScope(Dispatchers.Main).launch {
-                        delay(1000)
+                        delay(1000.milliseconds)
 //                        val media = mediaPlayer.media ?: return@launch
 //                        val trackCount = media.trackCount
 //

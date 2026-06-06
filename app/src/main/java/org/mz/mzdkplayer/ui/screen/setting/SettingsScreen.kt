@@ -38,6 +38,7 @@ import androidx.tv.material3.Text
 import org.mz.mzdkplayer.R
 import org.mz.mzdkplayer.di.RepositoryProvider
 import org.mz.mzdkplayer.tool.viewModelWithFactory
+import org.mz.mzdkplayer.ui.screen.common.DeleteConfirmDialog
 import org.mz.mzdkplayer.ui.screen.common.FilePermissionScreen
 import org.mz.mzdkplayer.ui.screen.common.MyIconButton
 import org.mz.mzdkplayer.ui.screen.vm.AudioViewModel
@@ -388,28 +389,65 @@ fun SourceSection(state: SettingsUiState, settingsVM: SettingsViewModel) {
 
 @Composable
 fun ToolsSection(movieVM: MovieViewModel, audioViewModel: AudioViewModel) {
+    // 1. 定义两个状态，用来控制影视库和音乐库清理弹窗的显示
+    var showClearMovieDialog by remember { mutableStateOf(false) }
+    var showClearAudioDialog by remember { mutableStateOf(false) }
+
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Box(Modifier
             .padding(vertical = 8.dp)
             .fillMaxWidth()) {
             FilePermissionScreen() // 如果需要可以取消注释
         }
+
         MyIconButton(
             text = stringResource(R.string.btn_clear_movie_db),
             icon = R.drawable.close24dp,
             modifier = Modifier.align(Alignment.CenterHorizontally),
-            onClick = { movieVM.clearMediaLibrary() }
+            // 2. 点击时不直接清理，而是把弹窗状态设为 true
+            onClick = { showClearMovieDialog = true }
         )
         Spacer(Modifier.height(16.dp))
+
         MyIconButton(
             text = stringResource(R.string.btn_clear_audio_db),
             icon = R.drawable.close24dp,
             modifier = Modifier.align(Alignment.CenterHorizontally),
-            onClick = { audioViewModel.clearLibrary() }
+            // 3. 同样，点击时呼出音乐库清理弹窗
+            onClick = { showClearAudioDialog = true }
         )
         Spacer(Modifier.height(16.dp))
 
         PerformanceTestScreen()
+    }
+
+    // 4. 在界面底部挂载弹窗组件（当状态为 true 时显示）
+    if (showClearMovieDialog) {
+        DeleteConfirmDialog(
+            title = stringResource(R.string.btn_clear_movie_db), // 可以直接复用按钮的文案当标题
+            message = "确定要清空所有的影视数据吗？此操作不可恢复。",
+            onConfirm = {
+                // 用户点击确认后，真正执行清理逻辑
+                movieVM.clearMediaLibrary()
+            },
+            onDismiss = {
+                // 关闭弹窗
+                showClearMovieDialog = false
+            }
+        )
+    }
+
+    if (showClearAudioDialog) {
+        DeleteConfirmDialog(
+            title = stringResource(R.string.btn_clear_audio_db),
+            message = "确定要清空所有的音乐数据吗？此操作不可恢复。",
+            onConfirm = {
+                audioViewModel.clearLibrary()
+            },
+            onDismiss = {
+                showClearAudioDialog = false
+            }
+        )
     }
 }
 

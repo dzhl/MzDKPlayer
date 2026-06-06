@@ -3,49 +3,34 @@
 
 package org.mz.mzdkplayer.tool
 
-import android.util.DisplayMetrics
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.key
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.DrawScope.Companion.DefaultBlendMode
-import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import androidx.media3.common.text.Cue
 import androidx.media3.common.text.CueGroup
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.Text
 
 @Composable
 @UnstableApi
@@ -71,15 +56,14 @@ fun SubtitleView(
 
     // 直接使用传入的参数
     val videoSourceWidth = sourceVideoWidth
-    val videoSourceHeight = sourceVideoHeight
 
     // 计算视频在容器中的实际显示尺寸和位置
-    val displayedVideoRect = if (videoSourceWidth > 0 && videoSourceHeight > 0) {
+    val displayedVideoRect = if (videoSourceWidth > 0 && sourceVideoHeight > 0) {
         calculateDisplayedVideoRect(
             containerWidthDp = videoSizeDp.width,
             containerHeightDp = videoSizeDp.height,
             sourceWidthPx = videoSourceWidth,
-            sourceHeightPx = videoSourceHeight,
+            sourceHeightPx = sourceVideoHeight,
             density = density
         )
     } else {
@@ -88,7 +72,7 @@ fun SubtitleView(
     }
 
     Log.d("SubtitleView", "Video container: ${videoSizeDp.width}x${videoSizeDp.height}cueGroup.cues.size ${cueGroup.cues.size}")
-    Log.d("SubtitleView", "Video source: ${videoSourceWidth}x${videoSourceHeight}")
+    Log.d("SubtitleView", "Video source: ${videoSourceWidth}x$sourceVideoHeight")
     Log.d("SubtitleView", "Displayed video: ${displayedVideoRect.widthDp}x${displayedVideoRect.heightDp} at (${displayedVideoRect.offsetXDp}, ${displayedVideoRect.offsetYDp})")
 
 

@@ -429,7 +429,7 @@ fun VideoPlayerScreen(
             lastTimeStamp = System.currentTimeMillis()
 
             while (isPlaying) {
-                delay(1000) // 每秒更新一次
+                delay(1000.milliseconds) // 每秒更新一次
 
                 val currentRxBytes = TrafficStats.getTotalRxBytes()
                 val currentTimeStamp = System.currentTimeMillis()
@@ -463,7 +463,7 @@ fun VideoPlayerScreen(
     // 同时定期更新 `contentCurrentPosition`
     LaunchedEffect(Unit) {
         while (true) {
-            delay(200)
+            delay(200.milliseconds)
             contentCurrentPosition = player.currentPosition
             isPlaying = player.isPlaying
         }
@@ -550,7 +550,7 @@ fun VideoPlayerScreen(
         LaunchedEffect(showHistoryTip) {
             if (showHistoryTip) {
                 // 给一点点时间让 AnimatedVisibility 把内容挂载到树上
-                delay(100)
+                delay(100.milliseconds)
                 try {
                     reRequester.requestFocus()
                 } catch (e: Exception) {
@@ -558,7 +558,7 @@ fun VideoPlayerScreen(
                 }
 
                 // 原有的 5 秒后自动消失逻辑
-                delay(5000)
+                delay(5000.milliseconds)
                 showHistoryTip = false
             }
         }
@@ -953,7 +953,7 @@ fun NetworkSpeedIndicator(networkSpeed: Long, modifier: Modifier = Modifier) {
 /**
  * 为 Modifier 添加 D-Pad 事件处理
  *
- * @param IMzPlayer IMzPlayer 实例
+ * @param
  * @param videoPlayerState 视频播放器状态
  * @param pulseState 脉冲状态
  * @param videoPlayerViewModel ViewModel

@@ -50,13 +50,10 @@ import java.util.UUID
  * HTTP Link 连接与文件浏览界面
  */
 @Composable
-fun HTTPLinkConScreen(
-    // 可以在这里添加导航控制器等参数，如果需要的话
-) {
+fun HTTPLinkConScreen(httpLinkListViewModel: HTTPLinkListViewModel) {
     // 使用 HTTPLink 的 ViewModel
     val httpLinkConViewModel: HTTPLinkConViewModel = viewModel()
-    // 假设你也有一个管理连接列表的 ViewModel
-    val httpLinkListViewModel: HTTPLinkListViewModel = viewModel() // 如果不需要保存功能，可以移除
+    //val httpLinkListViewModel: HTTPLinkListViewModel = viewModel() // 如果不需要保存功能，可以移除
 
     // UI 状态由 ViewModel 管理
     val connectionStatus by httpLinkConViewModel.connectionStatus.collectAsState()

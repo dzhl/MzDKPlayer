@@ -25,6 +25,7 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.Text
 import kotlinx.coroutines.delay
 import org.mz.mzdkplayer.R
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun LaunchScreen(
@@ -39,7 +40,7 @@ fun LaunchScreen(
 
     // 模拟启动过程（如初始化数据库、检查登录状态等）
     LaunchedEffect(Unit) {
-        delay(durationMillis)
+        delay(durationMillis.milliseconds)
         onFinish()
     }
 

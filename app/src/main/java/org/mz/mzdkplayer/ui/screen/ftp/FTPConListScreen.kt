@@ -6,30 +6,24 @@ import android.annotation.SuppressLint
 import android.util.Log
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -39,12 +33,9 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import androidx.tv.material3.ListItem
-import androidx.tv.material3.Text
 import org.mz.mzdkplayer.R
 import org.mz.mzdkplayer.ui.screen.common.ConOpPanel
 // --- 导入 FTP 相关的模型和 ViewModel ---
@@ -52,6 +43,7 @@ import org.mz.mzdkplayer.ui.screen.common.ConnectionCard
 import org.mz.mzdkplayer.ui.screen.common.ConnectionCardInfo
 import org.mz.mzdkplayer.ui.screen.common.ConnectionListEmpty
 import org.mz.mzdkplayer.ui.screen.common.ConnectionListTitle
+import org.mz.mzdkplayer.ui.screen.common.DeleteConfirmDialog
 import org.mz.mzdkplayer.ui.screen.common.FCLMainTitle
 import org.mz.mzdkplayer.ui.screen.vm.FTPListViewModel // 使用 FTP ViewModel
 import java.net.URLEncoder
@@ -61,9 +53,9 @@ import java.net.URLEncoder
  */
 @SuppressLint("StateFlowValueCalledInComposition")
 @Composable
-fun FTPConListScreen(mainNavController: NavHostController) {
+fun FTPConListScreen(mainNavController: NavHostController, ftpListViewModel: FTPListViewModel) {
     // 使用 FTPListViewModel
-    val ftpListViewModel: FTPListViewModel = viewModel()
+   // val ftpListViewModel: FTPListViewModel = viewModel()
     val connections by ftpListViewModel.connections.collectAsState()
     val isOPanelShow by ftpListViewModel.isOPanelShow.collectAsState()
     // isLongPressInProgress 可能未在此处直接使用，但保留以匹配原始逻辑结构
@@ -78,7 +70,8 @@ fun FTPConListScreen(mainNavController: NavHostController) {
     val selectedIndex by ftpListViewModel.selectedIndex.collectAsState()
     val selectedId by ftpListViewModel.selectedId.collectAsState()
     val listState = rememberLazyListState()
-
+    // 专门用来控制删除弹窗的状态
+    var showDeleteDialog by remember { mutableStateOf(false) }
     // 焦点管理：面板显示/隐藏时切换焦点
     LaunchedEffect(isOPanelShow) {
         if (isOPanelShow) {
@@ -235,13 +228,33 @@ fun FTPConListScreen(mainNavController: NavHostController) {
             isOPanelShow,
             panelFocusRequester,
             onClickForDel = {
-                Log.d("selectedId",selectedId)
-                ftpListViewModel.deleteConnection(selectedId)
+                // 【关键改动】这里不直接执行删除，而是唤起弹窗
+                showDeleteDialog = true
+
                 ftpListViewModel.closeOPanel()
             },
             onClickForCancel = {
                 ftpListViewModel.closeOPanel()
             })
+
+        // 把弹窗挂载在最外层，保证它不会随着面板的消失而消失
+        if (showDeleteDialog) {
+            DeleteConfirmDialog(
+                title = "删除连接",
+                message = "确定要删除这个 FTP 连接吗？",
+                onConfirm = {
+                    // 点击确认后，才真正执行删除操作
+                    // 这里的 selectedId 需要根据你父组件的逻辑传过来
+                    Log.d("selectedId",selectedId)
+                    ftpListViewModel.deleteConnection(selectedId)
+
+                },
+                onDismiss = {
+                    // 关闭弹窗
+                    showDeleteDialog = false
+                }
+            )
+        }
 
     }
 }

@@ -33,12 +33,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.UnstableApi
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import androidx.navigation.navOptions
 import androidx.tv.material3.DrawerState
 import androidx.tv.material3.DrawerValue
@@ -88,11 +86,15 @@ import org.mz.mzdkplayer.ui.screen.webdavfile.WebDavFileListScreen
 import org.mz.mzdkplayer.ui.screen.setting.SettingsScreen
 import org.mz.mzdkplayer.ui.screen.tv.TVSeriesDetailsScreen
 import org.mz.mzdkplayer.ui.screen.vm.AudioViewModel
+import org.mz.mzdkplayer.ui.screen.vm.FTPListViewModel
+import org.mz.mzdkplayer.ui.screen.vm.HTTPLinkListViewModel
 
 import org.mz.mzdkplayer.ui.screen.vm.MediaHistoryViewModel
 import org.mz.mzdkplayer.ui.screen.vm.MediaLibraryViewModel
+import org.mz.mzdkplayer.ui.screen.vm.NFSListViewModel
 import org.mz.mzdkplayer.ui.screen.vm.SMBListViewModel
 import org.mz.mzdkplayer.ui.screen.vm.SettingsViewModel
+import org.mz.mzdkplayer.ui.screen.vm.WebDavListViewModel
 import org.mz.mzdkplayer.ui.theme.mySideListItemColor
 
 import org.mz.mzdkplayer.ui.videoplayer.VideoPlayerScreen
@@ -130,22 +132,18 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
         if (externalVideoUri != null) {
             val uriString = externalVideoUri.toString()
             Log.i("externalVideoUri",uriString)
-            // 简单校验是否为有效视频链接（可选）
-//            if (uriString.startsWith("http") &&
-//                (uriString.endsWith(".mp4") ||
-//                        uriString.endsWith(".mkv") ||
-//                        uriString.endsWith(".avi") ||
-//                        uriString.contains("video"))) {
-
-            // 直接导航到播放器页面
             mainNavController.navigate(
                 "VideoPlayer/${URLEncoder.encode(uriString, "UTF-8")}/HTTP/外部视频/外部视频"
             )
-            //}
         }
     }
 
     val smbListViewModel: SMBListViewModel = viewModel()
+    val webDavListViewModel: WebDavListViewModel = viewModel()
+    val ftpListViewModel: FTPListViewModel = viewModel()
+    val httpLinkListViewModel: HTTPLinkListViewModel = viewModel()
+    val nfsListViewModel: NFSListViewModel = viewModel()
+    //val webDavListViewModel: WebDavListViewModel = viewModel()
 
     // 使用工厂初始化 ViewModel
     val libraryViewModel: MediaLibraryViewModel = viewModelWithFactory {
@@ -162,7 +160,8 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
         navController = mainNavController,
         startDestination = "MainPage",
         modifier = Modifier.background(Color.Black)
-    ) {
+    )
+    {
 
         composable("MainPage") {
             val homeNavController = rememberNavController()
@@ -563,28 +562,28 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
             SMBConScreen(smbListViewModel)
         }
         composable("WebDavConScreen") {
-            WebDavConScreen()
+            WebDavConScreen(webDavListViewModel)
         }
         composable("WebDavListScreen") {
-            WebDavConListScreen(mainNavController)
+            WebDavConListScreen(mainNavController,webDavListViewModel)
         }
         composable("FTPConScreen") {
-            FTPConScreen()
+            FTPConScreen(ftpListViewModel)
         }
         composable("FTPConListScreen") {
-            FTPConListScreen(mainNavController)
+            FTPConListScreen(mainNavController,ftpListViewModel)
         }
         composable("NFSConScreen") {
-            NFSConScreen()
+            NFSConScreen(nfsListViewModel)
         }
         composable("NFSConListScreen") {
-            NFSConListScreen(mainNavController)
+            NFSConListScreen(mainNavController,nfsListViewModel)
         }
         composable("HTTPLinkConScreen") {
-            HTTPLinkConScreen()
+            HTTPLinkConScreen(httpLinkListViewModel)
         }
         composable("HTTPLinkConListScreen") {
-            HTTPLinkConListScreen(mainNavController)
+            HTTPLinkConListScreen(mainNavController,httpLinkListViewModel)
         }
         composable("SolarSystemScreen") {
             SolarSystem()

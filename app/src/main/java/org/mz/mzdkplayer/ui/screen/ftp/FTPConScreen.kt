@@ -54,12 +54,10 @@ import java.util.UUID
  * FTP 连接界面
  */
 @Composable
-fun FTPConScreen(
-
-) {
+fun FTPConScreen(ftpListViewModel: FTPListViewModel) {
     // 使用 FTP 的 ViewModel
     val ftpConViewModel: FTPConViewModel = viewModel()
-    val ftpListViewModel: FTPListViewModel = viewModel()
+    //val ftpListViewModel: FTPListViewModel = viewModel()
 
     // UI 状态由 ViewModel 管理
     val connectionStatus by ftpConViewModel.connectionStatus.collectAsState()
