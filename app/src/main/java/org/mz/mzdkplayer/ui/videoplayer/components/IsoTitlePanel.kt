@@ -16,6 +16,8 @@ import androidx.tv.material3.ListItem
 import androidx.tv.material3.ListItemDefaults
 import androidx.tv.material3.Text
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import org.mz.mzdkplayer.R
 import org.mz.mzdkplayer.player.core.MzIsoTitle
 import org.mz.mzdkplayer.tool.focusOnInitialVisibility
 
@@ -67,7 +69,7 @@ fun IsoTitlePanel(
                     )
                 },
                 leadingContent = if (selectedIndex == index) {
-                    { Icon(Icons.Filled.Check, contentDescription = "已选择") }
+                    { Icon(Icons.Filled.Check, contentDescription = stringResource(R.string.ui_label_selected)) }
                 } else null,
                 onClick = {
                     onTitleSelected(title)

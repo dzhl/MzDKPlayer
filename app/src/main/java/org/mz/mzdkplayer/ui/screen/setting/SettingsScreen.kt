@@ -268,7 +268,7 @@ fun PlaybackSection(state: SettingsUiState, settingsVM: SettingsViewModel) {
         // ==================== 新增：播放器内核选择 ====================
         ActionSettingItem(
             title = stringResource(R.string.setting_default_player),
-            value = if (state.defaultPlayer == "vlc") "VLC" else "ExoPlayer",
+            value = if (state.defaultPlayer == "vlc") stringResource(R.string.setting_default_player_vlc) else stringResource(R.string.setting_default_player_exo),
             onClick = {
                 val next = if (state.defaultPlayer == "exo") "vlc" else "exo"
                 settingsVM.setDefaultPlayer(next)
@@ -304,7 +304,7 @@ fun AudioSection(state: SettingsUiState, settingsVM: SettingsViewModel) {
         )
         // 新增音频解码模式切换选项
         ActionSettingItem(
-            title = "ExoPlayer音频解码模式(仅对ExoPlayer播放内核生效)",
+            title = stringResource(R.string.setting_exo_audio_decode_mode),
             value = formatAudioDecodeMode(state.exoAudioDecodeMode),
             onClick = {
                 // 循环切换逻辑: 1(硬优先) -> 2(软优先) -> 0(纯硬解) -> 1(硬优先)
@@ -447,7 +447,7 @@ fun ToolsSection(movieVM: MovieViewModel, audioViewModel: AudioViewModel) {
     if (showClearMovieDialog) {
         DeleteConfirmDialog(
             title = stringResource(R.string.btn_clear_movie_db), // 可以直接复用按钮的文案当标题
-            message = "确定要清空所有的影视数据吗？此操作不可恢复。",
+            message = stringResource(R.string.msg_clear_movie_db_confirm),
             onConfirm = {
                 // 用户点击确认后，真正执行清理逻辑
                 movieVM.clearMediaLibrary()
@@ -462,7 +462,7 @@ fun ToolsSection(movieVM: MovieViewModel, audioViewModel: AudioViewModel) {
     if (showClearAudioDialog) {
         DeleteConfirmDialog(
             title = stringResource(R.string.btn_clear_audio_db),
-            message = "确定要清空所有的音乐数据吗？此操作不可恢复。",
+            message = stringResource(R.string.msg_clear_audio_db_confirm),
             onConfirm = {
                 audioViewModel.clearLibrary()
             },
@@ -608,7 +608,7 @@ fun AboutSection(context: Context, navController: NavHostController) {
             ) {
                 Text(
                     modifier = Modifier.padding(3.dp),
-                    text = "Version: ${pkgInfo?.versionName} (${pkgInfo?.versionCodeCompat})",
+                    text = stringResource(R.string.ui_label_version_prefix) + "${pkgInfo?.versionName} (${pkgInfo?.versionCodeCompat})",
                     style = MaterialTheme.typography.bodyLarge,
                     color = Color.Gray
                 )
@@ -620,8 +620,8 @@ fun AboutSection(context: Context, navController: NavHostController) {
 // --- Helper Functions ---
 @Composable
 fun formatLang(code: String): String = when (code) {
-    "zh" -> "中文"
-    "en" -> "English"
+    "zh" -> stringResource(R.string.ui_label_chinese_language)
+    "en" -> stringResource(R.string.lang_english)
     else -> stringResource(R.string.lang_auto)
 }
 @Composable
@@ -630,20 +630,20 @@ fun parseBgColorName(color: Long): String = when (color) {
     0x80FFFFFF -> stringResource(R.string.color_white_50)
     0x80FFFF00 -> stringResource(R.string.color_yellow_50)
     0x00000000L -> stringResource(R.string.color_transparent)
-    else -> "自定义"
+    else -> stringResource(R.string.ui_label_custom)
 }
 @Composable
 fun formatAppLang(code: String): String = when(code){
-    "" -> "Auto (System)"
-    "zh" -> "中文"
-    "en" -> "English"
-    "ja" -> "日本語"
+    "" -> stringResource(R.string.lang_auto_system)
+    "zh" -> stringResource(R.string.ui_label_chinese_language)
+    "en" -> stringResource(R.string.lang_english)
+    "ja" -> stringResource(R.string.ui_label_japanese_language)
     else -> stringResource(R.string.lang_auto)
 }
 @Composable
 fun formatAudioDecodeMode(mode: Int): String = when (mode) {
-    0 -> "纯硬解 (不支持FFmpeg)"
-    1 -> "硬解优先 (支持音频直通)"
-    2 -> "软解优先 (兼容性最好)"
-    else -> "未知"
+    0 -> stringResource(R.string.setting_audio_decode_pure_hw)
+    1 -> stringResource(R.string.setting_audio_decode_hw_priority)
+    2 -> stringResource(R.string.setting_audio_decode_sw_priority)
+    else -> stringResource(R.string.ui_label_unknown)
 }

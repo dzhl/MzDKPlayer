@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.UnstableApi
+import org.mz.mzdkplayer.tool.Tools.toBase64
 import androidx.navigation.NavHostController
 import androidx.tv.material3.Icon
 import androidx.tv.material3.ListItem
@@ -255,22 +256,9 @@ fun LocalFileListScreen(path: String?, navController: NavHostController, setting
                                         // 本地文件 URI 格式通常是 file:///full/path/to/file
                                         val fullFileUri = "file://$fullPath"
 
-                                        val encodedFileUri = try {
-                                            URLEncoder.encode(fullFileUri, "UTF-8")
-                                        } catch (e: Exception) {
-                                            Log.e("LocalFileListScreen", "文件URI编码失败: $e")
-                                            Toast.makeText(context, context.getString(R.string.ui_label_directory_path_encoding_failed), Toast.LENGTH_SHORT).show()
-                                            return@items
-                                        }
-
-                                        // 2. 尝试编码文件名
-                                        val encodedFileName = try {
-                                            URLEncoder.encode(fileName, "UTF-8")
-                                        } catch (e: Exception) {
-                                            Log.e("LocalFileListScreen", "文件名编码失败: $e")
-                                            Toast.makeText(context, context.getString(R.string.ui_label_filename_encoding_failed), Toast.LENGTH_SHORT).show()
-                                            return@items
-                                        }
+                                        val encodedFileUri = fullFileUri.toBase64()
+                                        val encodedFileName = fileName.toBase64()
+                                        val encodedLocalFile = "本地文件".toBase64()
 
                                         ListItem(
                                             selected = false,
@@ -287,16 +275,7 @@ fun LocalFileListScreen(path: String?, navController: NavHostController, setting
                                                         isDirectory -> {
                                                             // --- 目录点击处理 ---
                                                             // 对新的路径（完整路径）进行编码，用于导航
-                                                            val encodedNewPath = try {
-                                                                URLEncoder.encode(fullPath, "UTF-8")
-                                                            } catch (e: Exception) {
-                                                                Log.e(
-                                                                    "LocalFileListScreen",
-                                                                    "目录路径编码失败: $e"
-                                                                )
-                                                                Toast.makeText(context, context.getString(R.string.ui_label_directory_path_encoding_failed), Toast.LENGTH_SHORT).show()
-                                                                return@launch
-                                                            }
+                                                            val encodedNewPath = fullPath.toBase64()
 
                                                             Log.d(
                                                                 "LocalFileListScreen",
@@ -315,15 +294,15 @@ fun LocalFileListScreen(path: String?, navController: NavHostController, setting
                                                                     )
                                                                 val route =
                                                                     if (mediaInfoFN.mediaType == "movie") {
-                                                                        "MovieDetails/$encodedFileUri/LOCAL/$encodedFileName/本地文件/$mediaId"
+                                                                        "MovieDetails/$encodedFileUri/LOCAL/$encodedFileName/$encodedLocalFile/$mediaId"
                                                                     } else {
                                                                         // 注意：这里假设 season/episode 可以安全地转换为 Int
-                                                                        "TVSeriesDetails/$encodedFileUri/LOCAL/$encodedFileName/本地文件/$mediaId/${mediaInfoFN.season.toInt()}/${mediaInfoFN.episode.toInt()}"
+                                                                        "TVSeriesDetails/$encodedFileUri/LOCAL/$encodedFileName/$encodedLocalFile/$mediaId/${mediaInfoFN.season.toInt()}/${mediaInfoFN.episode.toInt()}"
                                                                     }
                                                                 navController.navigate(route)
                                                             } else {
                                                                 navController.navigate(
-                                                                    "VideoPlayer/$encodedFileUri/LOCAL/$encodedFileName/本地文件" // connectionName 留空
+                                                                    "VideoPlayer/$encodedFileUri/LOCAL/$encodedFileName/$encodedLocalFile" // connectionName 留空
                                                                 )
                                                             }
                                                         }
@@ -373,7 +352,7 @@ fun LocalFileListScreen(path: String?, navController: NavHostController, setting
 
                                                             // 导航到音频播放器
                                                             navController.navigate(
-                                                                "AudioPlayer/$encodedFileUri/LOCAL/$encodedFileName/本地文件/$currentAudioIndex" // connectionName 留空
+                                                                "AudioPlayer/$encodedFileUri/LOCAL/$encodedFileName/$encodedLocalFile/$currentAudioIndex" // connectionName 留空
                                                             )
                                                         }
 
@@ -381,7 +360,7 @@ fun LocalFileListScreen(path: String?, navController: NavHostController, setting
                                                             fileExtension
                                                         ) -> {
                                                             navController.navigate(
-                                                                "PicViewer/$encodedFileUri/LOCAL/本地文件/$encodedFileName" // connectionName 留空
+                                                                "PicViewer/$encodedFileUri/LOCAL/$encodedLocalFile/$encodedFileName" // connectionName 留空
                                                             )
                                                         }
 

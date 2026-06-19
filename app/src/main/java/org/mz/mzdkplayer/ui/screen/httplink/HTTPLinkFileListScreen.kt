@@ -28,6 +28,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import org.mz.mzdkplayer.tool.Tools.toBase64
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavHostController
 import androidx.tv.material3.Icon
@@ -269,30 +270,9 @@ fun HTTPLinkFileListScreen(
                                             "Full file URL before encoding: $fullFileUrl"
                                         )
 
-                                        val encodedFileUrl = try {
-                                            URLEncoder.encode(fullFileUrl, "UTF-8")
-                                        } catch (e: Exception) {
-                                            Log.e("HTTPLinkFileListScreen", "文件URL编码失败: $e")
-                                            Toast.makeText(context, context.getString(R.string.ui_label_directory_path_encoding_failed), Toast.LENGTH_SHORT).show()
-                                            return@items
-                                        }
-
-                                        val encodedResourceName = try {
-                                            URLEncoder.encode(resource.name, "UTF-8")
-                                        } catch (e: Exception) {
-                                            Log.e("HTTPLinkFileListScreen", "文件名编码失败: $e")
-                                            Toast.makeText(context, context.getString(R.string.ui_label_filename_encoding_failed), Toast.LENGTH_SHORT).show()
-                                            return@items
-                                        }
-
-                                        val encodedConnectionName = try {
-                                            URLEncoder.encode(connectionName, "UTF-8")
-                                        } catch (e: Exception) {
-                                            // 几乎不会失败，但最好处理一下
-                                            Log.e("HTTPLinkFileListScreen", "连接名编码失败: $e")
-                                            Toast.makeText(context, context.getString(R.string.ui_label_connection_name_encoding_failed), Toast.LENGTH_SHORT).show()
-                                            return@items
-                                        }
+                                        val encodedFileUrl = fullFileUrl.toBase64()
+                                        val encodedResourceName = resource.name.toBase64()
+                                        val encodedConnectionName = connectionName.toBase64()
                                         ListItem(
                                             selected = false,
                                             onClick = {
@@ -307,19 +287,11 @@ fun HTTPLinkFileListScreen(
                                                         // normalizedPath 已带 /，所以直接拼接 resourceName 即可
                                                         val newFullPath =
                                                             "${normalizedPath}${resourceName}"
-                                                        val encodedNewSubPath = try {
-                                                            URLEncoder.encode(newFullPath, "UTF-8")
-                                                        } catch (e: Exception) {
-                                                            Log.e(
-                                                                "HTTPLinkFileListScreen",
-                                                                "目录路径编码失败: $e"
-                                                            )
-                                                            Toast.makeText(context, context.getString(R.string.ui_label_file_path_encoding_failed), Toast.LENGTH_SHORT).show()
-                                                            return@launch
-                                                        }
+                                                        val encodedNewSubPath = newFullPath.toBase64()
+                                                        val encodedConnName = connectionName.toBase64()
 
                                                         // 注意：导航路由参数顺序是 connectionName 在前，encodedNewSubPath 在后
-                                                        navController.navigate("HTTPLinkFileListScreen/$connectionName/$encodedNewSubPath")
+                                                        navController.navigate("HTTPLinkFileListScreen/$encodedConnName/$encodedNewSubPath")
 
                                                     } else {
                                                         // --- 文件点击处理：提取公共编码变量 ---

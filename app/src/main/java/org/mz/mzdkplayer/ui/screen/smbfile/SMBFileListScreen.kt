@@ -61,6 +61,8 @@ import org.mz.mzdkplayer.data.repository.Resource
 import org.mz.mzdkplayer.di.RepositoryProvider
 import org.mz.mzdkplayer.tool.Tools
 import org.mz.mzdkplayer.tool.Tools.VideoBigIcon
+import org.mz.mzdkplayer.tool.Tools.fromBase64
+import org.mz.mzdkplayer.tool.Tools.toBase64
 import org.mz.mzdkplayer.tool.viewModelWithFactory
 import org.mz.mzdkplayer.ui.screen.common.CirCleIconButton
 
@@ -144,13 +146,8 @@ fun SMBFileListScreen(
     var showEditDialog by remember { mutableStateOf(false) }
     // 处理路径变化和连接状态
     LaunchedEffect(path, connectionStatus) {
-        val decodedPath = try {
-            URLDecoder.decode(path ?: "", "UTF-8")
-        } catch (e: Exception) {
-            Log.e("SMBFileListScreen", "路径解码失败: $e")
-            Toast.makeText(context, context.getString(R.string.ui_label_invalid_path_format), Toast.LENGTH_SHORT).show()
-            return@LaunchedEffect
-        }
+        // 🟢 进来的 path 已经在 MzDKPlayerAPP 路由层解密过了，直接用！
+        val decodedPath = path ?: ""
 
         if (decodedPath.isEmpty()) {
             Log.w("SMBFileListScreen", "路径为空")
@@ -293,37 +290,15 @@ fun SMBFileListScreen(
                                                 selected = false,
 
                                                 onClick = {
-                                                    // --- 提取公共变量/准备工作 ---
+                                                    // 1. 统一安全处理 connectionName 并转 Base64
+                                                    val safeConnectionName = (if (connectionName.isBlank()) "unknown" else connectionName).toBase64()
 
-                                                    val connectionName = connectionName
+                                                    // 2. 构造 SMB URI
+                                                    val fullSmbUri = "smb://${file.username}:${file.password}@${file.server}/${file.share}${file.fullPath}"
 
-                                                    // 构造完整的 SMB URI（含用户名/密码，用于文件访问）
-                                                    val fullSmbUri =
-                                                        "smb://${file.username}:${file.password}@${file.server}/${file.share}${file.fullPath}"
-
-                                                    // 尝试对 URI 和文件名进行 URL 编码
-                                                    val encodedUri = try {
-                                                        URLEncoder.encode(fullSmbUri, "UTF-8")
-                                                    } catch (e: Exception) {
-                                                        Log.e(
-                                                            "SMBFileListScreen",
-                                                            "URI 编码失败: $e"
-                                                        )
-                                                        Toast.makeText(context, context.getString(R.string.ui_label_directory_path_encoding_failed), Toast.LENGTH_SHORT).show()
-                                                        return@ListItem // 编码失败，退出点击事件
-                                                    }
-
-                                                    val encodedFileName = try {
-                                                        URLEncoder.encode(file.name, "UTF-8")
-                                                    } catch (e: Exception) {
-                                                        Log.e(
-                                                            "SMBFileListScreen",
-                                                            "文件名编码失败: $e"
-                                                        )
-                                                        Toast.makeText(context, context.getString(R.string.ui_label_filename_encoding_failed), Toast.LENGTH_SHORT).show()
-                                                        return@ListItem // 编码失败，退出点击事件
-                                                    }
-
+                                                    // 3. 统一使用 Base64 编码，抛弃恶心的 try-catch
+                                                    val encodedUri = fullSmbUri.toBase64()
+                                                    val encodedFileName = file.name.toBase64()
                                                     // --- 核心逻辑分支 ---
                                                     when {
                                                         file.isDirectory -> {
@@ -335,40 +310,13 @@ fun SMBFileListScreen(
                                                                 file.username,
                                                                 file.password
                                                             )
-                                                            // 注意：这里的 newPath 是给导航路由使用的，需要重新编码
-                                                            val encodedNewPath = try {
-                                                                URLEncoder.encode(newPath, "UTF-8")
-                                                            } catch (e: Exception) {
-                                                                Log.e(
-                                                                    "SMBFileListScreen",
-                                                                    "路径编码失败: $e"
-                                                                )
-                                                                Toast.makeText(context, context.getString(R.string.ui_label_directory_path_encoding_failed), Toast.LENGTH_SHORT).show()
-                                                                return@ListItem
-                                                            }
-                                                            navController.navigate("SMBFileListScreen/$encodedNewPath/$connectionName")
+                                                            // 🟢 目录路径直接转 Base64
+                                                            val encodedNewPath = newPath.toBase64()
+                                                            navController.navigate("SMBFileListScreen/$encodedNewPath/$safeConnectionName")
                                                         }
 
                                                         Tools.containsVideoFormat(fileExtension) -> {
-                                                            val isIso = fileExtension.lowercase() == "iso"
-                                                            if (isIso) {
-                                                                // ====================== ISO 特殊处理 ======================
-                                                                currentISOFileName = file.name
-                                                                currentISOUri = fullSmbUri
 
-                                                                // TODO: 这里未来可以接入 LibVLC 实时解析 ISO 的 Title 列表
-                                                                // 目前先使用占位数据，替换成真实解析结果即可
-                                                                // 示例解析逻辑可参考 MzVlcPlayer.kt 中的 parseAsync + media.getTracks()
-                                                                isoTitles = listOf(
-                                                                    "Title 0 - 主电影 (Main Feature)",
-                                                                    "Title 1 - 额外内容 (Extras)",
-                                                                    "Title 2 - 菜单 (Menu)",
-                                                                    "Title 3 - 预告片 (Trailer)"
-                                                                )
-
-                                                                showISODialog = true
-                                                                return@ListItem
-                                                            }
                                                             // 处理视频文件点击
                                                             Log.d(
                                                                 "SMBFileListScreen",
@@ -381,26 +329,21 @@ fun SMBFileListScreen(
 
                                                             // 检查是否有媒体信息（mediaId > 0, 且是焦点文件, 且未隐藏详情）
                                                             if (mediaId > 0 && focusedFileName == file.name && !settingsState.hideDetails) {
-                                                                // 💡 核心改动：从当前已经加载成功的 focusedMovie 中获取信息
                                                                 val currentMedia = (focusedMovie as? Resource.Success)?.data
                                                                 if (currentMedia != null) {
                                                                     val route = if (currentMedia.isMovie) {
-                                                                        // 电影路由
-                                                                        "MovieDetails/$encodedUri/SMB/$encodedFileName/${connectionName}/$mediaId"
+                                                                        "MovieDetails/$encodedUri/SMB/$encodedFileName/$safeConnectionName/$mediaId"
                                                                     } else {
-                                                                        // 剧集路由：优先使用 currentMedia 里的季集信息，如果没有则降级使用解析器（保证健壮性）
                                                                         val s = currentMedia.seasonNumber
                                                                         val e = currentMedia.episodeNumber
-                                                                        "TVSeriesDetails/$encodedUri/SMB/$encodedFileName/${connectionName}/$mediaId/$s/$e"
+                                                                        "TVSeriesDetails/$encodedUri/SMB/$encodedFileName/$safeConnectionName/$mediaId/$s/$e"
                                                                     }
                                                                     navController.navigate(route)
                                                                 } else {
-                                                                    // 如果虽然有 mediaId 但对象为空（理论不应发生），降级直接播放
-                                                                    navController.navigate("VideoPlayer/$encodedUri/SMB/$encodedFileName/${connectionName}")
+                                                                    navController.navigate("VideoPlayer/$encodedUri/SMB/$encodedFileName/$safeConnectionName")
                                                                 }
                                                             } else {
-                                                                // 没有电影信息，直接播放
-                                                                navController.navigate("VideoPlayer/$encodedUri/SMB/$encodedFileName/${connectionName}")
+                                                                navController.navigate("VideoPlayer/$encodedUri/SMB/$encodedFileName/$safeConnectionName")
                                                             }
                                                         }
 
@@ -447,14 +390,16 @@ fun SMBFileListScreen(
                                                             )
 
                                                             // 传递当前音频项在播放列表中的索引并导航
-                                                            navController.navigate("AudioPlayer/$encodedUri/SMB/$encodedFileName/${connectionName}/$currentAudioIndex")
+                                                            // 🟢 音频跳转
+                                                            navController.navigate("AudioPlayer/$encodedUri/SMB/$encodedFileName/$safeConnectionName/$currentAudioIndex")
                                                         }
 
                                                         Tools.containsImageFileExtension(
                                                             fileExtension
                                                         ) -> {
                                                             // 处理图片文件点击
-                                                            navController.navigate("PicViewer/$encodedUri/SMB/$encodedFileName/${connectionName}")
+                                                            // 🟢 图片跳转
+                                                            navController.navigate("PicViewer/$encodedUri/SMB/$encodedFileName/$safeConnectionName")
                                                         }
 
                                                         else -> {
@@ -704,61 +649,7 @@ fun SMBFileListScreen(
             }
         }
     }
-//    if (showEditDialog) {
-//        MyFileDialog(
-//            onDismiss = { showEditDialog = false },
-//            fileName = focusedFileName,
-//            onEditClick = {
-//                showEditDialog = false
-//                navController.navigate(
-//                    "EditTMDBInfoScreen/${
-//                        URLEncoder.encode(
-//                            focusedMediaUri,
-//                            "UTF-8"
-//                        )
-//                    }"
-//                )
-//            },
-//            onCloseClick = { showEditDialog = false }
-//        )
-//    }
-//    if (showISODialog) {
-//        ISODialog(
-//            onDismiss = {
-//                showISODialog = false
-//                isoTitles = emptyList() // 清理数据
-//            },
-//            fileName = currentISOFileName,
-//            titles = isoTitles,
-//            currentUri = currentISOUri,
-//            onTitleSelected = { selectedTitle ->
-//                showISODialog = false
-//                isoTitles = emptyList()
-//
-//                // TODO: 如果你想支持指定 Title 播放，可以在这里把 title 索引传给 VideoPlayer
-//                // 例如修改导航为 "VideoPlayer/$encodedUri/SMB/$encodedFileName/${connectionName}?title=0"
-//                // 然后在 MzVlcPlayer.kt 的 options 或 media.addOption(":dvd-title=${index}") 里使用
-//                val encodedUri = try {
-//                    URLEncoder.encode(currentISOUri, "UTF-8")
-//                } catch (e: Exception) {
-//                    Log.e("SMBFileListScreen", "ISO URI 编码失败: $e")
-//                    return@ISODialog
-//                }
-//                val encodedFileName = try {
-//                    URLEncoder.encode(currentISOFileName ?: "", "UTF-8")
-//                } catch (e: Exception) {
-//                    Log.e("SMBFileListScreen", "ISO 文件名编码失败: $e")
-//                    return@ISODialog
-//                }
-//
-//                navController.navigate("VideoPlayer/$encodedUri/SMB/$encodedFileName/${connectionName}")
-//            },
-//            onCloseClick = {
-//                showISODialog = false
-//                isoTitles = emptyList()
-//            }
-//        )
-//    }
+
 }
 
 

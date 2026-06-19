@@ -47,6 +47,8 @@ import androidx.navigation.NavHostController
 
 import kotlinx.coroutines.delay
 import org.mz.mzdkplayer.R
+import org.mz.mzdkplayer.tool.Tools.fromBase64
+import org.mz.mzdkplayer.tool.Tools.toBase64
 import org.mz.mzdkplayer.ui.screen.common.ConOpPanel
 
 import org.mz.mzdkplayer.ui.screen.common.ConnectionCard
@@ -178,15 +180,15 @@ fun SMBConListScreen(mainNavController: NavHostController,smbListViewModel: SMBL
                                     username = conn.username ?: stringResource(R.string.ui_label_unknown),
                                 ),
                                 onClick = {
-                                    Log.d("SMBConListScreen", conn.name.toString())
-                                    mainNavController.navigate(
-                                        "SMBFileListScreen/${
-                                            URLEncoder.encode(
-                                                "smb://${conn.username}:${conn.password}@${conn.ip}/${conn.shareName}/",
-                                                "UTF-8"
-                                            )
-                                        }/${URLEncoder.encode(conn.name,"UTF-8")}"
-                                    )
+
+                                    // 🟢 统一使用 Base64 编码
+                                    val smbUri = "smb://${conn.username}:${conn.password}@${conn.ip}/${conn.shareName}/"
+                                    val safePath = smbUri.toBase64()
+                                    val safeConnectionName = (conn.name ?: "unknown").toBase64()
+                                    Log.d("SMBConListScreen", safePath)
+                                    Log.d("SMBConListScreen", safePath.fromBase64())
+                                    mainNavController.navigate("SMBFileListScreen/$safePath/$safeConnectionName")
+
                                     smbListViewModel.setSelectedIndex(index)
                                     smbListViewModel.setSelectedId(conn.id)
                                 },

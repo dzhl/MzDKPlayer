@@ -103,7 +103,7 @@ fun SubtitleTrackPanel(
                     val languageText = Tools.getFullLanguageName(trackLang)
 
                     val titleText = when {
-                        isExternalAutoSearch -> "$languageText $labelText (未找到文件可能缓冲)"
+                        isExternalAutoSearch -> "$languageText $labelText ${stringResource(R.string.ui_label_subtitle_file_not_found_hint)}"
                         trackLabel.isNotEmpty() -> "$languageText $labelText"
                         else -> "$languageText ${stringResource(R.string.ui_label_language_subtitles)}"
                     }
@@ -133,7 +133,7 @@ fun SubtitleTrackPanel(
                                 )
                             }else{
                                 Text(
-                                    text = "关闭字幕",
+                                    text = stringResource(R.string.ui_label_subtitle_off),
                                 )
                             }
                         },
@@ -143,7 +143,7 @@ fun SubtitleTrackPanel(
                                 }
                         },
                         leadingContent = if (selectedIndex == index) {
-                            { Icon(Icons.Filled.Check, contentDescription = "已选择") }
+                            { Icon(Icons.Filled.Check, contentDescription = stringResource(R.string.ui_label_selected)) }
                         } else null,
                         onClick = {
                             onTrackSelected(track)

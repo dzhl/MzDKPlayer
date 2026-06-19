@@ -71,6 +71,7 @@ import org.mz.mzdkplayer.ui.screen.common.MyFileDialog
 import org.mz.mzdkplayer.ui.screen.vm.MediaLibraryViewModel
 import org.mz.mzdkplayer.ui.screen.vm.SettingsViewModel
 import org.mz.mzdkplayer.ui.theme.myListItemCoverColor
+import org.mz.mzdkplayer.tool.Tools.toBase64
 import java.net.URLEncoder
 
 @OptIn(ExperimentalTvMaterial3Api::class)
@@ -116,9 +117,9 @@ fun MovieLibraryScreen(
                 when (versionCount) {
                     1 -> {
                         val version = movieVersions.first()
-                        val encodedUri = URLEncoder.encode(version.videoUri, "UTF-8")
-                        val encodedFileName = URLEncoder.encode(version.fileName, "UTF-8")
-                        val connectionName = URLEncoder.encode(version.connectionName, "UTF-8")
+                        val encodedUri = version.videoUri.toBase64()
+                        val encodedFileName = version.fileName.toBase64()
+                        val connectionName = version.connectionName.toBase64()
                         if (!settingsState.hideDetails) {
                             navController.navigate("MovieDetails/$encodedUri/${version.dataSourceType}/$encodedFileName/$connectionName/${version.tmdbId}")
                         } else {
@@ -403,9 +404,9 @@ fun MovieLibraryScreen(
                 showVersionDialog = false
                 viewModel.clearSelectedMovieVersions()
 
-                val encodedUri = URLEncoder.encode(version.videoUri, "UTF-8")
-                val encodedFileName = URLEncoder.encode(version.fileName, "UTF-8")
-                val connectionName = URLEncoder.encode(version.connectionName, "UTF-8")
+                val encodedUri = version.videoUri.toBase64()
+                val encodedFileName = version.fileName.toBase64()
+                val connectionName = version.connectionName.toBase64()
                 if (!settingsState.hideDetails) {
                     navController.navigate("MovieDetails/$encodedUri/${version.dataSourceType}/$encodedFileName/$connectionName/${version.tmdbId}")
                 } else {
@@ -424,7 +425,7 @@ fun MovieLibraryScreen(
             fileName = focusedMovie?.fileName,
             onEditClick = {
                 showEditDialog = false
-                navController.navigate("EditTMDBInfoScreen/${URLEncoder.encode(focusedMovie?.videoUri, "UTF-8")}")
+                            navController.navigate("EditTMDBInfoScreen/${focusedMovie?.videoUri?.toBase64()}")
             },
             onCloseClick = { showEditDialog = false }
         )

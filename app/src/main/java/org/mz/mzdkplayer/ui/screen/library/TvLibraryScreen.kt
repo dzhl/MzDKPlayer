@@ -65,6 +65,7 @@ import org.mz.mzdkplayer.ui.screen.common.MyFileDialog
 import org.mz.mzdkplayer.ui.screen.vm.MediaLibraryViewModel
 import org.mz.mzdkplayer.ui.screen.vm.SettingsViewModel
 import org.mz.mzdkplayer.ui.theme.myListItemCoverColor
+import org.mz.mzdkplayer.tool.Tools.toBase64
 import java.net.URLEncoder
 import java.util.Locale
 import androidx.compose.ui.platform.LocalLocale
@@ -327,11 +328,11 @@ fun TvLibraryScreen(
             onEpisodeClick = { episode ->
                 showEpisodeDialog = false
                 // 跳转到现有的 TVSeriesDetailsScreen
-                val encodedUri = URLEncoder.encode(episode.videoUri, "UTF-8")
+                val encodedUri = episode.videoUri.toBase64()
                 // 因为你的文件名可能作为 title 存在，这里要注意
                 val fileName = "S${episode.seasonNumber}E${episode.episodeNumber}"
-                val encodedFileName = URLEncoder.encode(episode.fileName, "UTF-8")
-                val connectionName = URLEncoder.encode(episode.connectionName, "UTF-8")
+                val encodedFileName = episode.fileName.toBase64()
+                val connectionName = episode.connectionName.toBase64()
                 // 核心：这里将具体的 Uri 和 Season/Episode 传给详情页
                 if (!settingsState.hideDetails) {
                     navController.navigate(
@@ -351,7 +352,7 @@ fun TvLibraryScreen(
             fileName = focusedTvShow?.fileName,
             onEditClick = {
                 showEditDialog = false
-                navController.navigate("EditTMDBInfoScreen/${URLEncoder.encode(focusedTvShow?.videoUri,"UTF-8")}")
+                navController.navigate("EditTMDBInfoScreen/${focusedTvShow?.videoUri?.toBase64()}")
             },
             onCloseClick = { showEditDialog = false }
         )
@@ -460,7 +461,7 @@ fun EpisodeSelectionDialog(
             onEditClick = {
                 val episode = selectedEpisodeForEdit
                 if (episode != null) {
-                    val encodedUri = URLEncoder.encode(episode.videoUri, "UTF-8")
+                    val encodedUri = episode.videoUri.toBase64()
                     // 跳转到修改页面
                     navController.navigate("EditTMDBInfoScreen/$encodedUri")
                 }

@@ -56,12 +56,14 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.SurfaceDefaults
 import androidx.tv.material3.Text
+import androidx.compose.ui.res.stringResource
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import org.mz.mzdkplayer.R
 import org.mz.mzdkplayer.data.model.AudioInfo
 import org.mz.mzdkplayer.data.model.AudioItem
 import org.mz.mzdkplayer.data.model.MediaHistoryRecord
@@ -148,7 +150,7 @@ fun AudioPlayerScreen(
                     playbackPosition = currentPos,
                     mediaDuration = totalDur,
                     // 处理协议名称显示的逻辑
-                    protocolName = if (dataSourceType == "LOCAL") "本地文件" else dataSourceType,
+                    protocolName = if (dataSourceType == "LOCAL") "LOCAL" else dataSourceType,
                     connectionName = connectionName,
                     serverAddress = "test", // 如果你有真实的 server IP，请传入，否则留空或用占位符
                     mediaType = "AUDIO",    // 明确标记为视频
@@ -177,7 +179,7 @@ fun AudioPlayerScreen(
     ) { isGranted ->
         hasAudioPermission = isGranted
         if (!isGranted) {
-            Toast.makeText(context, "没有录音权限，将无法显示频谱动画", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, context.getString(R.string.ui_label_no_recording_permission_spectrum), Toast.LENGTH_LONG).show()
         }
     }
 
@@ -502,7 +504,7 @@ fun AudioPlayerScreen(
 
     // 显示 "再按一次退出" Toast
     if (showToast) {
-        Toast.makeText(context, "再按一次退出", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.ui_label_press_again_to_exit), Toast.LENGTH_SHORT).show()
         showToast = false
     }
 
@@ -687,10 +689,12 @@ fun AudioPlayerScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     // 歌手和专辑信息
+                    val loadingText = stringResource(R.string.ui_label_loading)
+                    val unknownSingerText = stringResource(R.string.ui_label_unknown_singer)
                     Text(
                         text = buildString {
                             append(
-                                if (isAudioInfoLoading) "加载中..." else audioInfo?.artist ?: "未知歌手"
+                                if (isAudioInfoLoading) loadingText else audioInfo?.artist ?: unknownSingerText
                             )
                             if (!audioInfo?.album.isNullOrEmpty()) {
                                 append(" — ${audioInfo?.album}")

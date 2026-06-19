@@ -28,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import org.mz.mzdkplayer.tool.Tools.toBase64
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
@@ -163,20 +164,18 @@ fun HTTPLinkConListScreen(
                                 onClick = {
                                     // 构建用于导航到 HTTP 文件列表的参数
                                     try {
-                                        // 对参数进行 URL 编码以处理特殊字符
-                                        val encodedServerAddress =
-                                            URLEncoder.encode(conn.serverAddress, "UTF-8")
-                                        val encodedShareName =
-                                            URLEncoder.encode(conn.shareName, "UTF-8")
+                                        val serverAddress = conn.serverAddress ?: ""
+                                        val shareName = conn.shareName ?: ""
+                                        val encodedSubPath = (serverAddress + shareName).toBase64()
+                                        val encodedName = (conn.name ?: "").toBase64()
 
                                         Log.d(
                                             "HTTPLinkList",
-                                            "Navigating to HTTPLinkFileListScreen with " +
-                                                    "ServerAddress: $encodedServerAddress, ShareName: $encodedShareName"
+                                            "Navigating to HTTPLinkFileListScreen with subPath: $encodedSubPath"
                                         )
                                         // 导航到 HTTP 文件列表屏幕，传递编码后的参数
                                         mainNavController.navigate(
-                                            "HTTPLinkFileListScreen/${conn.name}/$encodedServerAddress$encodedShareName"
+                                            "HTTPLinkFileListScreen/$encodedName/$encodedSubPath"
                                         )
                                     } catch (e: Exception) {
                                         Log.e(

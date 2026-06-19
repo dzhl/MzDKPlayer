@@ -78,8 +78,10 @@ import org.mz.mzdkplayer.ui.screen.common.MyIconButton
 import org.mz.mzdkplayer.ui.screen.movie.ErrorView
 import org.mz.mzdkplayer.ui.screen.movie.FullDescriptionDialog
 import org.mz.mzdkplayer.ui.screen.vm.MovieViewModel
+import org.mz.mzdkplayer.tool.Tools.toBase64
 import java.net.URLEncoder
 import java.util.Locale
+import androidx.compose.ui.platform.LocalLocale
 
 @Composable
 fun TVSeriesDetailsScreen(
@@ -98,9 +100,9 @@ fun TVSeriesDetailsScreen(
     val tvSeriesDetails by movieViewModel.tvSeriesResults.collectAsState()
     val tvEpisodeDetails by movieViewModel.tvEpisodeResults.collectAsState()
 
-    val videoUriEncoder = URLEncoder.encode(videoUri, "UTF-8")
-    val fileNameEncoder = URLEncoder.encode(fileName, "UTF-8")
-    val connectionNameEncoder = URLEncoder.encode(connectionName, "UTF-8")
+    val videoUriEncoder = videoUri.toBase64()
+    val fileNameEncoder = fileName.toBase64()
+    val connectionNameEncoder = connectionName.toBase64()
 
     val decodedUri = remember(videoUri) {
         java.net.URLDecoder.decode(videoUri, "UTF-8")
@@ -353,7 +355,7 @@ private fun TVSeriesContent(
                                     .padding(horizontal = 8.dp, vertical = 2.dp)
                             ) {
                                 Text(
-                                    text = "TMDB ${String.format(Locale.getDefault(), "%.1f", tvSeries.voteAverage)}",
+                                    text = "TMDB ${String.format(LocalLocale.current.platformLocale, "%.1f", tvSeries.voteAverage)}",
                                     style = MaterialTheme.typography.labelMedium,
                                     color = Color.Black,
                                     fontWeight = FontWeight.Bold
@@ -759,7 +761,7 @@ private fun CurrentEpisodeInfoSection(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("No Image", color = Color.Gray, style = MaterialTheme.typography.labelSmall)
+                        Text(stringResource(R.string.ui_label_no_image), color = Color.Gray, style = MaterialTheme.typography.labelSmall)
                     }
                 }
             }

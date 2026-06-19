@@ -370,5 +370,31 @@
     <string name="ui_label_dolby_vision">Dolby Vision</string>
     <string name="ui_label_standard_definition">標準画質</string>
 
-
+    <string name="setting_default_player_vlc">VLC</string>
+    <string name="setting_default_player_exo">ExoPlayer</string>
+    <string name="setting_exo_audio_decode_mode">ExoPlayer オーディオデコードモード (ExoPlayer のみ)</string>
+    <string name="setting_audio_decode_pure_hw">ハードウェアのみ (FFmpeg なし)</string>
+    <string name="setting_audio_decode_hw_priority">ハードウェア優先 (パススルー対応)</string>
+    <string name="setting_audio_decode_sw_priority">ソフトウェア優先 (互換性重視)</string>
+    <string name="msg_clear_movie_db_confirm">すべての映画/TV データを消去してもよろしいですか？この操作は元に戻せません。</string>
+    <string name="msg_clear_audio_db_confirm">すべての音楽データを消去してもよろしいですか？この操作は元に戻せません。</string>
+    <string name="lang_auto_system">Auto (System)</string>
+    <string name="lang_english">English</string>
+    <string name="ui_label_version_prefix">Version: </string>
+    <string name="unit_bps">B/s</string>
+    <string name="unit_kbps">KB/s</string>
+    <string name="unit_mbps">MB/s</string>
+    <string name="ui_label_video_track">ビデオトラック</string>
+    <string name="ui_label_audio_track">オーディオトラック</string>
+    <string name="ui_label_subtitle_select">字幕選択</string>
+    <string name="ui_label_danmaku_off">弾幕をオフにする</string>
+    <string name="ui_label_danmaku_on">弾幕をオンにする</string>
+    <string name="ui_label_danmaku_settings">弾幕設定</string>
+    <string name="ui_label_hide_custom_subtitle">カスタム字幕を隠す</string>
+    <string name="ui_label_external_video">外部ビデオ</string>
+    <string name="ui_label_show_custom_subtitle">カスタム字幕を表示</string>
+    <string name="ui_label_no_image">画像なし</string>
+    <string name="ui_label_no_poster">ポスターなし</string>
+    <string name="ui_label_subtitle_off">字幕をオフにする</string>
+    <string name="ui_label_subtitle_file_not_found_hint">(ファイルが見つかりません。バッファリング中の可能性があります)</string>
 </resources>

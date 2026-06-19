@@ -28,6 +28,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
+import org.mz.mzdkplayer.tool.Tools.toBase64
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.res.stringResource
@@ -168,12 +169,15 @@ fun WebDavConListScreen(
                                     }
 
                                     try {
-                                        val encodedUrl = URLEncoder.encode(fullUrl, "UTF-8")
+                                        val encodedUrl = (fullUrl ?: "").toBase64()
+                                        val encodedUsername = (conn.username ?: "").toBase64()
+                                        val encodedPassword = (conn.password ?: "").toBase64()
+                                        val encodedName = (conn.name ?: "").toBase64()
                                         Log.d(
                                             "WebDavList",
                                             "Navigating to WebDavFileListScreen with URL: $encodedUrl"
                                         )
-                                        mainNavController.navigate("WebDavFileListScreen/$encodedUrl/${conn.username}/${conn.password}/${URLEncoder.encode(conn.name,"UTF-8")}")
+                                        mainNavController.navigate("WebDavFileListScreen/$encodedUrl/$encodedUsername/$encodedPassword/$encodedName")
                                     } catch (e: Exception) {
                                         Log.e("WebDavList", "Error encoding URL: ${e.message}")
 

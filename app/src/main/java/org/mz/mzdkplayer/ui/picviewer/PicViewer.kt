@@ -8,16 +8,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import coil3.ImageLoader
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import org.mz.mzdkplayer.R
 
 @Composable
 fun PicViewerScreen(
     mediaUri: String,
     dataSourceType: String,
-    fileName: String = "未知文件名",
+    fileName: String = stringResource(R.string.ui_label_unknown_filename),
     connectionName: String,
 ) {
     val context = LocalContext.current

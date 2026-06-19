@@ -23,6 +23,7 @@ import java.util.Locale
 import kotlin.time.Duration.Companion.milliseconds
 import androidx.compose.ui.platform.LocalLocale
 
+import androidx.compose.ui.res.stringResource
 /**
  * 视频播放器控制按钮区域
  *
@@ -87,7 +88,7 @@ fun VideoPlayerControls(
                     ) painterResource(id = R.drawable.baseline_hd_24) else painterResource(R.drawable.blu_ray_disc) , // 高清图标
                     state = state,
                     isPlaying = isPlaying,
-                    tooltipText = "视频轨道", // 增加此处
+                    tooltipText = stringResource(R.string.ui_label_video_track), // 增加此处
                     onClick = {
                         // 点击高清图标，显示视频轨道选择面板
                         // 如果底层解析出了 titles，说明是包含了多视频的 ISO/DVD 文件
@@ -104,7 +105,7 @@ fun VideoPlayerControls(
                     modifier = Modifier.padding(start = 12.dp),
                     icon = painterResource(id = R.drawable.baseline_speaker_24), // 音频图标
                     state = state,
-                    tooltipText = "音频轨道", // 增加此处
+                    tooltipText = stringResource(R.string.ui_label_audio_track), // 增加此处
                     isPlaying = isPlaying,
                     onClick = {
                         // 点击音频图标，显示音频轨道选择面板
@@ -117,7 +118,7 @@ fun VideoPlayerControls(
                     modifier = Modifier.padding(start = 12.dp),
                     icon = painterResource(id = R.drawable.baseline_subtitles_24), // 字幕图标
                     state = state,
-                    tooltipText = "字幕选择", // 增加此处
+                    tooltipText = stringResource(R.string.ui_label_subtitle_select), // 增加此处
                     isPlaying = isPlaying,
                     onClick = {
                         // 点击字幕图标，显示字幕轨道选择面板
@@ -132,7 +133,7 @@ fun VideoPlayerControls(
                         id = R.drawable.dmb
                     ), // 弹幕开关图标
                     state = state,
-                    tooltipText = if (videoPlayerViewModel.danmakuVisibility) "关闭弹幕" else "开启弹幕",
+                    tooltipText = if (videoPlayerViewModel.danmakuVisibility) stringResource(R.string.ui_label_danmaku_off) else stringResource(R.string.ui_label_danmaku_on),
                     isPlaying = isPlaying,
                     onClick = {
                         // 点击弹幕开关图标，切换弹幕可见性
@@ -175,7 +176,7 @@ fun VideoPlayerControls(
                     icon = painterResource(id = R.drawable.video_danmu_config), // 字幕图标
                     state = state,
                     isPlaying = isPlaying,
-                    tooltipText = "弹幕设置", // 增加此处
+                    tooltipText = stringResource(R.string.ui_label_danmaku_settings), // 增加此处
                     onClick = {
                         // 点击字幕图标，显示字幕轨道选择面板
                         videoPlayerViewModel.selectedAorVorS = "D"
@@ -190,7 +191,7 @@ fun VideoPlayerControls(
                     state = state,
                     isPlaying = isPlaying,
                     // 根据状态动态显示文案
-                    tooltipText = if (videoPlayerViewModel.isCusSubtitleViewVis) "隐藏自定义字幕" else "显示自定义字幕",
+                    tooltipText = if (videoPlayerViewModel.isCusSubtitleViewVis) stringResource(R.string.ui_label_hide_custom_subtitle) else stringResource(R.string.ui_label_show_custom_subtitle),
                     onClick = {
                         // 点击字幕图标，显示字幕轨道选择面板
                         videoPlayerViewModel.isCusSubtitleViewVis = !videoPlayerViewModel.isCusSubtitleViewVis;

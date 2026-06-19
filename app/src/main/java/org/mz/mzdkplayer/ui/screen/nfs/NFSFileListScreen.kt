@@ -28,6 +28,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import org.mz.mzdkplayer.tool.Tools.toBase64
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavHostController
 import androidx.tv.material3.Icon
@@ -264,20 +265,13 @@ fun NFSFileListScreen(
                                     // 这里假设 file 有 isDirectory: Boolean 和 name: String? 属性
                                     val isDirectory = file.isDirectory
                                     val fileName = file.name ?: "Unknown"
-                                    val encodedFileName = URLEncoder.encode(fileName,"UTF-8")
-                                    val connectionName = URLEncoder.encode(nfsConnection.name,"UTF-8")
                                     ListItem(
                                         selected = false,
                                         onClick = {
                                             coroutineScope.launch {
                                                 val newSubPath = file.path
 
-                                                // 对新路径进行编码
-                                                val encodedNewSubPath =
-                                                    URLEncoder.encode(
-                                                        newSubPath.ifEmpty { " " },
-                                                        "UTF-8"
-                                                    )
+                                                val encodedNewSubPath = newSubPath.ifEmpty { " " }.toBase64()
                                                 if (isDirectory) {
                                                     // 构建新的子路径
 
@@ -285,20 +279,13 @@ fun NFSFileListScreen(
 //                                                    "NFSFileListScreen",
 //                                                    "Navigating to subdirectory: ${file.path} (encoded: $fileName$fileName)"
 //                                                )
+                                                    val encodedIp = (nfsConnection.serverAddress ?: "").toBase64()
+                                                    val encodedShareName = (nfsConnection.shareName ?: "").toBase64()
+                                                    val encodedName = (nfsConnection.name ?: "").toBase64()
+
                                                     // 导航到子目录，传递连接信息和新的子路径
-                                                    // 注意 URL 路径结构可能需要根据你的导航图调整
                                                     navController.navigate(
-                                                        "NFSFileListScreen/${nfsConnection.serverAddress}/${
-                                                            URLEncoder.encode(
-                                                                nfsConnection.shareName,
-                                                                "UTF-8"
-                                                            )
-                                                        }/$encodedNewSubPath/${
-                                                            URLEncoder.encode(
-                                                                nfsConnection.name,
-                                                                "UTF-8"
-                                                            )
-                                                        }"
+                                                        "NFSFileListScreen/$encodedIp/$encodedShareName/$encodedNewSubPath/$encodedName"
                                                     )
                                                 } else {
                                                     // 处理文件点击 - 导航到 VideoPlayer
@@ -309,24 +296,10 @@ fun NFSFileListScreen(
                                                         "NFSFileListScreen",
                                                         "Navigating to subdirectory: ${file.path} (encoded: $fileName$fileName)"
                                                     )
-                                                    val fullFileUrl =
-                                                        "nfs://${nfsConnection.serverAddress}:${
-                                                            URLEncoder.encode(
-                                                                nfsConnection.shareName,
-                                                                "UTF-8"
-                                                            )
-                                                        }:${
-                                                            URLEncoder.encode(
-                                                                newSubPath.ifEmpty { " " },
-                                                                "UTF-8"
-                                                            )
-                                                        }"
-                                                    Log.d(
-                                                        "NFSFileListScreen",
-                                                        "Full file URL: $fullFileUrl"
-                                                    )
-
-                                                    val encodedFileUrl = URLEncoder.encode(fullFileUrl, "UTF-8")
+                                                    val fullFileUrl = "nfs://${nfsConnection.serverAddress}:${nfsConnection.shareName}:${newSubPath.ifEmpty { " " }}"
+                                                    val encodedFileUrl = fullFileUrl.toBase64()
+                                                    val encodedFileName = file.name.toBase64()
+                                                    val encodedConnectionName = (nfsConnection.name ?: "").toBase64()
 
                                                     if (Tools.containsVideoFormat(
                                                             Tools.extractFileExtension(
@@ -343,15 +316,15 @@ fun NFSFileListScreen(
                                                                 )
                                                             val route =
                                                                 if (mediaInfoFN.mediaType == "movie") {
-                                                                    "MovieDetails/$encodedFileUrl/NFS/$encodedFileName/${connectionName}/$mediaId"
+                                                                    "MovieDetails/$encodedFileUrl/NFS/$encodedFileName/$encodedConnectionName/$mediaId"
                                                                 } else {
                                                                     // 注意：这里假设 season/episode 可以安全地转换为 Int
-                                                                    "TVSeriesDetails/$encodedFileUrl/NFS/$encodedFileName/${connectionName}/$mediaId/${mediaInfoFN.season.toInt()}/${mediaInfoFN.episode.toInt()}"
+                                                                    "TVSeriesDetails/$encodedFileUrl/NFS/$encodedFileName/$encodedConnectionName/$mediaId/${mediaInfoFN.season.toInt()}/${mediaInfoFN.episode.toInt()}"
                                                                 }
                                                             navController.navigate(route)
                                                         } else {
                                                         // 没有电影信息，直接播放
-                                                        navController.navigate("VideoPlayer/$encodedFileUrl/NFS/$encodedFileName/${connectionName}")
+                                                        navController.navigate("VideoPlayer/$encodedFileUrl/NFS/$encodedFileName/$encodedConnectionName")
                                                     }
                                                     } else if (Tools.containsAudioFormat(
                                                             Tools.extractFileExtension(
@@ -402,17 +375,7 @@ fun NFSFileListScreen(
                                                             audioItems
                                                         )
                                                         navController.navigate(
-                                                            "AudioPlayer/$encodedFileUrl/NFS/${
-                                                                URLEncoder.encode(
-                                                                    file.name,
-                                                                    "UTF-8"
-                                                                )
-                                                            }/${
-                                                                URLEncoder.encode(
-                                                                    nfsConnection.name,
-                                                                    "UTF-8"
-                                                                )
-                                                            }/$currentAudioIndex"
+                                                            "AudioPlayer/$encodedFileUrl/NFS/$encodedFileName/$encodedConnectionName/$currentAudioIndex"
                                                         )
                                                     } else if (Tools.containsImageFileExtension(
                                                             Tools.extractFileExtension(
@@ -421,17 +384,7 @@ fun NFSFileListScreen(
                                                         )
                                                     ) {
                                                         navController.navigate(
-                                                            "PicViewer/$encodedFileUrl/NFS/${
-                                                                URLEncoder.encode(
-                                                                    file.name,
-                                                                    "UTF-8"
-                                                                )
-                                                            }/${
-                                                                URLEncoder.encode(
-                                                                    nfsConnection.name,
-                                                                    "UTF-8"
-                                                                )
-                                                            }"
+                                                            "PicViewer/$encodedFileUrl/NFS/$encodedFileName/$encodedConnectionName"
                                                         )
                                                     } else {
                                                         Toast.makeText(

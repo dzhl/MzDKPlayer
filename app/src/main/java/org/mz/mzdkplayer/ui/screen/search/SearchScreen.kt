@@ -45,7 +45,7 @@ import org.mz.mzdkplayer.ui.screen.common.MyIconButton
 import org.mz.mzdkplayer.ui.screen.common.TvTextField
 import org.mz.mzdkplayer.ui.screen.library.EpisodeSelectionDialog // 假设你已将其提取或放在同一包下
 import org.mz.mzdkplayer.ui.theme.myTTFColor
-
+import org.mz.mzdkplayer.tool.Tools.toBase64
 import java.net.URLEncoder
 
 @Composable
@@ -135,9 +135,9 @@ fun SearchScreen(
                                     // 2. 如果是电影，直接跳转到详情页或播放页
                                     // 这里沿用你的 URI 编码逻辑，但针对电影结构可能略有不同
                                     // 假设电影也跳一样的详情页，或者你有单独的 MovieDetails
-                                    val encodedUri = URLEncoder.encode(media.videoUri, "UTF-8")
-                                    val encodedFileName = URLEncoder.encode(media.fileName, "UTF-8")
-                                    val connectionName = URLEncoder.encode(media.connectionName, "UTF-8")
+                                    val encodedUri = media.videoUri.toBase64()
+                                    val encodedFileName = media.fileName.toBase64()
+                                    val connectionName = media.connectionName.toBase64()
 
                                     // 注意：电影没有 Season/Episode，传 0 或其他默认值
                                     navController.navigate(
@@ -168,9 +168,9 @@ fun SearchScreen(
                 viewModel.clearSelectedEpisodes() // 跳转前清理
 
                 // 执行跳转逻辑 (与 TvLibraryScreen 一致)
-                val encodedUri = URLEncoder.encode(episode.videoUri, "UTF-8")
-                val encodedFileName = URLEncoder.encode(episode.fileName, "UTF-8")
-                val connectionName = URLEncoder.encode(episode.connectionName, "UTF-8")
+                            val encodedUri = episode.videoUri.toBase64()
+                val encodedFileName = episode.fileName.toBase64()
+                val connectionName = episode.connectionName.toBase64()
 
                 navController.navigate(
                     "TVSeriesDetails/$encodedUri/${episode.dataSourceType}/$encodedFileName/$connectionName/${episode.tmdbId}/${episode.seasonNumber}/${episode.episodeNumber}"

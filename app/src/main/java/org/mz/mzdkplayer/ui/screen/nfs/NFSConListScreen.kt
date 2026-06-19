@@ -28,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import org.mz.mzdkplayer.tool.Tools.toBase64
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
@@ -156,31 +157,18 @@ fun NFSConListScreen(mainNavController: NavHostController, nfsListViewModel: NFS
                                     // 构建用于导航到 NFS 文件列表的参数
                                     // 注意：在实际应用中，直接传递密码/选项可能不安全。
                                     try {
-                                        // 对参数进行 URL 编码以处理特殊字符
-                                        val encodedIp =
-                                            URLEncoder.encode(conn.serverAddress, "UTF-8")
-                                        // NFS 通常不需要用户名，但可能需要其他选项，如 mount options
-                                        // val encodedUsername = URLEncoder.encode(conn.username, "UTF-8") // 移除用户名
-                                        val encodedSharePath = URLEncoder.encode(
-                                            conn.shareName,
-                                            "UTF-8"
-                                        ) // 使用 sharePath 而非 shareName
+                                        val encodedIp = (conn.serverAddress ?: "").toBase64()
+                                        val encodedSharePath = (conn.shareName ?: "").toBase64()
+                                        val encodedSubPath = "/".toBase64()
+                                        val encodedName = (conn.name ?: "").toBase64()
 
                                         Log.d(
                                             "NFSList", "Navigating to NFSFileListScreen with " +
                                                     "IP: $encodedIp, SharePath: $encodedSharePath"
                                         )
                                         // 导航到 NFS 文件列表屏幕，传递编码后的参数
-                                        // 注意：URL 路径和参数需要根据你的 NFSFileListScreen 实现调整
                                         mainNavController.navigate(
-                                            "NFSFileListScreen/$encodedIp/$encodedSharePath/${
-                                                URLEncoder.encode(
-                                                    "/",
-                                                    "UTF-8"
-                                                )
-                                            }/${URLEncoder.encode(conn.name,"UTF-8")}"
-                                            // 如果需要传递端口或其他选项，可以在这里添加
-                                            // "NFSFileListScreen/$encodedIp/${conn.port}/$encodedSharePath?options=${conn.options}"
+                                            "NFSFileListScreen/$encodedIp/$encodedSharePath/$encodedSubPath/$encodedName"
                                         )
                                     } catch (e: Exception) {
                                         Log.e(

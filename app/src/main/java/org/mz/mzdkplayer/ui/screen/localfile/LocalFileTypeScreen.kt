@@ -27,6 +27,7 @@ import org.mz.mzdkplayer.ui.screen.common.FCLMainTitle
 import org.mz.mzdkplayer.ui.theme.myCardBorderStyle
 import org.mz.mzdkplayer.ui.theme.myCardColor
 import org.mz.mzdkplayer.ui.theme.myFileTypeCardScaleStyle
+import org.mz.mzdkplayer.tool.Tools.toBase64
 import java.net.URLEncoder
 
 
@@ -76,7 +77,7 @@ fun LocalFileTypeScreen(mainNavController: NavHostController) {
                     .padding(10.dp),
                 onClick = {
                     mainNavController.navigate(
-                        "LocalFileListScreen/${URLEncoder.encode(filesPaths[index], "UTF-8")}"
+                        "LocalFileListScreen/${filesPaths[index].toBase64()}"
                     )
                 },
                 colors = myCardColor(),

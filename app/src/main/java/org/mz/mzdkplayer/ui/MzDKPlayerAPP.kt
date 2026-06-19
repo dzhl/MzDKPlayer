@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.UnstableApi
@@ -60,6 +61,8 @@ import org.mz.mzdkplayer.data.model.FTPConnection
 import org.mz.mzdkplayer.data.model.NFSConnection
 import org.mz.mzdkplayer.data.model.WebDavConnection
 import org.mz.mzdkplayer.di.RepositoryProvider
+import org.mz.mzdkplayer.tool.Tools.fromBase64
+import org.mz.mzdkplayer.tool.Tools.toBase64
 import org.mz.mzdkplayer.tool.Tools.toSafeInt
 import org.mz.mzdkplayer.tool.viewModelWithFactory
 import org.mz.mzdkplayer.ui.audioplayer.AudioPlayerScreen
@@ -120,13 +123,13 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
     val items =
         listOf(
 
-            "电影" to painterResource(id = R.drawable.moviefileicon),
-            "电视" to painterResource(id = R.drawable.tv24dp),
-            "音乐" to painterResource(id = R.drawable.librarymusic24dp),
-            "继续播放" to painterResource(id = R.drawable.history24dp),
-            "文件浏览" to painterResource(id = R.drawable.baseline_folder_24),
-            "搜索" to painterResource(id = R.drawable.baseline_search_24),
-            "设置" to painterResource(id = R.drawable.baseline_settings_24),
+            stringResource(id = R.string.ui_label_movies) to painterResource(id = R.drawable.moviefileicon),
+            stringResource(id = R.string.ui_label_tv) to painterResource(id = R.drawable.tv24dp),
+            stringResource(id = R.string.ui_label_music) to painterResource(id = R.drawable.librarymusic24dp),
+            stringResource(id = R.string.ui_label_continue_playing) to painterResource(id = R.drawable.history24dp),
+            stringResource(id = R.string.ui_label_file_browsing) to painterResource(id = R.drawable.baseline_folder_24),
+            stringResource(id = R.string.ui_label_search) to painterResource(id = R.drawable.baseline_search_24),
+            stringResource(id = R.string.ui_label_settings) to painterResource(id = R.drawable.baseline_settings_24),
         )
     var backPressedTime by remember { mutableLongStateOf(0L) }
     val backPressThreshold = 2000L // 2秒内再次按返回键才退出
@@ -142,8 +145,9 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
         if (externalVideoUri != null) {
             val uriString = externalVideoUri.toString()
             Log.i("externalVideoUri",uriString)
+            val extVideo = context.getString(R.string.ui_label_external_video).toBase64()
             mainNavController.navigate(
-                "VideoPlayer/${URLEncoder.encode(uriString, "UTF-8")}/HTTP/外部视频/外部视频"
+                "VideoPlayer/${uriString.toBase64()}/HTTP/$extVideo/$extVideo"
             )
         }
     }
@@ -371,7 +375,7 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
         composable("LocalFileListScreen/{path}") { backStackEntry ->
             val encodedPath = backStackEntry.arguments?.getString("path")
             if (encodedPath != null) {
-                val path = URLDecoder.decode(encodedPath, "UTF-8")
+                val path = encodedPath.fromBase64()
                 Log.d("encodedPath", path)
                 LocalFileListScreen(path, mainNavController,settingsVM)
 
@@ -383,7 +387,7 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
             val sourceUri = backStackEntry.arguments?.getString("sourceUri")
             val dataSourceType = backStackEntry.arguments?.getString("dataSourceType")
             val fileName = backStackEntry.arguments?.getString("fileName")
-            val connectionName = backStackEntry.arguments?.getString("connectionName") ?: "未知"
+            val connectionName = backStackEntry.arguments?.getString("connectionName") ?: context.getString(R.string.ui_label_unknown)
 
             // ============ 强制 VLC 判断逻辑 ============
 
@@ -391,7 +395,7 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
             if (sourceUri != null && dataSourceType != null && fileName != null) {
                 //Log.d("sourceUri", sourceUri)
                 //Log.d("dataSourceType", dataSourceType)
-                val decodedUri = URLDecoder.decode(sourceUri, "UTF-8")
+                val decodedUri = sourceUri.fromBase64()
                 val extension = decodedUri.substringAfterLast('.').lowercase()
                 val forceVlcByExtension = extension in listOf("m2ts", "iso", "m2t", "mts","ts")
                 Log.d("VideoPlayer", "✅ Decoded MRL（传给 VLC）: $decodedUri")   // ← 关键！
@@ -399,8 +403,8 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
                 VideoPlayerScreen(
                     decodedUri,
                     dataSourceType,
-                    URLDecoder.decode(fileName, "UTF-8"),
-                    URLDecoder.decode(connectionName, "UTF-8"),
+                    fileName.fromBase64(),
+                    connectionName.fromBase64(),
                     mediaHistoryViewModel,
                     shouldUseVlc,
                     settingsVM
@@ -414,7 +418,7 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
             val dataSourceType = backStackEntry.arguments?.getString("dataSourceType")
             val fileName = backStackEntry.arguments?.getString("fileName")
             val currentIndex = backStackEntry.arguments?.getString("currentIndex") ?: "1"
-            val connectionName = backStackEntry.arguments?.getString("connectionName") ?: "未知"
+            val connectionName = backStackEntry.arguments?.getString("connectionName") ?: context.getString(R.string.ui_label_unknown)
             // 获取特定的字符串列表
             val extraList = MzDkPlayerApplication.getStringList("audio_playlist")
             // 检查参数是否不为空，并渲染屏幕
@@ -422,12 +426,12 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
                 Log.d("sourceUri", sourceUri)
                 Log.d("dataSourceType", dataSourceType)
                 AudioPlayerScreen(
-                    URLDecoder.decode(sourceUri, "UTF-8"),
+                    sourceUri.fromBase64(),
                     dataSourceType,
-                    URLDecoder.decode(fileName, "UTF-8") ?: "未知文件名",
+                    fileName?.fromBase64() ?: context.getString(R.string.ui_label_unknown_filename),
                     extraList,
                     currentIndex = currentIndex,
-                    URLDecoder.decode(connectionName, "UTF-8"),
+                    connectionName.fromBase64(),
                     mediaHistoryViewModel,
                     audioViewModel = audioViewModel
 
@@ -441,17 +445,17 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
             val dataSourceType = backStackEntry.arguments?.getString("dataSourceType")
             val fileName = backStackEntry.arguments?.getString("fileName")
 
-            val connectionName = backStackEntry.arguments?.getString("connectionName") ?: "未知"
+            val connectionName = backStackEntry.arguments?.getString("connectionName") ?: context.getString(R.string.ui_label_unknown)
 
             // 检查参数是否不为空，并渲染屏幕
             if (sourceUri != null && dataSourceType != null) {
                 Log.d("sourceUri", sourceUri)
                 Log.d("dataSourceType", dataSourceType)
                 PicViewerScreen(
-                    URLDecoder.decode(sourceUri, "UTF-8"),
+                    sourceUri.fromBase64(),
                     dataSourceType,
-                    URLDecoder.decode(fileName, "UTF-8") ?: "未知文件名",
-                    URLDecoder.decode(connectionName, "UTF-8"),
+                    fileName?.fromBase64() ?: context.getString(R.string.ui_label_unknown_filename),
+                    connectionName.fromBase64(),
                 )
             }
         }
@@ -462,27 +466,33 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
 
         composable("SMBFileListScreen/{path}/{connectionName}") { backStackEntry ->
             val encodedPath = backStackEntry.arguments?.getString("path")
-            val connectionName = backStackEntry.arguments?.getString("connectionName") ?: "未知"
-            if (encodedPath != null) {
+            val connectionName = backStackEntry.arguments?.getString("connectionName")
 
-                val path = URLDecoder.decode(encodedPath, "UTF-8")
-                Log.d("encodedPath", path)
-                SMBFileListScreen(path, mainNavController, connectionName,settingsVM)
+            if (encodedPath != null) {
+                // 🟢 路径和连接名使用 Base64 解码
+                val path = encodedPath.fromBase64()
+                val decodedConnectionName = connectionName?.fromBase64() ?: stringResource(R.string.ui_label_unknown)
+
+                SMBFileListScreen(path, mainNavController, decodedConnectionName, settingsVM)
             }
         }
         composable("WebDavFileListScreen/{path}/{username}/{pw}/{connectionName}") { backStackEntry ->
             val encodedPath = backStackEntry.arguments?.getString("path")
             val username = backStackEntry.arguments?.getString("username")
             val pw = backStackEntry.arguments?.getString("pw")
-            val connectionName = backStackEntry.arguments?.getString("connectionName") ?: "未知"
+            val connectionName = backStackEntry.arguments?.getString("connectionName") ?: context.getString(R.string.ui_label_unknown)
             if (encodedPath != null && username != null && pw != null) {
 
-                val path = URLDecoder.decode(encodedPath, "UTF-8")
+                val path = encodedPath.fromBase64()
+                val decodedUsername = username.fromBase64()
+                val decodedPw = pw.fromBase64()
+                val decodedConnectionName = connectionName.fromBase64()
+
                 Log.d("encodedPath", path)
                 WebDavFileListScreen(
                     path,
                     mainNavController,
-                    WebDavConnection("1", connectionName, path, username, pw),
+                    WebDavConnection("1", decodedConnectionName, path, decodedUsername, decodedPw),
                     settingsVM
                 )
             }
@@ -492,32 +502,32 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
             val encodedUsername = backStackEntry.arguments?.getString("encodedUsername")
             val encodedPassword = backStackEntry.arguments?.getString("encodedPassword")
             val encodedShareName = backStackEntry.arguments?.getString("encodedShareName")
-            val connectionName = backStackEntry.arguments?.getString("connectionName") ?: "未知"
+            val connectionName = backStackEntry.arguments?.getString("connectionName") ?: context.getString(R.string.ui_label_unknown)
             val port = backStackEntry.arguments?.getString("port") ?: "21"
             //URLEncoder.encode(conn.shareName, "UTF-8")
             if (encodedIp != null) {
 
-                val path = URLDecoder.decode(URLDecoder.decode(encodedIp, "UTF-8"), "UTF-8")
+                val decodedIp = encodedIp.fromBase64()
+                val decodedUsername = encodedUsername?.fromBase64() ?: ""
+                val decodedPassword = encodedPassword?.fromBase64() ?: ""
+                val decodedShareName = encodedShareName?.fromBase64() ?: ""
+                val decodedConnectionName = connectionName.fromBase64()
+
                 Log.d(
                     "encodedPath",
-                    "${URLDecoder.decode(encodedUsername, "UTF-8")}${
-                        URLDecoder.decode(
-                            encodedPassword,
-                            "UTF-8"
-                        )
-                    }${URLDecoder.decode(encodedShareName, "UTF-8")}"
+                    "$decodedUsername$decodedPassword$decodedShareName"
                 )
                 FTPFileListScreen(
-                    URLDecoder.decode(encodedShareName, "UTF-8"),
+                    decodedShareName,
                     mainNavController,
                     FTPConnection(
                         "1",
-                        connectionName,
-                        ip = encodedIp,
+                        decodedConnectionName,
+                        ip = decodedIp,
                         port.toSafeInt(21),
-                        URLDecoder.decode(encodedUsername, "UTF-8"),
-                        URLDecoder.decode(encodedPassword, "UTF-8"),
-                        shareName = URLDecoder.decode(encodedShareName, "UTF-8"),
+                        decodedUsername,
+                        decodedPassword,
+                        shareName = decodedShareName,
                     ),
                     settingsVM
                 )
@@ -527,22 +537,24 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
             val encodedIp = backStackEntry.arguments?.getString("encodedIp")
             val encodedShareName = backStackEntry.arguments?.getString("encodedShareName")
             val newSubPath = backStackEntry.arguments?.getString("newSubPath")
-            val connectionName = backStackEntry.arguments?.getString("connectionName") ?: "未知"
+            val connectionName = backStackEntry.arguments?.getString("connectionName") ?: context.getString(R.string.ui_label_unknown)
             //URLEncoder.encode(conn.shareName, "UTF-8")
             if (encodedIp != null) {
 
-                //val path = URLDecoder.decode(URLDecoder.decode(encodedIp, "UTF-8"), "UTF-8")
-                Log.d("encodedPath", "${URLDecoder.decode(newSubPath, "UTF-8")}")
+                val decodedIp = encodedIp.fromBase64()
+                val decodedShareName = encodedShareName?.fromBase64() ?: ""
+                val decodedSubPath = newSubPath?.fromBase64() ?: ""
+                val decodedConnectionName = connectionName.fromBase64()
+
+                Log.d("encodedPath", decodedSubPath)
                 NFSFileListScreen(
-                    URLDecoder.decode(newSubPath, "UTF-8"),
+                    decodedSubPath,
                     mainNavController,
                     NFSConnection(
                         "1",
-                        connectionName,
-
-                        URLDecoder.decode(encodedIp, "UTF-8"),
-                        URLDecoder.decode(encodedShareName, "UTF-8"),
-
+                        decodedConnectionName,
+                        decodedIp,
+                        decodedShareName,
                         ),
                     settingsVM
                 )
@@ -550,15 +562,16 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
         }
         composable("HTTPLinkFileListScreen/{connectionName}/{newSubPath}") { backStackEntry ->
             val newSubPath = backStackEntry.arguments?.getString("newSubPath")
-            val connectionName = backStackEntry.arguments?.getString("connectionName") ?: "未知"
+            val connectionName = backStackEntry.arguments?.getString("connectionName") ?: context.getString(R.string.ui_label_unknown)
             //URLEncoder.encode(conn.shareName, "UTF-8")
             if (newSubPath != null) {
-                //val path = URLDecoder.decode(URLDecoder.decode(encodedIp, "UTF-8"), "UTF-8")
-                Log.d("encodedPath", "${URLDecoder.decode(newSubPath, "UTF-8")}")
+                val decodedSubPath = newSubPath.fromBase64()
+                val decodedConnectionName = connectionName.fromBase64()
+                Log.d("encodedPath", decodedSubPath)
                 HTTPLinkFileListScreen(
-                    URLDecoder.decode(newSubPath, "UTF-8"),
+                    decodedSubPath,
                     mainNavController,
-                    connectionName,
+                    decodedConnectionName,
                     settingsVM
                 )
             }

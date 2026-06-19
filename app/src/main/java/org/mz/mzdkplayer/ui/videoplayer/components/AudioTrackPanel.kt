@@ -34,6 +34,7 @@ import org.mz.mzdkplayer.player.core.MzBasicTrack
 import org.mz.mzdkplayer.tool.Tools
 import org.mz.mzdkplayer.tool.focusOnInitialVisibility
 import java.util.Locale
+import androidx.compose.ui.platform.LocalLocale
 
 @Composable
 fun AudioTrackPanel(
@@ -98,7 +99,7 @@ fun AudioTrackPanel(
                         Text("${Tools.getFullLanguageName(track.language)} ${track.bitrate / 1000}Kbps")
                     },
                     overlineContent = {
-                        val sampleRateText = String.format(Locale.getDefault(), "%.1f kHz", track.sampleRate / 1000.0)
+                        val sampleRateText = String.format(LocalLocale.current.platformLocale, "%.1f kHz", track.sampleRate / 1000.0)
                         // 注意：这里需要把你的 Tools.inferAudioFormatType 改造为接收 mimeType 字符串
                         Text(
                             text = stringResource(

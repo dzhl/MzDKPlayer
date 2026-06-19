@@ -370,4 +370,32 @@
     <string name="ui_label_dolby_vision">杜比视界</string>
     <string name="ui_label_standard_definition">标清</string>
 
+    <string name="setting_default_player_vlc">VLC</string>
+    <string name="setting_default_player_exo">ExoPlayer</string>
+    <string name="setting_exo_audio_decode_mode">ExoPlayer音频解码模式(仅对ExoPlayer播放内核生效)</string>
+    <string name="setting_audio_decode_pure_hw">纯硬解 (不支持FFmpeg)</string>
+    <string name="setting_audio_decode_hw_priority">硬解优先 (支持音频直通)</string>
+    <string name="setting_audio_decode_sw_priority">软解优先 (兼容性最好)</string>
+    <string name="msg_clear_movie_db_confirm">确定要清空所有的影视数据吗？此操作不可恢复。</string>
+    <string name="msg_clear_audio_db_confirm">确定要清空所有的音乐数据吗？此操作不可恢复。</string>
+    <string name="lang_auto_system">Auto (System)</string>
+    <string name="lang_english">English</string>
+    <string name="ui_label_version_prefix">Version: </string>
+    <string name="unit_bps">B/s</string>
+    <string name="unit_kbps">KB/s</string>
+    <string name="unit_mbps">MB/s</string>
+    <string name="ui_label_video_track">视频轨道</string>
+    <string name="ui_label_audio_track">音频轨道</string>
+    <string name="ui_label_subtitle_select">字幕选择</string>
+    <string name="ui_label_danmaku_off">关闭弹幕</string>
+    <string name="ui_label_danmaku_on">开启弹幕</string>
+    <string name="ui_label_danmaku_settings">弹幕设置</string>
+    <string name="ui_label_hide_custom_subtitle">隐藏自定义字幕</string>
+    <string name="ui_label_external_video">外部视频</string>
+    <string name="ui_label_show_custom_subtitle">显示自定义字幕</string>
+    <string name="ui_label_no_image">无图片</string>
+    <string name="ui_label_no_poster">无海报</string>
+    <string name="ui_label_subtitle_off">关闭字幕</string>
+    <string name="ui_label_subtitle_file_not_found_hint">(未找到文件，可能正在缓冲)</string>
+
 </resources>

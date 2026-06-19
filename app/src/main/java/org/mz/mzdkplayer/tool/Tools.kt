@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.os.Build
+import android.util.Base64
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.OptIn
@@ -38,6 +39,7 @@ import kotlin.math.pow
 import kotlin.text.contains
 import androidx.core.graphics.set
 import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 object Tools {
     fun extractFileExtension(fileName: String?): String {
@@ -846,6 +848,20 @@ object Tools {
             }
         }
         return fontFile.absolutePath
+    }
+
+    // 编码：转为 URL 安全且不带换行符的 Base64 字符串
+    fun String.toBase64(): String {
+        return Base64.encodeToString(this.toByteArray(StandardCharsets.UTF_8), Base64.URL_SAFE or Base64.NO_WRAP)
+    }
+
+    // 解码：从 Base64 还原为原始字符串
+    fun String.fromBase64(): String {
+        return try {
+            String(Base64.decode(this, Base64.URL_SAFE or Base64.NO_WRAP), StandardCharsets.UTF_8)
+        } catch (e: Exception) {
+            ""
+        }
     }
 }
 

@@ -23,6 +23,7 @@ import org.mz.mzdkplayer.R
 import org.mz.mzdkplayer.ui.screen.common.DashboardTopBarItemIndicator
 import org.mz.mzdkplayer.ui.screen.vm.MediaHistoryViewModel
 import org.mz.mzdkplayer.ui.theme.myListItemCoverColor
+import org.mz.mzdkplayer.tool.Tools.toBase64
 import java.net.URLEncoder
 
 @OptIn(ExperimentalTvMaterial3Api::class)
@@ -121,12 +122,13 @@ fun MediaHistoryScreen(
                             historyItem = item,
                             onClick = {
                                 val record = item.history
-                                val encodedUri = URLEncoder.encode(record.mediaUri, "UTF-8")
-                                val encodedFileName = URLEncoder.encode(record.fileName, "UTF-8")
+                                val encodedUri = record.mediaUri.toBase64()
+                                val encodedFileName = record.fileName.toBase64()
+                                val encodedConnName = record.connectionName.toBase64()
                                 // 导航逻辑
                                 Log.d("HIS",record.protocolName)
                                 val protocolName = if(record.protocolName == "本地文件") {"LOCAL"} else{record.protocolName}
-                                navController.navigate("VideoPlayer/$encodedUri/${protocolName}/$encodedFileName/${record.connectionName}")
+                                navController.navigate("VideoPlayer/$encodedUri/${protocolName}/$encodedFileName/$encodedConnName")
                             }
                         )
                     } else {

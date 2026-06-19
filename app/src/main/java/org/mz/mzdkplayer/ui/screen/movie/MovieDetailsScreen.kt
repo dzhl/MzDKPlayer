@@ -84,9 +84,11 @@ import org.mz.mzdkplayer.ui.screen.common.LoadingScreenWithSub
 import org.mz.mzdkplayer.ui.screen.common.LocalizedStatusText
 import org.mz.mzdkplayer.ui.screen.common.MyIconButton
 import org.mz.mzdkplayer.ui.screen.vm.MovieViewModel
+import org.mz.mzdkplayer.tool.Tools.toBase64
 import java.net.URLDecoder
 import java.net.URLEncoder
 import java.util.Locale
+import androidx.compose.ui.platform.LocalLocale
 
 @Composable
 fun MovieDetailsScreen(
@@ -112,9 +114,9 @@ fun MovieDetailsScreen(
             movieViewModel.getMovieDetailsWithCache(movieId, decodedUri, dataSourceType, fileName, connectionName)
         }
     }
-    val videoUriEncoder = URLEncoder.encode(videoUri, "UTF-8")
-    val fileNameEncoder = URLEncoder.encode(fileName, "UTF-8")
-    val connectionNameEncoder = URLEncoder.encode(connectionName, "UTF-8")
+    val videoUriEncoder = videoUri.toBase64()
+    val fileNameEncoder = fileName.toBase64()
+    val connectionNameEncoder = connectionName.toBase64()
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -323,7 +325,7 @@ private fun MovieContent(
                                     .padding(horizontal = 8.dp, vertical = 2.dp)
                             ) {
                                 Text(
-                                    text = "TMDB ${String.format(Locale.getDefault(), "%.1f", movie.voteAverage)}",
+                                    text = "TMDB ${String.format(LocalLocale.current.platformLocale, "%.1f", movie.voteAverage)}",
                                     style = MaterialTheme.typography.labelMedium,
                                     color = Color.Black,
                                     fontWeight = FontWeight.Bold
@@ -526,7 +528,7 @@ private fun MoviePosterSection(movie: MovieDetails) {
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("No Poster", color = Color.Gray, style = MaterialTheme.typography.labelSmall)
+                        Text(stringResource(R.string.ui_label_no_poster), color = Color.Gray, style = MaterialTheme.typography.labelSmall)
                     }
                 }
             }

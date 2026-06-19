@@ -108,14 +108,14 @@ fun EditTMDBInfoScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "修正匹配信息",
+                text = stringResource(R.string.ui_label_correct_matching_info),
                 style = MaterialTheme.typography.headlineMedium,
                 color = Color.White,
                 fontWeight = FontWeight.Bold
             )
 
             Text(
-                text = "文件: $fileName",
+                text = stringResource(R.string.ui_label_file_placeholder, fileName),
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.Gray,
                 maxLines = 2,
@@ -123,11 +123,11 @@ fun EditTMDBInfoScreen(
             )
 
             // 1. 搜索关键词输入
-            Text("搜索关键词 (名称)", color = Color.LightGray, fontSize = 12.sp)
+            Text(stringResource(R.string.ui_label_search_keyword_name), color = Color.LightGray, fontSize = 12.sp)
             TvTextField(
                 value = searchKeyword,
                 onValueChange = { searchKeyword = it },
-                placeholder = "输入电影/剧集名称",
+                placeholder = stringResource(R.string.ui_label_enter_movie_series_name),
                 colors = myTTFColor()
             )
 

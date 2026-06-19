@@ -46,6 +46,7 @@ import org.mz.mzdkplayer.ui.screen.common.ConnectionListTitle
 import org.mz.mzdkplayer.ui.screen.common.DeleteConfirmDialog
 import org.mz.mzdkplayer.ui.screen.common.FCLMainTitle
 import org.mz.mzdkplayer.ui.screen.vm.FTPListViewModel // 使用 FTP ViewModel
+import org.mz.mzdkplayer.tool.Tools.toBase64
 import java.net.URLEncoder
 
 /**
@@ -163,14 +164,11 @@ fun FTPConListScreen(mainNavController: NavHostController, ftpListViewModel: FTP
                                     // 构建用于导航到 FTP 文件列表的参数
                                     // 注意：在实际应用中，直接传递密码可能不安全。
                                     try {
-                                        // 对参数进行 URL 编码以处理特殊字符
-                                        val encodedIp = URLEncoder.encode(conn.ip, "UTF-8")
-                                        val encodedUsername =
-                                            URLEncoder.encode(conn.username, "UTF-8")
-                                        val encodedPassword =
-                                            URLEncoder.encode(conn.password, "UTF-8")
-                                        val encodedShareName =
-                                            URLEncoder.encode(conn.shareName, "UTF-8")
+                                        val encodedIp = (conn.ip ?: "").toBase64()
+                                        val encodedUsername = (conn.username ?: "").toBase64()
+                                        val encodedPassword = (conn.password ?: "").toBase64()
+                                        val encodedShareName = (conn.shareName ?: "").toBase64()
+                                        val encodedConnName = (conn.name ?: "").toBase64()
                                         Log.d(
                                             "FTPList", "Navigating to FTPFileListScreen with " +
                                                     "IP: $encodedIp, User: $encodedUsername, " +
@@ -179,7 +177,7 @@ fun FTPConListScreen(mainNavController: NavHostController, ftpListViewModel: FTP
                                         // 导航到 FTP 文件列表屏幕，传递编码后的参数
                                         mainNavController.navigate(
                                             "FTPFileListScreen/$encodedIp/" +
-                                                    "$encodedUsername/$encodedPassword/${conn.port}/$encodedShareName/${URLEncoder.encode(conn.name,"UTF-8")}"
+                                                    "$encodedUsername/$encodedPassword/${conn.port}/$encodedShareName/$encodedConnName"
                                         )
                                     } catch (e: Exception) {
                                         Log.e(

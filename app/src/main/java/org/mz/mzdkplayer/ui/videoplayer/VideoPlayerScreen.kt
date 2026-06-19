@@ -132,6 +132,7 @@ import java.util.Locale
 import kotlin.concurrent.thread
 import kotlin.math.abs
 import kotlin.time.Duration.Companion.milliseconds
+import androidx.compose.ui.platform.LocalLocale
 
 /**
  * 视频播放器主界面 Composable
@@ -144,7 +145,7 @@ import kotlin.time.Duration.Companion.milliseconds
 fun VideoPlayerScreen(
     mediaUri: String,
     dataSourceType: String,
-    fileName: String = "未知文件名",
+    fileName: String = stringResource(R.string.ui_label_unknown_filename),
     connectionName: String,
     mediaHistoryViewModel: MediaHistoryViewModel,
     useVlc: Boolean = false, // 开关：让用户或者设置决定用哪个内核
@@ -705,8 +706,8 @@ fun VideoPlayerScreen(
         }
         // 显示 "再按一次退出" Toast
         if (showToast) {
-
-            Toast.makeText(context, "再按一次退出", Toast.LENGTH_SHORT).show()
+            val pressAgainText = stringResource(R.string.ui_label_press_again_to_exit)
+            Toast.makeText(context, pressAgainText, Toast.LENGTH_SHORT).show()
             showToast = false
         }
 
@@ -915,23 +916,27 @@ fun VideoPlayerScreen(
 @Composable
 fun NetworkSpeedIndicator(networkSpeed: Long, modifier: Modifier = Modifier) {
     // 格式化网速显示文本
+    val bps = stringResource(R.string.unit_bps)
+    val kbps = stringResource(R.string.unit_kbps)
+    val mbps = stringResource(R.string.unit_mbps)
+    
     val speedText = when {
-        networkSpeed < 1024 -> "$networkSpeed B/s"
+        networkSpeed < 1024 -> "$networkSpeed $bps"
         networkSpeed < 1024 * 1024 -> "${
             String.format(
-                Locale.getDefault(),
+                LocalLocale.current.platformLocale,
                 "%.1f",
                 networkSpeed / 1024.0
             )
-        } KB/s"
+        } $kbps"
 
         else -> "${
             String.format(
-                Locale.getDefault(),
+                LocalLocale.current.platformLocale,
                 "%.1f",
                 networkSpeed / (1024.0 * 1024.0)
             )
-        } MB/s"
+        } $mbps"
     }
 
     // 绘制包含网速文本的 Box

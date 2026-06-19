@@ -46,6 +46,7 @@ import org.mz.mzdkplayer.data.model.AudioItem
 import org.mz.mzdkplayer.ui.screen.common.LibraryEmpty
 import org.mz.mzdkplayer.ui.screen.vm.AudioViewModel
 import org.mz.mzdkplayer.ui.theme.MyFileListItemColor
+import org.mz.mzdkplayer.tool.Tools.toBase64
 import java.io.File
 import java.net.URLEncoder
 import java.util.Locale
@@ -178,9 +179,9 @@ fun AudioLibraryScreen(
                         ListItem(
                             selected = false,
                             onClick = {
-                                val encodedUri = URLEncoder.encode(audio.audioUri, "UTF-8")
-                                val encodedFn = URLEncoder.encode(audio.fileName, "UTF-8")
-                                val encodedConn = URLEncoder.encode(audio.connectionName, "UTF-8")
+                                val encodedUri = audio.audioUri.toBase64()
+                                val encodedFn = audio.fileName.toBase64()
+                                val encodedConn = audio.connectionName.toBase64()
                                 val audioItems = audioList.map { AudioItem(it.audioUri, it.fileName, it.dataSourceType) }
                                 MzDkPlayerApplication.setStringList("audio_playlist", audioItems)
                                 mainNavController.navigate("AudioPlayer/$encodedUri/${audio.dataSourceType}/$encodedFn/$encodedConn/$index")

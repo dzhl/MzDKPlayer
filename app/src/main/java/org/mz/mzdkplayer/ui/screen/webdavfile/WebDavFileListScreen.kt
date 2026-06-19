@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.tv.material3.ListItem
+import org.mz.mzdkplayer.tool.Tools.toBase64
 import androidx.tv.material3.ListItemDefaults
 import kotlinx.coroutines.launch
 import org.mz.mzdkplayer.data.model.WebDavConnection
@@ -246,36 +247,28 @@ fun WebDavFileListScreen(
                                         // 处理文件点击
                                         val fileExtension = Tools.extractFileExtension(file.name)
                                         val fullFileUrl = path ?: "" // 直接使用文件的完整路径
-                                        val authenticatedUrl =viewModel.buildAuthenticatedUrl(fullFileUrl,
+                                        val authenticatedUrl = viewModel.buildAuthenticatedUrl(fullFileUrl,
                                             username = webDavConnection.username?:""
                                             , password = webDavConnection.password?:"").trimEnd('/')
-                                        val encodedFileUrl = URLEncoder.encode(
-                                            "${authenticatedUrl}/${
-                                                fileName.trimEnd('/').trimStart('/')
-                                            }",
-                                            "UTF-8"
-                                        )
-                                        val encodedFileName = URLEncoder.encode(fileName, "UTF-8")
-                                        val connectionName=URLEncoder.encode(webDavConnection.name, "UTF-8")
+                                        val encodedFileUrl = "${authenticatedUrl}/${fileName.trimEnd('/').trimStart('/')}".toBase64()
+                                        val encodedFileName = fileName.toBase64()
+                                        val encodedConnectionName = (webDavConnection.name ?: "").toBase64()
                                         ListItem(
                                             selected = false,
                                             onClick = {
                                                 coroutineScope.launch {
                                                     if (isDirectory) {
-                                                        // 构建子目录的完整 URL 路径
-                                                        val encodedNewPath = URLEncoder.encode("${path?.trimEnd('/') ?:""}/${fileName.trimEnd('/').trimStart('/')}/", "UTF-8")
+                                                        val rawNewPath = "${path?.trimEnd('/') ?:""}/${fileName.trimEnd('/').trimStart('/')}/"
+                                                        val encodedNewPath = rawNewPath.toBase64()
+                                                        val encodedUsername = (webDavConnection.username ?: "").toBase64()
+                                                        val encodedPassword = (webDavConnection.password ?: "").toBase64()
+                                                        val encodedName = (webDavConnection.name ?: "").toBase64()
+
                                                         Log.d(
                                                             "WebDavFileListScreen",
-                                                            "Navigating to subdirectory: $path to ${path?.trimEnd('/')}/${fileName.trimEnd('/').trimStart('/')}/"
+                                                            "Navigating to subdirectory: $path to $rawNewPath"
                                                         )
-                                                        Log.d(
-                                                            "WebDavFileListScreen",
-                                                            "$encodedNewPath"
-                                                        )
-                                                        navController.navigate("WebDavFileListScreen/$encodedNewPath/${webDavConnection.username}/${webDavConnection.password}/${ URLEncoder.encode(
-                                                            webDavConnection.name,
-                                                            "UTF-8"
-                                                        )}")
+                                                        navController.navigate("WebDavFileListScreen/$encodedNewPath/$encodedUsername/$encodedPassword/$encodedName")
                                                     } else {
                                                         when {
                                                             Tools.containsVideoFormat(fileExtension) -> {
@@ -289,13 +282,13 @@ fun WebDavFileListScreen(
                                                                             file.name
                                                                         )
                                                                     if (mediaInfoFN.mediaType == "movie") {
-                                                                        navController.navigate("MovieDetails/$encodedFileUrl/WEBDAV/$encodedFileName/${connectionName}/$mediaId")
+                                                                        navController.navigate("MovieDetails/$encodedFileUrl/WEBDAV/$encodedFileName/$encodedConnectionName/$mediaId")
                                                                     } else {
-                                                                        navController.navigate("TVSeriesDetails/$encodedFileUrl/WEBDAV/$encodedFileName/${connectionName}/$mediaId/${mediaInfoFN.season.toInt()}/${mediaInfoFN.episode.toInt()}")
+                                                                        navController.navigate("TVSeriesDetails/$encodedFileUrl/WEBDAV/$encodedFileName/$encodedConnectionName/$mediaId/${mediaInfoFN.season.toInt()}/${mediaInfoFN.episode.toInt()}")
                                                                     }
                                                                 } else {
                                                                     navController.navigate(
-                                                                        "VideoPlayer/$encodedFileUrl/WEBDAV/${encodedFileName}/${connectionName}"
+                                                                        "VideoPlayer/$encodedFileUrl/WEBDAV/$encodedFileName/$encodedConnectionName"
                                                                     )
                                                                 }
                                                             }
@@ -344,12 +337,12 @@ fun WebDavFileListScreen(
                                                                 )
 
                                                                 navController.navigate(
-                                                                    "AudioPlayer/$encodedFileUrl/WEBDAV/${encodedFileName}/${connectionName}/$currentAudioIndex"
+                                                                    "AudioPlayer/$encodedFileUrl/WEBDAV/$encodedFileName/$encodedConnectionName/$currentAudioIndex"
                                                                 )
                                                             }
                                                             Tools.containsImageFileExtension(fileExtension) -> {
                                                                 navController.navigate(
-                                                                    "PicViewer/$encodedFileUrl/WEBDAV/${encodedFileName}/${connectionName}"
+                                                                    "PicViewer/$encodedFileUrl/WEBDAV/$encodedFileName/$encodedConnectionName"
                                                                 )
                                                             }
 

@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavHostController
+import org.mz.mzdkplayer.tool.Tools.toBase64
 import androidx.tv.material3.Icon
 import androidx.tv.material3.ListItem
 import androidx.tv.material3.ListItemDefaults
@@ -70,6 +71,7 @@ import org.mz.mzdkplayer.ui.screen.vm.MovieViewModel
 import org.mz.mzdkplayer.ui.screen.vm.SettingsViewModel
 import java.net.URLEncoder
 import kotlin.text.ifEmpty
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -136,7 +138,7 @@ fun FTPFileListScreen(
             }
 
             is FileConnectionStatus.Disconnected -> {
-                delay(300)
+                delay(300.milliseconds)
                 // 未连接，尝试连接
                 Log.d("FTPFileListScreen", "Disconnected. Attempting to connect.")
                 viewModel.connectToFTP(
@@ -270,21 +272,18 @@ fun FTPFileListScreen(
                                                             "${path.trimEnd('/')}/$fileName"
                                                         }
 
-                                                        // 对路径进行编码
-                                                        val encodedNewPath = try {
-                                                            URLEncoder.encode(newPath.ifEmpty { " " }, "UTF-8")
-                                                        } catch (e: Exception) {
-                                                            Log.e("FTPFileListScreen", "目录路径编码失败: $e")
-                                                            Toast.makeText(context, context.getString(R.string.ui_label_directory_path_encoding_failed), Toast.LENGTH_SHORT).show()
-                                                            return@launch
-                                                        }
+                                                        val encodedNewPath = newPath.ifEmpty { " " }.toBase64()
+                                                        val encodedIp = (ftpConnection.ip ?: "").toBase64()
+                                                        val encodedUsername = (ftpConnection.username ?: "").toBase64()
+                                                        val encodedPassword = (ftpConnection.password ?: "").toBase64()
+                                                        val encodedConnName = (ftpConnection.name ?: "").toBase64()
 
                                                         Log.d(
                                                             "FTPFileListScreen",
                                                             "Navigating to subdirectory: $newPath (encoded: $encodedNewPath)"
                                                         )
                                                         // 导航到子目录，传递连接信息
-                                                        navController.navigate("FTPFileListScreen/${ftpConnection.ip}/${ftpConnection.username}/${ftpConnection.password}/${ftpConnection.port}/$encodedNewPath/${ftpConnection.name}")
+                                                        navController.navigate("FTPFileListScreen/$encodedIp/$encodedUsername/$encodedPassword/${ftpConnection.port}/$encodedNewPath/$encodedConnName")
 
                                                     } else {
                                                         // --- 文件点击处理：提取公共编码变量 ---
@@ -293,29 +292,9 @@ fun FTPFileListScreen(
                                                         val fileExtension = Tools.extractFileExtension(fileName)
 
                                                         // 统一处理 URL、文件名、连接名的编码和错误
-                                                        val encodedFileUrl = try {
-                                                            URLEncoder.encode(fullFileUrl, "UTF-8")
-                                                        } catch (e: Exception) {
-                                                            Log.e("FTPFileListScreen", "文件URL编码失败: $e")
-                                                            Toast.makeText(context, context.getString(R.string.ui_label_file_path_encoding_failed), Toast.LENGTH_SHORT).show()
-                                                            return@launch
-                                                        }
-
-                                                        val encodedFileName = try {
-                                                            URLEncoder.encode(fileName, "UTF-8")
-                                                        } catch (e: Exception) {
-                                                            Log.e("FTPFileListScreen", "文件名编码失败: $e")
-                                                            Toast.makeText(context, context.getString(R.string.ui_label_filename_encoding_failed), Toast.LENGTH_SHORT).show()
-                                                            return@launch
-                                                        }
-
-                                                        val encodedConnectionName = try {
-                                                            URLEncoder.encode(ftpConnection.name, "UTF-8")
-                                                        } catch (e: Exception) {
-                                                            Log.e("FTPFileListScreen", "连接名编码失败: $e")
-                                                            Toast.makeText(context, context.getString(R.string.ui_label_connection_name_encoding_failed), Toast.LENGTH_SHORT).show()
-                                                            return@launch
-                                                        }
+                                                        val encodedFileUrl = fullFileUrl.toBase64()
+                                                        val encodedFileName = fileName.toBase64()
+                                                        val encodedConnectionName = (ftpConnection.name ?: "").toBase64()
 
                                                         when {
 

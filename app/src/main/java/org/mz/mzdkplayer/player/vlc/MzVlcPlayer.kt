@@ -137,10 +137,10 @@ class MzVlcPlayer(
         //    }
         // 设置事件监听器同步状态
         Log.d("VLCPlayer", "mediaStr → $mediaUri")
-        Log.d("VLCPlayer", "mediaUri → ${mediaUri.toUri()}")
 
-        val vlcSafeUri = Tools.encodeUrlForPlayer(mediaUri)
-        val media = Media(libVLC, vlcSafeUri.toUri()).apply {
+        // 🟢 关键修复：不再使用可能导致二次编码错误的 Tools.encodeUrlForPlayer
+        // 既然是从 Base64 解码回来的原始字符串，直接解析为 Uri 即可
+        val media = Media(libVLC, mediaUri.toUri()).apply {
             setHWDecoderEnabled(true, true)
             //addOption(":codec=mediacodec_ndk")
 
