@@ -11,6 +11,7 @@ import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
+import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
@@ -55,6 +56,9 @@ class MzExoPlayer(
 
     private val _isPlayingFlow = MutableStateFlow(false)
     override val isPlayingFlow = _isPlayingFlow.asStateFlow()
+
+    private val _playbackSpeed = MutableStateFlow(1.0f)
+    override val playbackSpeed: StateFlow<Float> = _playbackSpeed.asStateFlow()
 
     override var onError: ((String) -> Unit)? = null
     override var onCuesChanged: ((Any) -> Unit)? = null
@@ -301,6 +305,15 @@ class MzExoPlayer(
     override fun release() {
         exoPlayer.release()
     }
+
+    override fun setPlaybackSpeed(speed: Float) {
+        if (settingsState.enablePassthrough && speed != 1.0f) {
+            return
+        }
+        _playbackSpeed.value = speed
+        exoPlayer.playbackParameters = PlaybackParameters(speed)
+    }
+
     override fun addExternalSubtitles(subtitles: List<Pair<String, String>>) {
         val currentMediaItem = exoPlayer.currentMediaItem ?: return
         val currentPos = exoPlayer.currentPosition

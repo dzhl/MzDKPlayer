@@ -127,6 +127,20 @@ fun VideoPlayerControls(
                         focusRequester.requestFocus()
                     }
                 )
+
+                VideoPlayerControlsIcon(
+                    modifier = Modifier.padding(start = 12.dp),
+                    icon = painterResource(id = R.drawable.baseline_speed_24), // 倍速图标
+                    state = state,
+                    tooltipText = stringResource(R.string.ui_label_speed),
+                    isPlaying = isPlaying,
+                    onClick = {
+                        videoPlayerViewModel.selectedAorVorS = "SPEED"
+                        videoPlayerViewModel.atpVisibility = !videoPlayerViewModel.atpVisibility;
+                        focusRequester.requestFocus()
+                    }
+                )
+
                 VideoPlayerControlsIcon(
                     modifier = Modifier.padding(start = 12.dp),
                     icon = if (videoPlayerViewModel.danmakuVisibility) painterResource(id = R.drawable.dmk) else painterResource(

@@ -51,6 +51,16 @@ interface IMzPlayer {
     val isoTitles: StateFlow<List<MzIsoTitle>>
     // 切换 ISO 标题
     fun selectIsoTitle(index: Int)
+
+    /**
+     * 设置播放倍速
+     */
+    fun setPlaybackSpeed(speed: Float)
+
+    /**
+     * 当前播放倍速
+     */
+    val playbackSpeed: StateFlow<Float>
 }
 
 fun autoLoadSameNameSubtitles(videoUri: String, player: IMzPlayer) {

@@ -84,6 +84,7 @@ import org.mz.mzdkplayer.ui.screen.common.LoadingScreenWithSub
 import org.mz.mzdkplayer.ui.screen.common.LocalizedStatusText
 import org.mz.mzdkplayer.ui.screen.common.MyIconButton
 import org.mz.mzdkplayer.ui.screen.vm.MovieViewModel
+import org.mz.mzdkplayer.tool.Tools.fromBase64
 import org.mz.mzdkplayer.tool.Tools.toBase64
 import java.net.URLDecoder
 import java.net.URLEncoder
@@ -104,19 +105,19 @@ fun MovieDetailsScreen(
 ) {
     val movieDetails by movieViewModel.movieDeResults.collectAsState()
 
-    // 解码 URI 用于数据库查询
-    val decodedUri = remember(videoUri) {
-        URLDecoder.decode(videoUri, "UTF-8")
-    }
+    // 🟢 核心修复：传入的参数已经是 Base64 编码的，不需要再次编码
+    // 这里解码出原始值用于显示或数据库查询
+    val decodedUri = remember(videoUri) { videoUri.fromBase64() }
+    val decodedFileName = remember(fileName) { fileName.fromBase64() }
+    val decodedConnectionName = remember(connectionName) { connectionName.fromBase64() }
+
     LaunchedEffect(movieId) {
         if (movieId > 0) {
-            // 调用带缓存的方法
-            movieViewModel.getMovieDetailsWithCache(movieId, decodedUri, dataSourceType, fileName, connectionName)
+            // 使用解码后的 URI 调用带缓存的方法
+            movieViewModel.getMovieDetailsWithCache(movieId, decodedUri, dataSourceType, decodedFileName, decodedConnectionName)
         }
     }
-    val videoUriEncoder = videoUri.toBase64()
-    val fileNameEncoder = fileName.toBase64()
-    val connectionNameEncoder = connectionName.toBase64()
+
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -125,11 +126,12 @@ fun MovieDetailsScreen(
                 MovieContent(
                     movie = result.data,
                     onPlayClick = {
-                        navController.navigate("VideoPlayer/$videoUriEncoder/$dataSourceType/$fileNameEncoder/$connectionNameEncoder")
+                        // 🟢 使用传入的原始编码后的字符串，避免二次编码导致播放失败
+                        navController.navigate("VideoPlayer/$videoUri/$dataSourceType/$fileName/$connectionName")
                     },
                     dataSourceType = dataSourceType,
-                    fileName = fileName,
-                    connectionName = connectionName
+                    fileName = decodedFileName, // 传入解码后的名称用于显示
+                    connectionName = decodedConnectionName // 传入解码后的名称用于显示
                 )
             }
 
@@ -151,14 +153,20 @@ fun MovieDetailsScreen(
                         text = stringResource(R.string.ui_label_play_now),
                         icon = R.drawable.baseline_play_arrow_24,
                         modifier = Modifier,
-                        onClick = { navController.navigate("VideoPlayer/$videoUriEncoder/$dataSourceType/$fileNameEncoder/$connectionNameEncoder") }
+                        onClick = { 
+                            // 🟢 同样使用原始编码字符串
+                            navController.navigate("VideoPlayer/$videoUri/$dataSourceType/$fileName/$connectionName") 
+                        }
                     )
                 }
             }
 
             is Resource.Error -> ErrorView(
                 message = stringResource(R.string.ui_label_loading_failed),
-                onPlayAnyway = { navController.navigate("VideoPlayer/$videoUriEncoder/$dataSourceType/$fileNameEncoder/$connectionNameEncoder") }
+                onPlayAnyway = { 
+                    // 🟢 同样使用原始编码字符串
+                    navController.navigate("VideoPlayer/$videoUri/$dataSourceType/$fileName/$connectionName") 
+                }
             )
         }
     }

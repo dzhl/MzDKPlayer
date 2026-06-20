@@ -406,6 +406,13 @@ fun SourceSection(state: SettingsUiState, settingsVM: SettingsViewModel) {
             }
             DataSourceSwitch("HTTP", state.http, modifier) { settingsVM.toggleSource("HTTP", it) }
         }
+        Spacer(modifier = Modifier.height(16.dp))
+        SwitchSettingItem(
+            title = stringResource(R.string.setting_prioritize_nfo),
+            subtitle = stringResource(R.string.setting_prioritize_nfo_sub),
+            checked = state.prioritizeLocalNfo,
+            onCheckedChange = { settingsVM.togglePrioritizeLocalNfo(it) }
+        )
     }
 }
 

@@ -7,9 +7,12 @@
     <string name="cat_playback">Playback</string>
     <string name="cat_audio">Audio</string>
     <string name="cat_subtitle">Subtitles</string>
-    <string name="cat_source">Sources</string>
+    <string name="cat_source">Sources &amp; Scraping</string>
     <string name="cat_tools">Tools</string>
     <string name="cat_about">About</string>
+
+    <string name="setting_prioritize_nfo">Prioritize Local NFO Files</string>
+    <string name="setting_prioritize_nfo_sub">If a .nfo file with the same name exists in the media directory, information will be extracted from it first instead of scraping online</string>
 
     <string name="setting_hide_details">Hide Details</string>
     <string name="setting_hide_details_sub">Play directly without showing details</string>

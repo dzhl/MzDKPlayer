@@ -43,7 +43,6 @@ import org.mz.mzdkplayer.R
 import org.mz.mzdkplayer.data.repository.Resource
 import org.mz.mzdkplayer.ui.screen.vm.MovieViewModel
 import org.mz.mzdkplayer.ui.theme.myTTFColor
-import java.net.URLDecoder
 
 // 假设 MediaInfoExtractorFormFileName 已经在同一个包或正确导入
 import org.mz.mzdkplayer.tool.MediaInfoExtractorFormFileName
@@ -66,7 +65,7 @@ fun EditTMDBInfoScreen(
     val searchResults by movieViewModel.manualSearchResults.collectAsState()
 
     // 1. 解析文件名和初始化状态
-    val decodedUri = remember(mediaUri) { URLDecoder.decode(mediaUri, "UTF-8") }
+    val decodedUri = mediaUri
     // 从 URI 中提取纯文件名 (假设 URI 结构是 smb://.../filename.ext)
     val fileName = remember(decodedUri) {
         decodedUri.substringAfterLast("/")

@@ -78,6 +78,7 @@ import org.mz.mzdkplayer.ui.screen.common.MyIconButton
 import org.mz.mzdkplayer.ui.screen.movie.ErrorView
 import org.mz.mzdkplayer.ui.screen.movie.FullDescriptionDialog
 import org.mz.mzdkplayer.ui.screen.vm.MovieViewModel
+import org.mz.mzdkplayer.tool.Tools.fromBase64
 import org.mz.mzdkplayer.tool.Tools.toBase64
 import java.net.URLEncoder
 import java.util.Locale
@@ -100,13 +101,10 @@ fun TVSeriesDetailsScreen(
     val tvSeriesDetails by movieViewModel.tvSeriesResults.collectAsState()
     val tvEpisodeDetails by movieViewModel.tvEpisodeResults.collectAsState()
 
-    val videoUriEncoder = videoUri.toBase64()
-    val fileNameEncoder = fileName.toBase64()
-    val connectionNameEncoder = connectionName.toBase64()
-
-    val decodedUri = remember(videoUri) {
-        java.net.URLDecoder.decode(videoUri, "UTF-8")
-    }
+    // 🟢 核心修复：传入的参数已经是 Base64 编码的，不需要再次编码
+    val decodedUri = remember(videoUri) { videoUri.fromBase64() }
+    val decodedFileName = remember(fileName) { fileName.fromBase64() }
+    val decodedConnectionName = remember(connectionName) { connectionName.fromBase64() }
 
     LaunchedEffect(seriesId, currentSeason, currentEpisode) {
         if (seriesId > 0 && currentSeason > 0 && currentEpisode > 0) {
@@ -116,8 +114,8 @@ fun TVSeriesDetailsScreen(
                 episode = currentEpisode,
                 videoUri = decodedUri,
                 dataSourceType,
-                fileName,
-                connectionName
+                decodedFileName,
+                decodedConnectionName
             )
         }
     }
@@ -131,11 +129,12 @@ fun TVSeriesDetailsScreen(
                     currentSeason = currentSeason,
                     currentEpisode = currentEpisode,
                     onPlayClick = {
-                        navController.navigate("VideoPlayer/$videoUriEncoder/$dataSourceType/$fileNameEncoder/$connectionNameEncoder")
+                        // 🟢 使用传入的原始编码后的字符串
+                        navController.navigate("VideoPlayer/$videoUri/$dataSourceType/$fileName/$connectionName")
                     },
                     dataSourceType = dataSourceType,
-                    fileName = fileName,
-                    connectionName = connectionName
+                    fileName = decodedFileName,
+                    connectionName = decodedConnectionName
                 )
             }
 
@@ -156,14 +155,20 @@ fun TVSeriesDetailsScreen(
                         text =stringResource(R.string.ui_label_play_now),
                         icon = R.drawable.baseline_play_arrow_24,
                         modifier = Modifier,
-                        onClick = { navController.navigate("VideoPlayer/$videoUriEncoder/$dataSourceType/$fileNameEncoder/$connectionNameEncoder") }
+                        onClick = { 
+                            // 🟢 同样使用原始编码字符串
+                            navController.navigate("VideoPlayer/$videoUri/$dataSourceType/$fileName/$connectionName") 
+                        }
                     )
                 }
             }
 
             is Resource.Error -> ErrorView(
                 message = stringResource(R.string.ui_label_tv_series_loading_failed,result.message),
-                onPlayAnyway = { navController.navigate("VideoPlayer/$videoUriEncoder/$dataSourceType/$fileNameEncoder/$connectionNameEncoder") }
+                onPlayAnyway = { 
+                    // 🟢 同样使用原始编码字符串
+                    navController.navigate("VideoPlayer/$videoUri/$dataSourceType/$fileName/$connectionName") 
+                }
             )
 
         }

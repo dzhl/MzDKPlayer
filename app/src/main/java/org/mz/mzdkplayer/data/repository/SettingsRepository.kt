@@ -48,6 +48,9 @@ object SettingsRepository {
     private const val KEY_SOURCE_HTTP = "source_http"
     private const val KEY_APP_LANGUAGE = "app_language"
 
+    // 🔥 新增：优先选择本地 nfo
+    private const val KEY_PRIORITIZE_LOCAL_NFO = "prioritize_local_nfo"
+
     // 🔥 新增：Exo音频解码模式 (0=纯硬解, 1=硬解优先, 2=软解优先)
     private const val KEY_EXO_AUDIO_DECODE_MODE = "exo_audio_decode_mode"
     // --- Getters & Setters ---
@@ -147,4 +150,8 @@ object SettingsRepository {
     var appLanguage: String
         get() = prefs.getString(KEY_APP_LANGUAGE, "") ?: "" // "" = 跟随系统
         set(value) = prefs.edit { putString(KEY_APP_LANGUAGE, value) }
+
+    var prioritizeLocalNfo: Boolean
+        get() = prefs.getBoolean(KEY_PRIORITIZE_LOCAL_NFO, false)
+        set(value) = prefs.edit { putBoolean(KEY_PRIORITIZE_LOCAL_NFO, value) }
 }

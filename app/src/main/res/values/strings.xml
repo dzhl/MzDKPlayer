@@ -7,9 +7,12 @@
     <string name="cat_playback">播放与视频</string>
     <string name="cat_audio">音频设置</string>
     <string name="cat_subtitle">字幕外观</string>
-    <string name="cat_source">数据源刮削</string>
+    <string name="cat_source">数据源与刮削</string>
     <string name="cat_tools">工具与权限</string>
     <string name="cat_about">关于软件</string>
+
+    <string name="setting_prioritize_nfo">优先加载本地 NFO 文件</string>
+    <string name="setting_prioritize_nfo_sub">如果媒体目录下存在同名 .nfo 文件，将优先从中提取信息而非联网刮削</string>
 
     <string name="setting_hide_details">隐藏详情页</string>
     <string name="setting_hide_details_sub">直接播放，不显示电影/电视剧详情</string>

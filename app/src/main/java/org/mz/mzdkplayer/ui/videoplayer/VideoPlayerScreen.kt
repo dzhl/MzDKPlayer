@@ -110,6 +110,7 @@ import org.mz.mzdkplayer.ui.videoplayer.components.AkDanmakuPlayer
 import org.mz.mzdkplayer.ui.videoplayer.components.AudioTrackPanel
 import org.mz.mzdkplayer.ui.videoplayer.components.DanmakuPanel
 import org.mz.mzdkplayer.ui.videoplayer.components.IsoTitlePanel
+import org.mz.mzdkplayer.ui.videoplayer.components.PlaybackSpeedPanel
 import org.mz.mzdkplayer.ui.videoplayer.components.SubtitleTrackPanel
 import org.mz.mzdkplayer.ui.videoplayer.components.VideoPlayerControls
 import org.mz.mzdkplayer.ui.videoplayer.components.VideoPlayerControlsIcon
@@ -226,6 +227,7 @@ fun VideoPlayerScreen(
 
     val isPlayerPlaying by player.isPlayingFlow.collectAsState()
     val playerStatus by player.playerStatus.collectAsState()
+    val playbackSpeed by player.playbackSpeed.collectAsState()
     // 构建播放器 (设置媒体源等)
     //BuilderMzPlayer(context, mediaUri, exoPlayer, dataSourceType, settingsViewModel)
     // 当 Composable 离开组合时，释放资源
@@ -812,6 +814,15 @@ fun VideoPlayerScreen(
                         player.selectIsoTitle(title.index)
                     }
                 )
+
+                "SPEED" -> PlaybackSpeedPanel(
+                    currentSpeed = playbackSpeed,
+                    onSpeedSelected = { speed ->
+                        player.setPlaybackSpeed(speed)
+                    },
+                    isPassthroughEnabled = settingsState.enablePassthrough
+                )
+
                 else -> {
                     SubtitleTrackPanel(
                         subtitleTracks = player.subtitleTracks, onTrackSelected = { track ->

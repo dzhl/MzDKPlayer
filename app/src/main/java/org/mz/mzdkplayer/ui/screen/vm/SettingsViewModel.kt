@@ -30,7 +30,8 @@ data class SettingsUiState(
     val nfs: Boolean = false,
     val local: Boolean = false,
     val http: Boolean = false,
-    val appLang: String = ""
+    val appLang: String = "",
+    val prioritizeLocalNfo: Boolean = false
 )
 
 class SettingsViewModel : ViewModel() {
@@ -64,7 +65,8 @@ class SettingsViewModel : ViewModel() {
                 nfs = repo.enableNfs,
                 local = repo.enableLocal,
                 http = repo.enableHttp,
-                appLang = repo.appLanguage
+                appLang = repo.appLanguage,
+                prioritizeLocalNfo = repo.prioritizeLocalNfo
             )
         }
     }
@@ -105,6 +107,10 @@ class SettingsViewModel : ViewModel() {
     }
     fun setExoAudioDecodeMode(mode: Int) {
         repo.exoAudioDecodeMode = mode
+        refreshState()
+    }
+    fun togglePrioritizeLocalNfo(v: Boolean) {
+        repo.prioritizeLocalNfo = v
         refreshState()
     }
 }

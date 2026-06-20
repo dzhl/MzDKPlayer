@@ -22,9 +22,16 @@ import org.mz.mzdkplayer.data.model.TVEpisode
 import org.mz.mzdkplayer.data.model.TVSeriesDetails
 import org.mz.mzdkplayer.data.repository.Resource
 import org.mz.mzdkplayer.data.repository.TmdbRepository
+import org.mz.mzdkplayer.data.repository.SettingsRepository
+import org.mz.mzdkplayer.tool.NfoReader
+import org.mz.mzdkplayer.tool.NfoTool
 import org.mz.mzdkplayer.tool.MediaInfo
+import org.mz.mzdkplayer.MzDkPlayerApplication
+import androidx.annotation.OptIn
+import androidx.media3.common.util.UnstableApi
 
 class MovieViewModel(private val repository: TmdbRepository,private val mediaDao: MediaDao) : ViewModel() {
+    private val settingsRepo = SettingsRepository
 
     private val _popularMovies = MutableStateFlow<Resource<List<Movie>>>(Resource.Loading)
     val popularMovies: StateFlow<Resource<List<Movie>>> = _popularMovies
@@ -623,6 +630,7 @@ class MovieViewModel(private val repository: TmdbRepository,private val mediaDao
 
     // [新增] 核心通用方法：搜索并获取完整详情，然后入库
 // 返回插入的 Entity，如果失败返回 null
+    @OptIn(UnstableApi::class)
     private suspend fun searchAndFetchFullDetails(
         mediaInfo: MediaInfo,
         videoUri: String,
@@ -631,6 +639,18 @@ class MovieViewModel(private val repository: TmdbRepository,private val mediaDao
         connectionName: String
     ): MediaCacheEntity? {
         try {
+            // 0. 尝试加载本地 NFO (如果开启)
+            if (settingsRepo.prioritizeLocalNfo) {
+                NfoReader.getNfoStream(MzDkPlayerApplication.context, videoUri, dataSourceType)?.use { inputStream ->
+                    val nfoEntity = NfoTool.parseNfo(inputStream, videoUri, dataSourceType, fileName, connectionName)
+                    if (nfoEntity != null) {
+                        Log.d("MovieViewModel", "Hit local NFO for: $fileName")
+                        mediaDao.insertMedia(nfoEntity)
+                        return nfoEntity
+                    }
+                }
+            }
+
             if (mediaInfo.mediaType == "movie") {
                 // 1. 搜索电影
                 val searchResult = repository.searchMovies(mediaInfo.title, year = mediaInfo.year)

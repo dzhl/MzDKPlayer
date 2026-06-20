@@ -124,6 +124,10 @@ class MzVlcPlayer(
     // 1. 增加变量
     private val _isoTitles = MutableStateFlow<List<MzIsoTitle>>(emptyList())
     override val isoTitles: StateFlow<List<MzIsoTitle>> = _isoTitles.asStateFlow()
+
+    private val _playbackSpeed = MutableStateFlow(1.0f)
+    override val playbackSpeed: StateFlow<Float> = _playbackSpeed.asStateFlow()
+
     // 3. 接口回调
     override var onError: ((String) -> Unit)? = null
     override var onCuesChanged: ((Any) -> Unit)? = null // VLC 不需要，留空
@@ -382,6 +386,14 @@ class MzVlcPlayer(
         mediaPlayer.release()
 
         libVLC.release()
+    }
+
+    override fun setPlaybackSpeed(speed: Float) {
+        if (isPassthroughEnabled && speed != 1.0f) {
+            return
+        }
+        _playbackSpeed.value = speed
+        mediaPlayer.rate = speed
     }
 
     @Composable

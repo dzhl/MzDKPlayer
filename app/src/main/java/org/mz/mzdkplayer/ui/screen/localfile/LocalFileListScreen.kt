@@ -8,7 +8,6 @@ import android.util.Log
 import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -135,7 +134,7 @@ fun LocalFileListScreen(path: String?, navController: NavHostController, setting
         files.clear()
         delay(300)
 
-        val decodedPath = path?.let { URLDecoder.decode(it, "UTF-8") } ?: ""
+        val decodedPath = path ?: ""
 
         if (decodedPath.isEmpty()) {
             status = LocalFileLoadStatus.Error(context.getString(R.string.ui_label_path_is_empty))
@@ -360,7 +359,7 @@ fun LocalFileListScreen(path: String?, navController: NavHostController, setting
                                                             fileExtension
                                                         ) -> {
                                                             navController.navigate(
-                                                                "PicViewer/$encodedFileUri/LOCAL/$encodedLocalFile/$encodedFileName" // connectionName 留空
+                                                                "PicViewer/$encodedFileUri/LOCAL/$encodedFileName/$encodedLocalFile" // connectionName 留空
                                                             )
                                                         }
 
