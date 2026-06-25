@@ -55,6 +55,7 @@ import coil3.compose.AsyncImage
 import kotlinx.coroutines.delay
 import org.mz.mzdkplayer.MzDkPlayerApplication
 import org.mz.mzdkplayer.R
+import org.mz.mzdkplayer.data.repository.AudioPlaylistRepository
 import org.mz.mzdkplayer.data.model.AudioItem
 import org.mz.mzdkplayer.data.model.FileConnectionStatus
 import org.mz.mzdkplayer.data.repository.Resource
@@ -383,9 +384,7 @@ fun SMBFileListScreen(
                                                                 }
 
                                                             // 设置全局播放列表
-                                                            MzDkPlayerApplication.clearStringList("audio_playlist")
-                                                            MzDkPlayerApplication.setStringList(
-                                                                "audio_playlist",
+                                                            AudioPlaylistRepository.setPlaylist(
                                                                 audioItems
                                                             )
 

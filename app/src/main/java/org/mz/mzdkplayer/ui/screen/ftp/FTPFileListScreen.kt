@@ -38,6 +38,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.mz.mzdkplayer.MzDkPlayerApplication
 import org.mz.mzdkplayer.R
+import org.mz.mzdkplayer.data.repository.AudioPlaylistRepository
 import org.mz.mzdkplayer.data.model.AudioItem
 import org.mz.mzdkplayer.data.model.FTPConnection
 import org.mz.mzdkplayer.data.model.FileConnectionStatus
@@ -358,9 +359,8 @@ fun FTPFileListScreen(
                                                                         )
                                                                     }
 
-                                                                // 设置数据到全局 Application
-                                                                MzDkPlayerApplication.clearStringList("audio_playlist")
-                                                                MzDkPlayerApplication.setStringList("audio_playlist", audioItems)
+                                                                // 设置数据到 Repository
+                                                                AudioPlaylistRepository.setPlaylist(audioItems)
 
                                                                 // 导航到音频播放器，带上播放列表索引
                                                                 navController.navigate(

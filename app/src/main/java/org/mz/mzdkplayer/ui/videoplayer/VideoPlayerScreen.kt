@@ -118,10 +118,14 @@ import org.mz.mzdkplayer.ui.videoplayer.components.VideoPlayerMainFrame
 import org.mz.mzdkplayer.ui.videoplayer.components.VideoPlayerMediaTitle
 import org.mz.mzdkplayer.ui.videoplayer.components.VideoPlayerMediaTitleType
 import org.mz.mzdkplayer.ui.videoplayer.components.VideoPlayerOverlay
+import org.mz.mzdkplayer.ui.videoplayer.components.VideoPlayerOverlayLayer
 import org.mz.mzdkplayer.ui.videoplayer.components.VideoPlayerPulse
 import org.mz.mzdkplayer.ui.videoplayer.components.VideoPlayerPulseState
 import org.mz.mzdkplayer.ui.videoplayer.components.VideoPlayerSeeker
 import org.mz.mzdkplayer.ui.videoplayer.components.VideoPlayerState
+import org.mz.mzdkplayer.ui.videoplayer.components.VideoPlayerStatusLayer
+import org.mz.mzdkplayer.ui.videoplayer.components.VideoPlayerTrackSelectionPanel
+import org.mz.mzdkplayer.ui.videoplayer.components.VideoPlayerViewLayer
 import org.mz.mzdkplayer.ui.videoplayer.components.VideoTrackPanel
 
 import org.mz.mzdkplayer.ui.videoplayer.components.rememberVideoPlayerPulseState
@@ -260,21 +264,6 @@ fun VideoPlayerScreen(
             // 4. 释放资源
             player.release()
             mDanmakuPlayer.release()
-
-            // ⭐️ 新增：退出播放页面时，彻底关闭 SMB 连接
-            // 只有在这里调用，才能既保证播放时的连接复用，又保证退出时不泄露连接
-            // 统一释放所有协议的全局连接
-            thread {
-                try {
-                    if (!useVlc){
-                        SmbDataSource.releaseGlobalResources()
-                        WebDavDataSource.releaseGlobalResources()
-                        FtpDataSource.releaseGlobalResources()
-                    }
-                } catch (e: Exception) {
-                    android.util.Log.e("VideoPlayer", "Async release failed", e)
-                }
-            }
         }
     }
     LaunchedEffect(Unit) {
@@ -392,7 +381,7 @@ fun VideoPlayerScreen(
     // 将加载的弹幕数据发送到播放器
     // 监听播放器状态变化来启动/暂停弹幕
     var hasSentDanmaku by remember { mutableStateOf(false) }
-    LaunchedEffect(isDanmakuLoaded, danmakuDataList, isPlaying, contentCurrentPosition) {
+    LaunchedEffect(isDanmakuLoaded, danmakuDataList) {
         // 如果弹幕已加载且尚未发送给播放器
         if (isDanmakuLoaded && !hasSentDanmaku && danmakuDataList != null) {
             Log.d("danmakuData", "状态弹幕")
@@ -567,65 +556,19 @@ fun VideoPlayerScreen(
             }
         }
 
-        // AndroidView 包裹 PlayerView，用于显示视频 - 这是关键，确保底层渲染不受干扰
-//        AndroidView(
-//            factory = { context ->
-//                PlayerView(context).apply {
-//                    useController = false // 禁用默认控制器
-//                    player = exoPlayer // 设置 ExoPlayer
-//                    // 根据 ViewModel 状态设置字幕视图可见性
-//                    subtitleView?.visibility = videoPlayerViewModel.isSubtitleViewVis
-//                }
-//            },
-//            update = { playView ->
-//                // 更新 PlayerView
-//                playView.player = exoPlayer
-//                //playView.resizeMode
-//                playView.subtitleView?.visibility = videoPlayerViewModel.isSubtitleViewVis
-//            },
-//
-//            modifier = Modifier
-//                .fillMaxSize()
-//                .onSizeChanged { size ->
-//                    videoSizePx = size
-//                    Log.d("playViewSize", videoSizePx.toString())
-//                }, // 填充整个父容器
-//            onRelease = {
-//                // 释放资源
-//                exoPlayer.release()
-//            }
-//        )
-        player.PlayerView(modifier = Modifier
-            .align(Alignment.Center)
-            .onSizeChanged { size ->
-                videoSizePx = size
-                Log.d("playViewSize", videoSizePx.toString())
-            })
-
-        // 显示 SRT/PSG/ ASS(ASS暂时由PlayerView显示,SubtitleView不显示)
-        if (videoPlayerViewModel.isCusSubtitleViewVis && !useVlc) {
-            // 字幕视图，显示 SRT/PSG/ASS 字幕 (从 CueGroup 中获取)
-            SubtitleView(
-                cueGroup = currentCueGroup, // 传递当前字幕组
-                subtitleStyle = customSubtitleStyle, // 使用自定义字幕样式(只影响srt字幕)
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = settingsState.subBottomPadding.dp), // 底部居中对齐(只影响srt字幕)
-                videoSizeDp = videoSizeDp,
-                backgroundColor = Color(settingsState.subBgColor),// 背景色(只影响srt字幕)
-                sourceVideoHeight = player.videoHeight,
-                sourceVideoWidth = player.videoWidth,
-                forcePGSCenter = settingsState.forcePgsCenter
-
-            )
-        }
-
-        //弹幕层
-        AkDanmakuPlayer(
-            modifier = Modifier
-                .fillMaxSize()
-                .align(Alignment.TopCenter), // 顶部居中对齐
-            danmakuPlayer = mDanmakuPlayer // 传递弹幕播放器实例
+        // AndroidView 包裹 PlayerView
+        VideoPlayerViewLayer(
+            player = player,
+            isCusSubtitleViewVis = videoPlayerViewModel.isCusSubtitleViewVis,
+            useVlc = useVlc,
+            currentCueGroup = currentCueGroup,
+            customSubtitleStyle = customSubtitleStyle,
+            subBottomPadding = settingsState.subBottomPadding,
+            subBgColor = settingsState.subBgColor,
+            videoSizeDp = videoSizeDp,
+            forcePgsCenter = settingsState.forcePgsCenter,
+            mDanmakuPlayer = mDanmakuPlayer,
+            onVideoSizeChanged = { videoSizePx = it }
         )
 
         // 实时网速显示
@@ -638,41 +581,25 @@ fun VideoPlayerScreen(
             )
         }
         val statusText = playerStatus.asDisplayString()
-        // 视频播放器覆盖层 (包含控制按钮等)
-        VideoPlayerOverlay(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .onFocusChanged {
-                    videoPlayerViewModel.conFocus =
-                        it.isFocused
-                }, // 底部居中
-            focusRequester = focusRequester, // 焦点请求器
-            state = videoPlayerState, // 播放器状态
-            isPlaying = isPlaying, // 播放状态
-            centerButton = { VideoPlayerPulse(pulseState) }, // 中心脉冲按钮
-            subtitles = { }, // 子标题 (未实现)
-            controls = {
-                // 控制按钮区域
-                VideoPlayerControls(
-                    isPlaying, // 播放状态
-                    contentCurrentPosition, // 当前位置
-                    player, // ExoPlayer 实例
-                    videoPlayerState, // 播放器状态
-                    focusRequester, // 焦点请求器
-                    fileName, // 标题 (示例)
-                    statusText, // 副标题 (示例)
-                    "2022/1/20", // 第三行文本 (示例)
-                    videoPlayerViewModel, // ViewModel
-                    isoTitles=isoTitles,
-                    mediaUri = mediaUri,
-                    mDanmakuPlayer, // 弹幕播放器
-
-                    settingsManager, // 弹幕设置管理器，用于保存可见性状态
-                    ::getDanmakuConfig // 传递获取配置的方法
-                )
-            },
-            atpFocus = videoPlayerViewModel.atpFocus // 音轨/字幕面板焦点状态
+        
+        // 视频播放器覆盖层
+        VideoPlayerOverlayLayer(
+            videoPlayerViewModel = videoPlayerViewModel,
+            focusRequester = focusRequester,
+            videoPlayerState = videoPlayerState,
+            isPlaying = isPlaying,
+            pulseState = pulseState,
+            currentPositionProvider = { contentCurrentPosition },
+            player = player,
+            fileName = fileName,
+            statusText = statusText,
+            isoTitles = isoTitles,
+            mediaUri = mediaUri,
+            mDanmakuPlayer = mDanmakuPlayer,
+            settingsManager = settingsManager,
+            getDanmakuConfig = ::getDanmakuConfig
         )
+
         LaunchedEffect(Unit) {
             reRequester.requestFocus()
         }
@@ -723,24 +650,8 @@ fun VideoPlayerScreen(
         LaunchedEffect(videoPlayerViewModel.conFocus) {
             Log.d("conFocus", videoPlayerViewModel.conFocus.toString())
         }
-//        BackHandler(backPressState == BackPress.Idle) { // 移除 !videoPlayerState.controlsVisible 条件
-//
-//
-//                // 如果控制栏未显示，则执行退出逻辑
-//
-//                backPressState = BackPress.InitialTouch
-//
-//                showToast = true
-//
-//        }
+
         BackHandler(backPressState == BackPress.Idle) {
-//            if (videoPlayerState.controlsVisible && !videoPlayerViewModel.conFocus) {
-//                // 如果控制栏显示，则隐藏控制栏
-//                //videoPlayerState.hideControls()
-//            } else if (videoPlayerState.controlsVisible ){
-//                // 如果控制栏不显示，则执行退出逻辑
-//                videoPlayerState.hideControls()
-//            }else{
             if (backPressState == BackPress.Idle && !videoPlayerState.controlsVisible) {
                 backPressState = BackPress.InitialTouch
                 showToast = true
@@ -755,167 +666,27 @@ fun VideoPlayerScreen(
         }
 
 
-        // 音轨/字幕选择面板的动画可见性
-        AnimatedVisibility(
-            videoPlayerViewModel.atpVisibility, // 根据 ViewModel 状态显示/隐藏
-            enter = fadeIn(), // 淡入动画
-            exit = fadeOut(), // 淡出动画
-            modifier = Modifier
-                .widthIn(200.dp, 420.dp) // 宽度范围
-                .fillMaxHeight() // 高度范围
-                .align(AbsoluteAlignment.CenterRight) // 右侧居中
-                // 向左偏移
-                .background(
-                    Color.Black.copy(0.8f), shape = RoundedCornerShape(2.dp) // 半透明黑色背景和圆角
-                )
-                // 处理 D-Pad 事件
-                .handleDPadKeyEvents(
-                    onRight = {
-                        true
-                    },
-                    onUp = {
-                        true
-                    },
-                    onDown = {
-                        true
-                    }
-                )
-                // 处理焦点变化
-                .onFocusChanged {
-                    if (it.isFocused) {
-                        videoPlayerViewModel.atpFocus = it.isFocused
+        // 音轨/字幕选择面板
+        VideoPlayerTrackSelectionPanel(
+            videoPlayerViewModel = videoPlayerViewModel,
+            player = player,
+            audioTracks = audioTracks,
+            videoTracks = videoTracks,
+            subtitleTracksFlow = player.subtitleTracks,
+            isoTitles = isoTitles,
+            playbackSpeed = playbackSpeed,
+            enablePassthrough = settingsState.enablePassthrough,
+            mDanmakuPlayer = mDanmakuPlayer,
+            mediaUri = mediaUri,
+            onHideControls = { videoPlayerState.hideControls() }
+        )
 
-                    } else {
-                        videoPlayerState.hideControls() // 隐藏控制栏
-                        videoPlayerViewModel.atpFocus = it.isFocused
-                    }
-                }) {
-            // 根据 ViewModel 中的选择显示不同的面板
-            when (videoPlayerViewModel.selectedAorVorS) {
-                "A" -> AudioTrackPanel(
-                    lists = audioTracks, onTrackSelected = { track ->
-                        player.selectAudioTrack(track)
-                    }
-
-                )
-
-                "V" -> VideoTrackPanel(lists = videoTracks, onTrackSelected = { track ->
-                    player.selectVideoTrack(track)
-                })
-
-                "D" -> DanmakuPanel(
-                    mDanmakuPlayer, // 弹幕播放器
-                    videoPlayerViewModel,
-                )
-// 👇 新增这个分支
-                "ISO" -> IsoTitlePanel(
-                    lists = isoTitles,
-                    onTitleSelected = { title ->
-                        player.selectIsoTitle(title.index)
-                    }
-                )
-
-                "SPEED" -> PlaybackSpeedPanel(
-                    currentSpeed = playbackSpeed,
-                    onSpeedSelected = { speed ->
-                        player.setPlaybackSpeed(speed)
-                    },
-                    isPassthroughEnabled = settingsState.enablePassthrough
-                )
-
-                else -> {
-                    SubtitleTrackPanel(
-                        subtitleTracks = player.subtitleTracks, onTrackSelected = { track ->
-                            player.selectSubtitleTrack(track)
-                        },onLoadExternalSubtitle = {
-                            // 1. 拿到当前正在播的视频 URI
-                            val videoUri = mediaUri // 这个变量你应该能从 ViewModel 或数据层拿到
-
-                            // 2. 盲猜同目录下可能的字幕文件
-                            val lastDotIndex = videoUri.lastIndexOf('.')
-                            if (lastDotIndex > 0) {
-                                val basePath = videoUri.substring(0, lastDotIndex)
-                                val extensions = listOf("ass", "srt", "ssa", "vtt")
-
-                                // 构造字幕列表：Pair(安全的URI路径, 显示名称)
-                                val subList = extensions.map { ext ->
-                                    val rawSubtitleUrl = "$basePath.$ext"
-                                    // 【核心修复】：必须对拼装好的字幕 URL 进行编码转换，替换空格并转码中文
-                                    val safeSubtitleUrl = Tools.encodeUrlForPlayer(rawSubtitleUrl)
-
-                                    safeSubtitleUrl to "[外部加载]$ext"
-                                }
-
-                                // 3. 调用播放器接口批量添加
-                                player.addExternalSubtitles(subList)
-                            }
-                        }
-                    )
-                }
-            }
-            // 处理返回键，隐藏面板
-            BackHandler(true) {
-                videoPlayerViewModel.atpVisibility = false
-            }
-        }
-
-        when (val status = playerStatus) {
-            is VideoPlayerStatus.Error -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .zIndex(2f) // 确保在最上层
-                        .background(Color.Black)
-                ) {
-                    VAErrorScreen((playerStatus as VideoPlayerStatus.Error).toString())
-                }
-            }
-
-            is VideoPlayerStatus.BUFFERING -> {
-                // 显示播放中途的缓冲状态 (小窗)
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .zIndex(1f)
-                ) {
-                    LoadingScreen(
-                        stringResource(id = R.string.ui_label_buffering_now),
-                        modifier = Modifier
-                            .width(95.dp)
-                            .height(95.dp)
-                            .align(Alignment.Center)
-                            // 🔑 保留这一行：将缓冲框整体向上偏移 80dp，避开中间的快进图标
-                            .offset(y = (-68).dp)
-                            .background(
-                                Color.Black.copy(0.5f),
-                                shape = RoundedCornerShape(8.dp)
-                            ),
-                        fontSize = 16,
-                        36
-                    )
-                }
-            }
-
-            else -> {}
-        }
-        if (isFirstLoad) {
-            // 显示首次加载状态 (全屏)
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .zIndex(1f)
-            ) {
-                LoadingScreen(
-                    stringResource(R.string.ui_label_loading_do_not_operate),
-                    Modifier
-                        .fillMaxSize()
-                        .background(Color.Black)
-                )
-            }
-        }
+        // 状态层 (Error, Buffering, FirstLoad)
+        VideoPlayerStatusLayer(
+            playerStatus = playerStatus,
+            isFirstLoad = isFirstLoad
+        )
     }
-
-
 }
 
 /**

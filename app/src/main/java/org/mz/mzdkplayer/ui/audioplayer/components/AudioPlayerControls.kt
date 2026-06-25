@@ -1,3 +1,5 @@
+package org.mz.mzdkplayer.ui.audioplayer.components
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,7 +34,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @Composable
 fun AudioPlayerControls(
     isPlaying: Boolean,
-    contentCurrentPosition: Long,
+    currentPositionProvider: () -> Long,
     exoPlayer: ExoPlayer,
     state: AudioPlayerState,
     audioPlayerViewModel: AudioPlayerViewModel,
@@ -58,7 +60,7 @@ fun AudioPlayerControls(
 
         // ===== 1️⃣ 进度条 =====
         AudioPlayerProgressBar(
-            contentProgress = contentCurrentPosition.milliseconds,
+            contentProgress = currentPositionProvider().milliseconds,
             contentDuration = contentDuration,
             onSeek = onSeek,
             state = state

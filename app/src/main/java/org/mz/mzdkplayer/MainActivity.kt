@@ -14,8 +14,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.core.view.WindowCompat
 import androidx.media3.common.util.UnstableApi
-import org.mz.mzdkplayer.data.repository.SettingsRepository
-import org.mz.mzdkplayer.di.RepositoryProvider
 import org.mz.mzdkplayer.ui.MzDKPlayerAPP
 
 @UnstableApi
@@ -28,8 +26,8 @@ class MainActivity : AppCompatActivity() {
         private const val MAX_DENSITY_DPI = 640
     }
 
-    // 用于 Compose 界面接收外部视频 URI
-    private var externalVideoUri: Uri? = null
+    // 用于 Compose 界面接收外部视频 URI，使用 mutableStateOf 确保 onNewIntent 更新时触发重组
+    private var externalVideoUri by mutableStateOf<Uri?>(null)
 
     // DPI 相关（保留你原有逻辑）
     private var needsDensityChangeCalculated = false
@@ -98,24 +96,23 @@ class MainActivity : AppCompatActivity() {
         // 1. 开启沉浸式，让布局延伸到系统栏下方
         WindowCompat.setDecorFitsSystemWindows(window, false)
         handleIntent(intent)
-        RepositoryProvider.init(this)
-        SettingsRepository.init(this)
         setContent {
             var showSplash by remember { mutableStateOf(true) }
             if (showSplash) {
                 LaunchScreen(onFinish = { showSplash = false })
             } else {
-                MzDKPlayerAPP(externalVideoUri = externalVideoUri)
+                MzDKPlayerAPP(
+                    externalVideoUri = externalVideoUri,
+                    onExternalVideoConsumed = { externalVideoUri = null }
+                )
             }
         }
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        setIntent(intent)
         handleIntent(intent)
-        // 注意：由于 Compose 状态在 onCreate 中初始化，
-        // 如果需要实时响应 onNewIntent，建议将 externalVideoUri 提升到 ViewModel 或使用 rememberUpdatedState。
-        // 对于简单场景（如只启动一次播放），当前方式已足够。
     }
 
     private fun handleIntent(intent: Intent?) {

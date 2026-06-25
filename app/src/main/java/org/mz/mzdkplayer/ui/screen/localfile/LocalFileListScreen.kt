@@ -59,6 +59,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.mz.mzdkplayer.MzDkPlayerApplication
 import org.mz.mzdkplayer.R
+import org.mz.mzdkplayer.data.repository.AudioPlaylistRepository
 import org.mz.mzdkplayer.data.model.AudioItem
 import org.mz.mzdkplayer.data.model.LocalFileLoadStatus
 import org.mz.mzdkplayer.data.repository.Resource
@@ -343,9 +344,7 @@ fun LocalFileListScreen(path: String?, navController: NavHostController, setting
                                                                 }
 
                                                             // 设置数据
-                                                            MzDkPlayerApplication.clearStringList("audio_playlist")
-                                                            MzDkPlayerApplication.setStringList(
-                                                                "audio_playlist",
+                                                            AudioPlaylistRepository.setPlaylist(
                                                                 audioItems
                                                             )
 

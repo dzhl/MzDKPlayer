@@ -32,6 +32,9 @@ import org.mz.mzdkplayer.player.core.IMzPlayer
 import org.mz.mzdkplayer.player.core.MzBasicTrack
 import org.mz.mzdkplayer.player.core.MzIsoTitle
 import org.mz.mzdkplayer.player.core.MzVideoTrack
+import org.mz.mzdkplayer.tool.FtpDataSource
+import org.mz.mzdkplayer.tool.SmbDataSource
+import org.mz.mzdkplayer.tool.WebDavDataSource
 import org.mz.mzdkplayer.ui.screen.vm.VideoPlayerStatus
 
 @OptIn(UnstableApi::class)
@@ -304,6 +307,10 @@ class MzExoPlayer(
 
     override fun release() {
         exoPlayer.release()
+        // 彻底释放协议层的全局静态连接，防止句柄泄漏
+        SmbDataSource.releaseGlobalResources()
+        FtpDataSource.releaseGlobalResources()
+        WebDavDataSource.releaseGlobalResources()
     }
 
     override fun setPlaybackSpeed(speed: Float) {

@@ -1,5 +1,6 @@
 package org.mz.mzdkplayer.ui
 
+import org.mz.mzdkplayer.data.repository.AudioPlaylistRepository
 import org.mz.mzdkplayer.ui.screen.setting.SolarSystem
 import android.net.Uri
 import android.util.Log
@@ -116,7 +117,10 @@ import java.net.URLEncoder
 
 @OptIn(UnstableApi::class)
 @Composable
-fun MzDKPlayerAPP(externalVideoUri: Uri?) {
+fun MzDKPlayerAPP(
+    externalVideoUri: Uri?,
+    onExternalVideoConsumed: () -> Unit = {}
+) {
 
 
     var selectedIndex by remember { mutableIntStateOf(0) }
@@ -149,6 +153,7 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
             mainNavController.navigate(
                 "VideoPlayer/${uriString.toBase64()}/HTTP/$extVideo/$extVideo"
             )
+            onExternalVideoConsumed()
         }
     }
 
@@ -421,8 +426,8 @@ fun MzDKPlayerAPP(externalVideoUri: Uri?) {
             val currentIndex = backStackEntry.arguments?.getString("currentIndex") ?: "1"
             val connectionNameEncoded = backStackEntry.arguments?.getString("connectionName")
             val connectionName = connectionNameEncoded?.fromBase64() ?: context.getString(R.string.ui_label_unknown)
-            // 获取特定的字符串列表
-            val extraList = MzDkPlayerApplication.getStringList("audio_playlist")
+            // 从 Repository 获取播放列表
+            val extraList by AudioPlaylistRepository.playlist.collectAsState()
             // 检查参数是否不为空，并渲染屏幕
             if (sourceUri != null && dataSourceType != null) {
                 Log.d("sourceUri", sourceUri)

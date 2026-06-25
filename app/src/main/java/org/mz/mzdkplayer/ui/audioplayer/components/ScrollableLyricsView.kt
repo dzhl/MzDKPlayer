@@ -31,7 +31,7 @@ import kotlin.time.Duration
 @SuppressLint("UnrememberedMutableState")
 @Composable
 fun ScrollableLyricsView(
-    currentPosition: Duration,
+    currentPositionProvider: () -> Duration,
     parsedLyrics: List<LyricEntry>,
     topMaskColor: Color,
     bottomMaskColor: Color
@@ -45,6 +45,7 @@ fun ScrollableLyricsView(
     // 查找当前应高亮的歌词索引
     val highlightedIndex by derivedStateOf {
         if (parsedLyrics.isEmpty()) return@derivedStateOf -1
+        val currentPosition = currentPositionProvider()
         var index = parsedLyrics.indexOfLast { it.time <= currentPosition }
         index = index.coerceAtLeast(0)
         index

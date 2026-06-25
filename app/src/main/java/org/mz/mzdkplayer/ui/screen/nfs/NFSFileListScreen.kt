@@ -40,6 +40,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.mz.mzdkplayer.MzDkPlayerApplication
 import org.mz.mzdkplayer.R
+import org.mz.mzdkplayer.data.repository.AudioPlaylistRepository
 import org.mz.mzdkplayer.data.model.AudioItem
 import org.mz.mzdkplayer.data.model.FileConnectionStatus
 import org.mz.mzdkplayer.data.model.NFSConnection
@@ -71,6 +72,7 @@ import org.mz.mzdkplayer.ui.theme.myTTFColor
 import java.net.URLDecoder
 
 import java.net.URLEncoder
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * NFS 文件列表屏幕
@@ -147,7 +149,7 @@ fun NFSFileListScreen(
             }
 
             is FileConnectionStatus.Disconnected -> {
-                delay(300)
+                delay(300.milliseconds)
                 // 未连接，尝试连接
                 Log.d("NFSFileListScreen", "未连接")
                 Log.d("sharePath", sharePath)
@@ -369,9 +371,7 @@ fun NFSFileListScreen(
                                                             )
                                                         }
                                                         // 设置数据
-                                                        MzDkPlayerApplication.clearStringList("audio_playlist")
-                                                        MzDkPlayerApplication.setStringList(
-                                                            "audio_playlist",
+                                                        AudioPlaylistRepository.setPlaylist(
                                                             audioItems
                                                         )
                                                         navController.navigate(

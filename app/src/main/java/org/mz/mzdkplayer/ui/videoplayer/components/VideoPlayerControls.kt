@@ -43,7 +43,7 @@ import androidx.compose.ui.res.stringResource
 @Composable
 fun VideoPlayerControls(
     isPlaying: Boolean,
-    contentCurrentPosition: Long,
+    currentPositionProvider: () -> Long,
     player: IMzPlayer,
     state: VideoPlayerState,
     focusRequester: FocusRequester,
@@ -165,10 +165,10 @@ fun VideoPlayerControls(
                         } else {
                             if (isPlaying) {
                                 danmakuPlayer.start()
-                                danmakuPlayer.seekTo(contentCurrentPosition)
+                                danmakuPlayer.seekTo(currentPositionProvider())
                             } else {
                                 // 修复关闭弹幕在打开时如果视频处于暂停状态弹幕还会继续滚动
-                                danmakuPlayer.seekTo(contentCurrentPosition)
+                                danmakuPlayer.seekTo(currentPositionProvider())
                                 danmakuPlayer.pause()
                             }
                         }
@@ -221,7 +221,7 @@ fun VideoPlayerControls(
                 isPlaying,
                 onPlayPauseToggle,
                 onSeek = { player.seekTo(player.duration.times(it).toLong()) }, // Seek 回调
-                contentProgress = contentCurrentPosition.milliseconds, // 当前进度
+                contentProgress = currentPositionProvider().milliseconds, // 当前进度
                 contentDuration = player.duration.milliseconds // 总时长
             )
         },

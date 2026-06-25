@@ -42,6 +42,7 @@ import coil3.request.crossfade
 import org.mz.mzdkplayer.MzDkPlayerApplication
 import org.mz.mzdkplayer.R
 import org.mz.mzdkplayer.data.local.AudioCacheEntity
+import org.mz.mzdkplayer.data.repository.AudioPlaylistRepository
 import org.mz.mzdkplayer.data.model.AudioItem
 import org.mz.mzdkplayer.ui.screen.common.LibraryEmpty
 import org.mz.mzdkplayer.ui.screen.vm.AudioViewModel
@@ -183,7 +184,7 @@ fun AudioLibraryScreen(
                                 val encodedFn = audio.fileName.toBase64()
                                 val encodedConn = audio.connectionName.toBase64()
                                 val audioItems = audioList.map { AudioItem(it.audioUri, it.fileName, it.dataSourceType) }
-                                MzDkPlayerApplication.setStringList("audio_playlist", audioItems)
+                                AudioPlaylistRepository.setPlaylist(audioItems)
                                 mainNavController.navigate("AudioPlayer/$encodedUri/${audio.dataSourceType}/$encodedFn/$encodedConn/$index")
                             },
                             modifier = Modifier

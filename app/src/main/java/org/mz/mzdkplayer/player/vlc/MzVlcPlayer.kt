@@ -16,11 +16,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import androidx.media3.common.util.UnstableApi
 import org.mz.mzdkplayer.player.core.IMzPlayer
 import org.mz.mzdkplayer.player.core.MzBasicTrack
 import org.mz.mzdkplayer.player.core.MzIsoTitle
 import org.mz.mzdkplayer.player.core.MzVideoTrack
+import org.mz.mzdkplayer.tool.FtpDataSource
+import org.mz.mzdkplayer.tool.SmbDataSource
 import org.mz.mzdkplayer.tool.Tools
+import org.mz.mzdkplayer.tool.WebDavDataSource
 import org.mz.mzdkplayer.ui.screen.vm.SettingsViewModel
 
 import org.mz.mzdkplayer.ui.screen.vm.VideoPlayerStatus
@@ -32,6 +36,7 @@ import org.videolan.libvlc.util.VLCVideoLayout
 import kotlin.collections.mapIndexed
 import kotlin.time.Duration.Companion.milliseconds
 
+@UnstableApi
 class MzVlcPlayer(
     private val context: Context,
     private val mediaUri: String,
@@ -386,6 +391,11 @@ class MzVlcPlayer(
         mediaPlayer.release()
 
         libVLC.release()
+
+        // 虽然 VLC 可能有自己的连接管理，但如果共用了 DataSources 或为了保险，统一清理
+        SmbDataSource.releaseGlobalResources()
+        FtpDataSource.releaseGlobalResources()
+        WebDavDataSource.releaseGlobalResources()
     }
 
     override fun setPlaybackSpeed(speed: Float) {
