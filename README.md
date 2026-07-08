@@ -101,7 +101,7 @@ MzDKPlayer 支持音频直通功能，可以将原始音频信号（源码）直
 
 ### 设置页面
 
-![设置页面截图](screenshots/Screenshot_20251220_123916.webp)
+![设置页面截图](screenshots/Screenshot_20260708_105422.webp)
 
 ---
 
