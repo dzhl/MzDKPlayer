@@ -1,6 +1,5 @@
 package org.mz.mzdkplayer.ui.screen.library
 
-import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -68,6 +67,7 @@ import org.mz.mzdkplayer.data.local.MediaCacheEntity
 import org.mz.mzdkplayer.ui.screen.common.LibraryEmpty
 import org.mz.mzdkplayer.ui.screen.common.LoadingScreen
 import org.mz.mzdkplayer.ui.screen.common.MyFileDialog
+import org.mz.mzdkplayer.ui.screen.common.showToast
 import org.mz.mzdkplayer.ui.screen.vm.MediaLibraryViewModel
 import org.mz.mzdkplayer.ui.screen.vm.SettingsViewModel
 import org.mz.mzdkplayer.ui.theme.myListItemCoverColor
@@ -105,11 +105,10 @@ fun MovieLibraryScreen(
                 if (versionCount == 1) {
                     showEditDialog = true
                 } else {
-                    Toast.makeText(
+                    showToast(
                         context,
-                        context.getString(R.string.ui_label_multiple_versions_detected),
-                        Toast.LENGTH_SHORT
-                    ).show()
+                        context.getString(R.string.ui_label_multiple_versions_detected)
+                    )
                 }
                 isLongClickAction = false
                 checkVersionsAfterLoad = false
@@ -232,9 +231,9 @@ fun MovieLibraryScreen(
                         modifier = Modifier
                             .align(Alignment.TopStart)
                             // 🚀 关键调整在这里：
-                            // start = 260.dp (避开左侧导航栏，并向右缩进)
+                            // start = 32.dp (与列表对齐，并减少离导航栏距离)
                             // top = 160.dp (把文字整体往下推，让出顶部背景空间)
-                            .padding(start = 50.dp, top = 160.dp)
+                            .padding(start = 32.dp, top = 160.dp)
                             .widthIn(max = 700.dp) // 限制最大宽度，防止文字拉得太长
                     ) { movie ->
                         if (movie != null) {
@@ -294,8 +293,8 @@ fun MovieLibraryScreen(
                 LazyHorizontalGrid(
                     rows = GridCells.Fixed(1),
                     contentPadding = PaddingValues(
-                        start = 58.dp,  // 🚀 像素级还原蓝图：列表左安全边距 58.dp
-                        end = 58.dp,
+                        start = 32.dp,  // 调整为 32.dp，与主页一致，减少离导航栏距离
+                        end = 32.dp,
                         top = 12.dp,    // 预留焦点放大扩展空间
                         bottom = 24.dp
                     ),

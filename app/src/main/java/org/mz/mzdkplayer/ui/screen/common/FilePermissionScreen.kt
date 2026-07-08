@@ -1,114 +1,160 @@
 package org.mz.mzdkplayer.ui.screen.common
+
 import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.Settings
-import android.widget.Toast
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.magnifier
-
+import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.tv.material3.Button
-import androidx.tv.material3.Text
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
-import com.google.accompanist.permissions.shouldShowRationale
 import androidx.core.net.toUri
+import androidx.tv.material3.*
+import com.google.accompanist.permissions.*
 import org.mz.mzdkplayer.R
+import org.mz.mzdkplayer.ui.theme.myListItemCoverColor
 
-@OptIn(ExperimentalPermissionsApi::class)
+@OptIn(ExperimentalPermissionsApi::class, ExperimentalTvMaterial3Api::class)
 @Composable
 fun FilePermissionScreen() {
     val context = LocalContext.current
 
-    // 对于 Android 10 及以下版本，请求读写权限
-    val readPermissionState = rememberPermissionState(
-        Manifest.permission.READ_EXTERNAL_STORAGE
-    )
-    val writePermissionState = rememberPermissionState(
-        Manifest.permission.WRITE_EXTERNAL_STORAGE
-    )
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(8.dp)
     ) {
+        Text(
+            text = stringResource(R.string.perm_section_storage),
+            style = MaterialTheme.typography.titleMedium,
+            color = Color.White.copy(alpha = 0.8f),
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        // 1. All Files Access (Recommended for Android 11+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            // Android 11+ 需要 MANAGE_EXTERNAL_STORAGE 权限
-            if (Environment.isExternalStorageManager()) {
-                Text(stringResource(R.string.ui_label_all_file_access_granted), color = Color.White)
-                // 这里可以放置你的应用内容
-            } else {
-                Text(stringResource(R.string.ui_label_all_file_access_needed),color = Color.White)
-                Spacer(modifier = Modifier.height(16.dp))
-                MyIconButton(
-                    text = stringResource(R.string.ui_label_request_storage_permission),
-                    icon = R.drawable.foldermanaged24dp,
-                    onClick = {
-                    requestManageStoragePermission(context)
-                })
+            PermissionItem(
+                title = stringResource(R.string.perm_title_all_files),
+                subtitle = stringResource(R.string.perm_desc_all_files),
+                isGranted = Environment.isExternalStorageManager(),
+                onClick = { requestManageStoragePermission(context) }
+            )
+        }
 
-            }
+        // 2. Granular Media Permissions (Android 13+) or Legacy Storage
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            PermissionRequestItem(
+                permission = Manifest.permission.READ_MEDIA_VIDEO,
+                title = stringResource(R.string.perm_title_media_video)
+            )
+            PermissionRequestItem(
+                permission = Manifest.permission.READ_MEDIA_AUDIO,
+                title = stringResource(R.string.perm_title_media_audio)
+            )
+            PermissionRequestItem(
+                permission = Manifest.permission.READ_MEDIA_IMAGES,
+                title = stringResource(R.string.perm_title_media_images)
+            )
         } else {
-            // Android 10 及以下版本处理
-            if (readPermissionState.status.isGranted && writePermissionState.status.isGranted) {
-                Text(stringResource(R.string.ui_label_storage_permission_granted), color = Color.White)
-                // 这里可以放置你的应用内容
-            } else {
-                val textToShow = if (readPermissionState.status.shouldShowRationale ||
-                    writePermissionState.status.shouldShowRationale
-                ) {
-                    context.getString(R.string.ui_label_app_needs_storage_permission)
-                } else {
-                    context.getString(R.string.ui_label_storage_permission_needed_for_files)
-                }
+            PermissionRequestItem(
+                permission = Manifest.permission.READ_EXTERNAL_STORAGE,
+                title = stringResource(R.string.perm_title_media_video)
+            )
+        }
 
-                Text(textToShow, color = Color.White)
-                Spacer(modifier = Modifier.height(16.dp))
-                MyIconButton(
-                    text = stringResource(R.string.ui_label_request_storage_permission),
-                    icon = R.drawable.foldermanaged24dp,
-                    onClick = {
-                    readPermissionState.launchPermissionRequest()
-                    writePermissionState.launchPermissionRequest()
-                })
-            }
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = stringResource(R.string.perm_section_other),
+            style = MaterialTheme.typography.titleMedium,
+            color = Color.White.copy(alpha = 0.8f),
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        // 3. Notification Permission (Android 13+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            PermissionRequestItem(
+                permission = Manifest.permission.POST_NOTIFICATIONS,
+                title = stringResource(R.string.perm_title_notifications)
+            )
         }
     }
-
-    // 自动请求权限（可选）
-    LaunchedEffect(Unit) {
-
-            if (!readPermissionState.status.isGranted || !writePermissionState.status.isGranted) {
-                readPermissionState.launchPermissionRequest()
-                writePermissionState.launchPermissionRequest()
-            }
-
-    }
 }
+
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+fun PermissionRequestItem(permission: String, title: String) {
+    val permissionState = rememberPermissionState(permission)
+    val context = LocalContext.current
+
+    PermissionItem(
+        title = title,
+        isGranted = permissionState.status.isGranted,
+        onClick = {
+            if (!permissionState.status.isGranted) {
+                permissionState.launchPermissionRequest()
+            } else {
+                openAppSettings(context)
+            }
+        }
+    )
+}
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+fun PermissionItem(
+    title: String,
+    subtitle: String? = null,
+    isGranted: Boolean,
+    onClick: () -> Unit
+) {
+    ListItem(
+        selected = false,
+        onClick = onClick,
+        headlineContent = { Text(title) },
+        supportingContent = if (subtitle != null) { { Text(subtitle) } } else null,
+        trailingContent = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = if (isGranted) stringResource(R.string.perm_status_granted) else stringResource(R.string.perm_status_denied),
+                    color = if (isGranted) Color.Green else Color.Red,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Icon(
+                    painter = painterResource(if (isGranted) R.drawable.check24dp else R.drawable.close24dp),
+                    contentDescription = null,
+                    tint = if (isGranted) Color.Green else Color.Red
+                )
+            }
+        },
+        colors = myListItemCoverColor(),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+    )
+}
+
+private fun openAppSettings(context: Context) {
+    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+        data = Uri.fromParts("package", context.packageName, null)
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+    context.startActivity(intent)
+}
+
 @RequiresApi(Build.VERSION_CODES.R)
 private fun requestManageStoragePermission(context: Context) {
     val intents = listOf(
-        Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-            .setData("package:${context.packageName}".toUri()),
         Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+            .setData("package:${context.packageName}".toUri()),
+        Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
             .setData("package:${context.packageName}".toUri()),
         Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
             .setData("package:${context.packageName}".toUri())
@@ -116,11 +162,12 @@ private fun requestManageStoragePermission(context: Context) {
 
     for (intent in intents) {
         try {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(intent)
             return
         } catch (e: Exception) {
             continue
         }
     }
-    Toast.makeText(context, context.getString(R.string.ui_label_manually_enable_permission_in_settings), Toast.LENGTH_LONG).show()
+    MzToastManager.show(context.getString(R.string.ui_label_manually_enable_permission_in_settings))
 }

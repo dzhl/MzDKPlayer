@@ -18,6 +18,10 @@ interface MediaHistoryDao {
     @Query("SELECT * FROM media_history WHERE mediaType = 'VIDEO' ORDER BY timestamp DESC")
     fun getVideoHistoryWithMetadata(): Flow<List<HistoryWithMetadata>>
 
+    // 获取最近访问的文件记录（最大 100 条）
+    @Query("SELECT * FROM media_history ORDER BY timestamp DESC LIMIT 100")
+    fun getRecentFiles(): Flow<List<MediaHistoryEntity>>
+
     // 获取所有音频历史 (音频通常没有 metadata，直接查实体即可)
     @Query("SELECT * FROM media_history WHERE mediaType = 'AUDIO' ORDER BY timestamp DESC")
     fun getAudioHistory(): Flow<List<MediaHistoryEntity>>

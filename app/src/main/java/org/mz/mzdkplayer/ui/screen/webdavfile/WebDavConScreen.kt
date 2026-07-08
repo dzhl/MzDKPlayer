@@ -3,7 +3,6 @@
 package org.mz.mzdkplayer.ui.screen.webdavfile
 
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -43,6 +42,7 @@ import org.mz.mzdkplayer.ui.screen.vm.WebDavConViewModel
 import org.mz.mzdkplayer.ui.screen.vm.WebDavListViewModel
 import org.mz.mzdkplayer.ui.theme.myTTFColor
 import org.mz.mzdkplayer.ui.screen.common.MyIconButton
+import org.mz.mzdkplayer.ui.screen.common.MzToastManager
 import org.mz.mzdkplayer.ui.screen.common.RemoteInputQRPanel
 import org.mz.mzdkplayer.ui.screen.common.TvTextField
 import java.util.UUID
@@ -148,7 +148,7 @@ fun WebDavConScreen(webDavListViewModel: WebDavListViewModel) {
                 onClick = {
                     keyboardController?.hide()
                     currentPath = "" // 使用完整的 baseUrl 作为当前路径
-                    if (!Tools.validateWebConnectionParams(context, serverAddress = baseUrl)) {
+                    if (!Tools.validateWebConnectionParams(serverAddress = baseUrl)) {
                         return@MyIconButton
                     }
                     webDavConViewModel.connectToWebDav(baseUrl, username, password,true)
@@ -162,12 +162,12 @@ fun WebDavConScreen(webDavListViewModel: WebDavListViewModel) {
                 onClick = {
                     keyboardController?.hide()
                     currentPath = baseUrl
-                    if (!Tools.validateWebConnectionParams(context, serverAddress = baseUrl)) {
+                    if (!Tools.validateWebConnectionParams(serverAddress = baseUrl)) {
                         return@MyIconButton
                     }
 
                     if (!webDavConViewModel.isConnected()) {
-                        Toast.makeText(context, context.getString(R.string.ui_label_save_after_successful_connection), Toast.LENGTH_SHORT).show()
+                        MzToastManager.show(context.getString(R.string.ui_label_save_after_successful_connection))
                         return@MyIconButton
                     }
 
@@ -179,13 +179,11 @@ fun WebDavConScreen(webDavListViewModel: WebDavListViewModel) {
                         password = password
                     )
                     if (webDavListViewModel.addConnection(newConnection)) {
-                        Toast.makeText(context, context.getString(R.string.ui_label_connection_saved), Toast.LENGTH_SHORT).show()
+                        MzToastManager.show(context.getString(R.string.ui_label_connection_saved))
                     } else {
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.ui_label_save_failed_connection_exists),
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        MzToastManager.show(
+                            context.getString(R.string.ui_label_save_failed_connection_exists)
+                        )
                     }
                     Log.d("WebDavConScreen", "保存连接: $aliasName, 路径: $baseUrl")
                 },
@@ -236,11 +234,9 @@ fun WebDavConScreen(webDavListViewModel: WebDavListViewModel) {
                                             password
                                         )
                                     } else {
-                                        Toast.makeText(
-                                            context,
-                                            context.getString(R.string.ui_label_http_file_clicked,resourceName),
-                                            Toast.LENGTH_LONG // 长一些以便显示 URL
-                                        ).show()
+                                        MzToastManager.show(
+                                            context.getString(R.string.ui_label_http_file_clicked,resourceName)
+                                        )
                                     }
                                 }
                                 .padding(8.dp),

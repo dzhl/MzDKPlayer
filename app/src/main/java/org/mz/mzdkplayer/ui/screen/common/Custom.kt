@@ -2,17 +2,25 @@ package org.mz.mzdkplayer.ui.screen.common
 
 import android.content.Context
 import android.view.KeyEvent
-import android.widget.Toast
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -35,8 +43,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.Border
@@ -50,9 +60,15 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ShapeDefaults
 import androidx.tv.material3.Surface
+import androidx.tv.material3.SurfaceDefaults
 
 import androidx.tv.material3.Text
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.mz.mzdkplayer.ui.theme.myIconButtonColor
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
@@ -205,15 +221,85 @@ fun MyIconButton(
             text = text,
             style = if (isFileBut) MaterialTheme.typography.titleSmall.copy(
                 fontSize = 10.sp
-            ) else MaterialTheme.typography.titleSmall
+            ) else MaterialTheme.typography.titleSmall,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 
 
 }
 
-fun showToast(context: Context, message: String, duration: Int = Toast.LENGTH_SHORT) {
-    Toast.makeText(context, message, duration).show()
+fun showToast(context: Context, message: String, duration: Int = 0) {
+    MzToastManager.show(message)
+}
+
+object MzToastManager {
+    val state = MzToastState()
+    private var scope: CoroutineScope? = null
+
+    fun init(scope: CoroutineScope) {
+        this.scope = scope
+    }
+
+    fun show(message: String) {
+        scope?.let {
+            state.show(message, it)
+        }
+    }
+}
+
+class MzToastState {
+    var message by mutableStateOf("")
+    var isVisible by mutableStateOf(false)
+    private var job: Job? = null
+
+    fun show(msg: String, scope: CoroutineScope, duration: Long = 3000L) {
+        message = msg
+        isVisible = true
+        job?.cancel()
+        job = scope.launch {
+            delay(duration.milliseconds)
+            isVisible = false
+        }
+    }
+}
+
+@Composable
+fun rememberMzToastState() = remember { MzToastState() }
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+fun MzToast(state: MzToastState) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.BottomCenter
+    ) {
+        AnimatedVisibility(
+            visible = state.isVisible,
+            enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
+            exit = fadeOut() + slideOutVertically(targetOffsetY = { it })
+        ) {
+            Surface(
+                modifier = Modifier.padding(bottom = 80.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = SurfaceDefaults.colors(
+                    containerColor = Color.Black.copy(alpha = 0.85f),
+                    contentColor = Color.White
+                )
+            ) {
+                Text(
+                    text = state.message,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Medium
+                    ),
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
+                )
+            }
+        }
+    }
 }
 
 

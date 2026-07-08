@@ -225,6 +225,40 @@ class NFSConViewModel(application: Application) : AndroidViewModel(application) 
             disconnectNfs()
         }
     }
+
+    suspend fun scanVideosRecursive(path: String, maxDepth: Int): List<Pair<String, String>> = withContext(Dispatchers.IO) {
+        val result = mutableListOf<Pair<String, String>>()
+        val client = nfsClient ?: return@withContext emptyList()
+
+        fun scanRecursive(currentPath: String, currentDepth: Int) {
+            if (currentDepth > maxDepth) return
+
+            try {
+                val dir = Nfs3File(client, currentPath)
+                if (!dir.exists() || !dir.isDirectory) return
+
+                dir.listFiles()?.filterNotNull()?.forEach { file ->
+                    val fileName = file.name
+                    if (fileName == "." || fileName == "..") return@forEach
+
+                    val filePath = if (currentPath == "/") "/$fileName" else "$currentPath/$fileName"
+
+                    if (file.isDirectory) {
+                        scanRecursive(filePath, currentDepth + 1)
+                    } else if (org.mz.mzdkplayer.tool.Tools.containsVideoFormat(org.mz.mzdkplayer.tool.Tools.extractFileExtension(fileName))) {
+                        // NFS URI usually handled via custom logic or just the path if mounted.
+                        // Here we return the "path" as used in NFSFileListScreen.
+                        result.add(fileName to filePath)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("NfsConViewModel", "Error scanning $currentPath", e)
+            }
+        }
+
+        scanRecursive(path, 0)
+        result
+    }
 }
 
 // --- 状态密封类 ---

@@ -57,6 +57,13 @@ object SettingsRepository {
 
     // 🔥 新增：Exo音频解码模式 (0=纯硬解, 1=硬解优先, 2=软解优先)
     private const val KEY_EXO_AUDIO_DECODE_MODE = "exo_audio_decode_mode"
+
+    // 🔥 新增：递归扫描层级 (0=当前文件夹, 1=当前+1层子文件夹, ...)
+    private const val KEY_RECURSIVE_SCAN_LEVEL = "recursive_scan_level"
+
+    private const val KEY_TMDB_SEARCH_LANG = "tmdb_search_lang"
+    private const val KEY_TMDB_RESULT_LANG = "tmdb_result_lang"
+
     // --- Getters & Setters ---
 
     // 常规
@@ -162,4 +169,16 @@ object SettingsRepository {
     var tmdbBaseUrl: String
         get() = prefs.getString(KEY_TMDB_BASE_URL, DEFAULT_TMDB_URL) ?: DEFAULT_TMDB_URL
         set(value) = prefs.edit { putString(KEY_TMDB_BASE_URL, value) }
+
+    var recursiveScanLevel: Int
+        get() = prefs.getInt(KEY_RECURSIVE_SCAN_LEVEL, 1)
+        set(value) = prefs.edit { putInt(KEY_RECURSIVE_SCAN_LEVEL, value) }
+
+    var tmdbSearchLang: String
+        get() = prefs.getString(KEY_TMDB_SEARCH_LANG, "") ?: ""
+        set(value) = prefs.edit { putString(KEY_TMDB_SEARCH_LANG, value) }
+
+    var tmdbResultLang: String
+        get() = prefs.getString(KEY_TMDB_RESULT_LANG, "") ?: ""
+        set(value) = prefs.edit { putString(KEY_TMDB_RESULT_LANG, value) }
 }

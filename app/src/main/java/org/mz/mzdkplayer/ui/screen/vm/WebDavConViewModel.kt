@@ -296,6 +296,71 @@ class WebDavConViewModel : ViewModel() {
             disconnectWebDav()
         }
     }
+
+    suspend fun scanVideosRecursive(fullPath: String, maxDepth: Int, username: String?, password: String?): List<Pair<String, String>> = withContext(Dispatchers.IO) {
+        val result = mutableListOf<Pair<String, String>>()
+        if (sardine == null) return@withContext emptyList()
+
+        suspend fun scanRecursive(currentPath: String, currentDepth: Int) {
+            if (currentDepth > maxDepth) return
+
+            try {
+                val encodedPath = encodeWebDavPath(currentPath)
+                val resources = sardine?.list(encodedPath) ?: return
+
+                resources.forEach { resource ->
+                    if (resource.name == "." || resource.name == "..") return@forEach
+
+                    // sardine.list(path) 返回的第一个元素通常是 path 本身
+                    // 我们通过比较 path 来跳过它。注意 resource.path 是绝对路径/完整路径。
+                    // 这里的逻辑需要小心处理，因为 sardine 返回的 resource.path 可能是编码过的或带协议的。
+                    // 简单起见，如果 resource.name 为空或与当前路径最后一部分相同（且不是第一个元素），我们可能需要跳过。
+                    // 实际上，sardine 返回的第一个元素的 path 通常就是传入的 path。
+                    if (resource.path.trimEnd('/') == encodedPath.substringAfter("://").substringAfter("/").let { if (it.isEmpty()) "/" else "/$it" }.trimEnd('/')) {
+                       // return@forEach // 这种比较方式可能不太可靠
+                    }
+                    // 更可靠的方式：如果 resource.name 为空（根目录）或者 resource.path 与 list 的路径一致，跳过
+                    // 但是 resource.name 在 sardine 中通常是最后一部分。
+
+                    // 一个常用的技巧是检查 resource.path 是否与当前目录 path 相同
+                    // 这里我们尝试通过 resource.name 是否与 list 的路径末尾一致来判断（粗略）
+                }
+
+                // 重新审视：sardine.list(url) 返回 List<DavResource>，第一个是 url 本身。
+                val filteredResources = if (resources.size > 1) resources.drop(1) else emptyList()
+
+                filteredResources.forEach { resource ->
+                    val fileName = resource.name
+                    val isDir = resource.isDirectory
+                    // resource.path 是服务器上的路径，我们需要构建完整的 URL
+                    // getCurrentFullUrl() 这种方式不适合递归。
+                    // 我们可以根据 resource.path 来构建。
+                    // davResource.path 往往是 /dav/path/to/file
+                    // 我们需要结合协议、主机、端口。
+
+                    val baseUrlObj = java.net.URI(currentPath)
+                    val fullUrl = "${baseUrlObj.scheme}://${baseUrlObj.host}${if (baseUrlObj.port != -1) ":${baseUrlObj.port}" else ""}${resource.path}"
+
+                    if (isDir) {
+                        scanRecursive(fullUrl, currentDepth + 1)
+                    } else if (org.mz.mzdkplayer.tool.Tools.containsVideoFormat(org.mz.mzdkplayer.tool.Tools.extractFileExtension(fileName))) {
+                        // 构建带认证信息的 URL
+                        val authenticatedUrl = if (username != null && password != null) {
+                            buildAuthenticatedUrl(fullUrl, username, password)
+                        } else {
+                            fullUrl
+                        }
+                        result.add(fileName to authenticatedUrl)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("WebDavConViewModel", "Error scanning $currentPath", e)
+            }
+        }
+
+        scanRecursive(fullPath, 0)
+        result
+    }
 }
 
 

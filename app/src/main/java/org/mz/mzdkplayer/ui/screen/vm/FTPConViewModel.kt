@@ -256,4 +256,39 @@ class FTPConViewModel : ViewModel() {
         }
         ftpClient = null
     }
+
+    suspend fun scanVideosRecursive(path: String, maxDepth: Int): List<Pair<String, String>> = withContext(Dispatchers.IO) {
+        val result = mutableListOf<Pair<String, String>>()
+        if (ftpClient == null || ftpClient?.isConnected != true) return@withContext emptyList()
+
+        val normalizedStartPath = if (path.startsWith("/")) path else "/$path"
+
+        fun scanRecursive(currentPath: String, currentDepth: Int) {
+            if (currentDepth > maxDepth) return
+
+            try {
+                val dirPath = if (currentPath.endsWith("/")) currentPath else "$currentPath/"
+                val files = ftpClient?.listFiles(dirPath) ?: return
+
+                files.forEach { file ->
+                    val fileName = file.name
+                    if (fileName == "." || fileName == "..") return@forEach
+
+                    val filePath = "$dirPath$fileName"
+
+                    if (file.isDirectory) {
+                        scanRecursive(filePath, currentDepth + 1)
+                    } else if (org.mz.mzdkplayer.tool.Tools.containsVideoFormat(org.mz.mzdkplayer.tool.Tools.extractFileExtension(fileName))) {
+                        val fullUri = "ftp://$username:$password@$server:$port${filePath}"
+                        result.add(fileName to fullUri)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("FTPConViewModel", "Error scanning $currentPath", e)
+            }
+        }
+
+        scanRecursive(normalizedStartPath, 0)
+        result
+    }
 }

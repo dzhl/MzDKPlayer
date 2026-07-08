@@ -257,6 +257,36 @@ class HTTPLinkConViewModel : ViewModel() {
             disconnectHTTPLink()
         }
     }
+
+    suspend fun scanVideosRecursive(fullUrl: String, maxDepth: Int): List<Pair<String, String>> = withContext(Dispatchers.IO) {
+        val result = mutableListOf<Pair<String, String>>()
+
+        fun scanRecursive(currentUrl: String, currentDepth: Int) {
+            if (currentDepth > maxDepth) return
+
+            try {
+                val normalizedUrl = if (currentUrl.endsWith("/")) currentUrl else "$currentUrl/"
+                val resources = listDirectoryFromUrl(normalizedUrl)
+
+                resources.forEach { resource ->
+                    if (resource.name == "." || resource.name == "..") return@forEach
+
+                    val resourceUrl = resolveUrl(resource.path, normalizedUrl)
+
+                    if (resource.isDirectory) {
+                        scanRecursive(resourceUrl, currentDepth + 1)
+                    } else if (org.mz.mzdkplayer.tool.Tools.containsVideoFormat(org.mz.mzdkplayer.tool.Tools.extractFileExtension(resource.name))) {
+                        result.add(resource.name to resourceUrl)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("HTTPLinkConViewModel", "Error scanning $currentUrl", e)
+            }
+        }
+
+        scanRecursive(fullUrl, 0)
+        result
+    }
 }
 /**
  * 辅助方法：从 Nginx 的行文本中提取大小数字

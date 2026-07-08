@@ -14,12 +14,23 @@
     <string name="setting_prioritize_nfo">ローカル NFO ファイルを優先</string>
     <string name="setting_prioritize_nfo_sub">メディアディレクトリに同名の .nfo ファイルが存在する場合、オンラインでのスクレイピングではなく、そこから情報を優先的に抽出します</string>
 
+    <string name="setting_recursive_scan_level">一括スキャンのサブフォルダ階層</string>
+    <string name="setting_recursive_scan_level_sub">ビデオを一括スキャンする際にサブディレクトリを再帰的に検索する深さ</string>
+    <string name="recursive_scan_level_0">現在のフォルダのみ (レベル 0)</string>
+    <string name="recursive_scan_level_1">現在および 1 階層下のサブフォルダ (レベル 1)</string>
+    <string name="recursive_scan_level_2">現在および 2 階層下のサブフォルダ (レベル 2)</string>
+    <string name="recursive_scan_level_3">現在および 3 階層下のサブフォルダ (レベル 3)</string>
+    <string name="recursive_scan_level_4">現在および 4 階層下のサブフォルダ (レベル 4)</string>
+    <string name="recursive_scan_level_5">現在および 5 階層下のサブフォルダ (レベル 5)</string>
+
     <string name="setting_hide_details">詳細ページを非表示</string>
     <string name="setting_hide_details_sub">詳細を表示せずに直接再生する</string>
     <string name="setting_hide_net_speed">通信速度の表示を隠す</string>
     <string name="setting_app_lang">アプリの言語</string>
     <string name="setting_tmdb_api_mirror">TMDB API アドレス (ミラー)</string>
     <string name="setting_tmdb_api_mirror_sub">一部の地域で TMDB に直接アクセスできない場合、ミラーアドレスの使用をお勧めします</string>
+    <string name="setting_tmdb_search_lang">TMDB 検索言語</string>
+    <string name="setting_tmdb_result_lang">TMDB 詳細言語</string>
     <string name="ui_label_custom_tmdb_url">カスタム TMDB API アドレス</string>
     <string name="ui_label_enter_tmdb_url">TMDB API アドレスを入力してください (/3/ で終わる必要があります)</string>
     <string name="ui_label_test_tmdb_connection">TMDB 接続テスト</string>
@@ -67,7 +78,7 @@
     <string name="ui_label_local_files">ローカルファイル</string>
     <string name="ui_label_no_recording_permission_spectrum">録音権限がないため、スペクトラムアニメーションを表示できません</string>
     <string name="ui_label_press_again_to_exit">もう一度押して終了</string>
-    <string name="ui_label_loading">読み込み中...</string>
+    <string name="ui_label_loading">読み込み中…</string>
     <string name="ui_label_unknown_singer">不明な歌手</string>
     <string name="ui_label_no_content">コンテンツなし</string>
     <string name="ui_label_no_lyrics_yet">歌詞はまだありません</string>
@@ -81,14 +92,14 @@
     <string name="ui_label_specify_season_episode_note">* このファイルに対応するシーズン数とエピソード数を手動で指定してください。検索結果はシリーズの確認にのみ使用されます。</string>
     <string name="ui_label_search_tmdb">TMDBを検索</string>
     <string name="ui_label_please_enter_keyword">キーワードを入力してください</string>
-    <string name="ui_label_searching">検索中...</string>
+    <string name="ui_label_searching">検索中…</string>
     <string name="ui_label_search_failed">検索に失敗しました: %s</string>
     <string name="ui_label_no_related_results_found">関連する結果が見つかりません</string>
     <string name="ui_label_search_results_confirm">検索結果（クリックして確定）</string>
     <string name="ui_label_corrected_to">修正後: %s</string>
     <string name="ui_label_unknown_date">不明な日付</string>
     <string name="ui_label_no_introduction_yet">紹介文はまだありません</string>
-    <string name="ui_label_loading_in_progress">読み込み中...</string>
+    <string name="ui_label_loading_in_progress">読み込み中…</string>
     <string name="ui_label_unknown_title">不明なタイトル</string>
     <string name="ui_label_network_storage">ネットワークストレージ</string>
     <string name="ui_label_local_storage">ローカルストレージ</string>
@@ -112,6 +123,20 @@
     <string name="ui_label_app_needs_storage_permission">アプリがファイルにアクセスするにはストレージ権限が必要です。権限を付与してください。</string>
     <string name="ui_label_storage_permission_needed_for_files">ファイルにアクセスするにはストレージ権限が必要です</string>
     <string name="ui_label_manually_enable_permission_in_settings">設定で権限を手動で有効にしてください</string>
+
+    <string name="perm_title_all_files">すべてのファイルへのアクセス権限 (推奨)</string>
+    <string name="perm_desc_all_files">プレイヤーがデバイス上のすべてのビデオ、オーディオ、字幕ファイルにアクセスできるようにします。これは Android 11+ TV デバイスでの最適な選択です。</string>
+    <string name="perm_title_media_video">動画アクセス権限</string>
+    <string name="perm_title_media_audio">音声アクセス権限</string>
+    <string name="perm_title_media_images">画像アクセス権限</string>
+    <string name="perm_title_notifications">通知権限</string>
+    <string name="perm_status_granted">許可済み</string>
+    <string name="perm_status_denied">未許可</string>
+    <string name="perm_section_storage">ストレージ関連の権限</string>
+    <string name="perm_section_other">その他の権限</string>
+
+    <string name="tool_section_database">データベース管理</string>
+    <string name="tool_section_performance">パフォーマンスツール</string>
     <string name="ui_label_no_movie_info_yet">映画情報はまだありません</string>
     <string name="ui_label_no_tv_show_info_yet">TVドラマ情報はまだありません</string>
     <string name="ui_label_no_music_info_yet">音楽情報はまだありません</string>
@@ -136,7 +161,7 @@
     <string name="ui_label_quick_input_via_mobile_qr_scan">モバイル端末でQRコードをスキャンしてクイック入力</string>
     <string name="ui_label_or_access_via_browser">またはブラウザからアクセス: %s</string>
     <string name="ui_label_mobile_and_tv_same_lan">モバイル端末とテレビは同じLAN内にある必要があります</string>
-    <string name="ui_label_initializing_service">サービスを初期化中...</string>
+    <string name="ui_label_initializing_service">サービスを初期化中…</string>
     <string name="ui_label_unknown_error">不明なエラー</string>
     <string name="ui_label_something_went_wrong">エラーが発生しました</string>
     <string name="ui_label_ftp_file_sharing">FTPファイル共有</string>
@@ -155,7 +180,7 @@
     <string name="ui_label_disconnect">接続を切断</string>
     <string name="ui_label_current_path_truncated">現在のパス:</string>
     <string name="ui_label_file_clicked">クリックされたファイル: resourceName</string>
-    <string name="ui_label_connecting">接続中...</string>
+    <string name="ui_label_connecting">接続中…</string>
     <string name="ui_label_no_files">ファイルなし</string>
     <string name="ui_label_ftp_error">FTPエラー:</string>
     <string name="ui_label_unknown_connection">不明な接続</string>
@@ -170,14 +195,14 @@
     <string name="ui_label_unsupported_file_format">サポートされていないファイル形式: %s</string>
     <string name="ui_label_please_enter_filename">ファイル名を入力してください</string>
     <string name="ui_label_getting_video_info">ビデオ情報を取得中</string>
-    <string name="ui_label_preparing_video_scan">ビデオスキャンを準備中...</string>
-    <string name="ui_label_parsing_music_filename">音楽ファイル名を解析中...</string>
+    <string name="ui_label_preparing_video_scan">ビデオスキャンを準備中…</string>
+    <string name="ui_label_parsing_music_filename">音楽ファイル名を解析中…</string>
     <string name="ui_label_getting_info">情報を取得中</string>
     <string name="ui_label_bulk_add_to_video_library">ビデオライブラリに一括追加</string>
     <string name="ui_label_scraping_not_enabled">現在のデータソースでスクレイピング機能が有効になっていません。設定で有効にしてください。</string>
     <string name="ui_label_no_video_files_in_directory">現在のディレクトリにビデオファイルはありません</string>
-    <string name="ui_label_start_background_info_retrieval">バックグラウンドで情報を取得を開始します。しばらくお待ちください...</string>
-    <string name="ui_label_parsing_filename">ファイル名を解析中...</string>
+    <string name="ui_label_start_background_info_retrieval">バックグラウンドで情報を取得を開始します。しばらくお待ちください…</string>
+    <string name="ui_label_parsing_filename">ファイル名を解析中…</string>
     <string name="ui_label_bulk_add_to_music_library">音楽ライブラリに一括追加</string>
     <string name="ui_label_no_audio_files_found">オーディオファイルが見つかりません</string>
     <string name="ui_label_added_music_in_background">バックグラウンドで %s 曲の音楽を追加しました</string>
@@ -229,7 +254,7 @@
     <string name="ui_label_device_mounted_folders">デバイスのマウントフォルダ</string>
     <string name="ui_label_root_directory_requires_root">ルートディレクトリ（ルート権限が必要）</string>
     <string name="ui_label_directory_path">ディレクトリパス: %s</string>
-    <string name="ui_label_loading_movie_details">映画の詳細を読み込んでいます...</string>
+    <string name="ui_label_loading_movie_details">映画の詳細を読み込んでいます…</string>
     <string name="ui_label_tip_hide_details_page_in_settings">詳細ページを表示したくない場合は、設定で非表示にすることができます</string>
     <string name="ui_label_play_now">すぐに再生</string>
 <!--    <string name="ui_label_loading_failed">読み込みに失敗しました</string>-->
@@ -255,12 +280,12 @@
     <string name="ui_label_unnamed_nfs_connection">名前未設定のNFS接続</string>
     <string name="ui_label_nfs_connection_saved">NFS接続を保存しました</string>
     <string name="ui_label_current_path">現在のパス: %s</string>
-    <string name="ui_label_preparing_to_retrieve_files">ファイルの取得準備中...</string>
+    <string name="ui_label_preparing_to_retrieve_files">ファイルの取得準備中…</string>
     <string name="ui_label_nfs_error">NFSエラー: %s</string>
     <string name="ui_label_file_not_found_in_audio_list_file_name">オーディオリストにファイルが見つかりません: file.name</string>
     <string name="ui_label_unsupported_format">サポートされていない形式</string>
     <string name="ui_label_loading_nfs_files">NFSファイルを読み込んでいます</string>
-    <string name="ui_label_search_movies_shows">映画、TVシリーズを検索...</string>
+    <string name="ui_label_search_movies_shows">映画、TVシリーズを検索…</string>
     <string name="ui_label_clear">クリア</string>
     <string name="ui_label_no_results_found">該当するコンテンツが見つかりません</string>
     <string name="ui_label_database_performance_test_tool">データベースパフォーマンステストツール</string>
@@ -295,11 +320,11 @@
     <string name="ui_label_file_name_encoding_failed">ファイル名のエンコードに失敗しました: %s</string>
     <string name="ui_label_path_encoding_failed_with_error">パスのエンコードに失敗しました: %s</string>
     <string name="ui_label_connecting_to_smb_server">SMBサーバーに接続中</string>
-    <string name="ui_label_loading_tv_series_info">TVシリーズの情報を読み込んでいます...</string>
+    <string name="ui_label_loading_tv_series_info">TVシリーズの情報を読み込んでいます…</string>
     <string name="ui_label_tv_series_loading_failed">TVシリーズの読み込みに失敗しました: %s</string>
     <string name="ui_label_play_season_episode">第 %1$d シーズン 第 %2$d 话を再生</string>
     <string name="ui_label_current_playback_info">現在の再生情報</string>
-    <string name="ui_label_loading_episode_details">エピソードの詳細を読み込んでいます...</string>
+    <string name="ui_label_loading_episode_details">エピソードの詳細を読み込んでいます…</string>
     <string name="ui_label_no_content_available">コンテンツはありません</string>
     <string name="ui_label_tv_series_details">TVシリーズの詳細</string>
     <string name="ui_label_seasons_episodes">シーズン/エピソード数: </string>
@@ -313,10 +338,10 @@
     <string name="ui_label_failed_to_retrieve_file">ファイルの取得に失敗しました: %s</string>
     <string name="ui_label_ready_unknown_data">準備完了。現在のデータ：不明</string>
     <string name="ui_label_ready_click_to_insert">準備完了。ボタンを押して開始してください。</string>
-    <string name="ui_label_cleaning_database">データベースをクリーンアップ中...</string>
+    <string name="ui_label_cleaning_database">データベースをクリーンアップ中…</string>
     <string name="ui_label_database_cleanup_complete">クリーンアップが完了しました。</string>
-    <string name="ui_label_start_generating_data_records">%1$d 件のデータを生成中...</string>
-    <string name="ui_label_data_generation_complete_prepare_insert">生成完了（計 %1$d 件）。データベースに挿入します...</string>
+    <string name="ui_label_start_generating_data_records">%1$d 件のデータを生成中…</string>
+    <string name="ui_label_data_generation_complete_prepare_insert">生成完了（計 %1$d 件）。データベースに挿入します…</string>
 
     <string name="ui_label_planet">プラネット</string>
     <string name="ui_label_revenge">リベンジ</string>
@@ -340,7 +365,7 @@
     <string name="ui_label_top">上部</string>
     <string name="ui_label_color">カラー</string>
     <string name="ui_label_initializing">初期化中</string>
-    <string name="ui_label_buffering">バッファリング中...</string>
+    <string name="ui_label_buffering">バッファリング中…</string>
     <string name="ui_label_playing">再生中</string>
     <string name="ui_label_playback_ended">再生終了</string>
     <string name="ui_label_playback_error">再生エラー: %1$s</string>
@@ -407,4 +432,12 @@
     <string name="ui_label_no_poster">ポスターなし</string>
     <string name="ui_label_subtitle_off">字幕をオフにする</string>
     <string name="ui_label_subtitle_file_not_found_hint">(ファイルが見つかりません。バッファリング中の可能性があります)</string>
+
+    <string name="ui_label_author">作成者</string>
+    <string name="ui_label_github">GitHub プロジェクト</string>
+    <string name="ui_label_gitee">Gitee プロジェクト</string>
+    <string name="ui_label_official_website">公式サイト</string>
+    <string name="ui_label_copyright">Copyright © 2026 MZHSY. All Rights Reserved.</string>
+    <string name="ui_label_disclaimer">免責事項：本ソフトウェアは学習および交流目的のみに使用され、メディアリソースは提供されません。</string>
+
 </resources>

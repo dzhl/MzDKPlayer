@@ -3,7 +3,7 @@ package org.mz.mzdkplayer.ui.screen.smbfile
 import org.mz.mzdkplayer.tool.MediaInfoExtractorFormFileName
 import NoSearchResult
 import android.util.Log
-import android.widget.Toast
+import org.mz.mzdkplayer.ui.screen.common.MzToastManager
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -31,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,6 +54,7 @@ import androidx.tv.material3.ListItemDefaults
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.mz.mzdkplayer.MzDkPlayerApplication
 import org.mz.mzdkplayer.R
 import org.mz.mzdkplayer.data.repository.AudioPlaylistRepository
@@ -125,6 +127,7 @@ fun SMBFileListScreen(
         RepositoryProvider.createAudioViewModel() // 不需要 context 了
     }
     val isAudioScanning by audioViewModel.isScanning.collectAsState()
+    val coroutineScope = rememberCoroutineScope()
     var seaText by remember { mutableStateOf("") }
     var mediaId by remember { mutableIntStateOf(-1) }
     var showISODialog by remember { mutableStateOf(false) }
@@ -159,7 +162,7 @@ fun SMBFileListScreen(
         val smbConfig = viewModel.parseSMBPath(decodedPath)
         if (smbConfig.server.isEmpty()) {
             Log.e("SMBFileListScreen", "无效的SMB路径: $decodedPath")
-            Toast.makeText(context, "无效的SMB路径", Toast.LENGTH_SHORT).show()
+            MzToastManager.show("无效的SMB路径")
             return@LaunchedEffect
         }
 
@@ -183,7 +186,7 @@ fun SMBFileListScreen(
             is FileConnectionStatus.Error -> {
                 val errorMessage = (connectionStatus as FileConnectionStatus.Error).message
                 Log.e("SMBFileListScreen", "连接错误: $errorMessage")
-                Toast.makeText(context, context.getString(R.string.ui_label_smb_error,errorMessage), Toast.LENGTH_LONG).show()
+                MzToastManager.show(context.getString(R.string.ui_label_smb_error,errorMessage))
             }
 
             else -> {}
@@ -403,11 +406,9 @@ fun SMBFileListScreen(
 
                                                         else -> {
                                                             // 不支持的文件格式
-                                                            Toast.makeText(
-                                                                context,
-                                                                context.getString(R.string.ui_label_unsupported_file_format,fileExtension),
-                                                                Toast.LENGTH_SHORT
-                                                            ).show()
+                                                            MzToastManager.show(
+                                                                context.getString(R.string.ui_label_unsupported_file_format,fileExtension)
+                                                            )
                                                         }
                                                     }
                                                 },
@@ -534,48 +535,45 @@ fun SMBFileListScreen(
                                             else stringResource(R.string.ui_label_bulk_add_to_video_library),
                                             onClick = {
                                                 if (!settingsState.smb) {
-                                                    Toast.makeText(
-                                                        context,
-                                                        context.getString(R.string.ui_label_scraping_not_enabled),
-                                                        Toast.LENGTH_SHORT
-                                                    ).show()
-                                                } else {
-                                                    // 1. 过滤出所有的视频文件 (不递归，只取当前层级)
-                                                    val videoFilesToScan = files.filter { file ->
-                                                        !file.isDirectory &&
-                                                                Tools.containsVideoFormat(
-                                                                    Tools.extractFileExtension(
-                                                                        file.name
-                                                                    )
-                                                                )
-                                                    }
-
-                                                    if (videoFilesToScan.isEmpty()) {
-                                                        Toast.makeText(
-                                                            context,
-                                                            context.getString(R.string.ui_label_no_video_files_in_directory),
-                                                            Toast.LENGTH_SHORT
-                                                        ).show()
-                                                        return@CirCleIconButton
-                                                    }
-
-                                                    // 2. 构建数据列表 Pair(fileName, fullUri)
-                                                    // 注意：URI 的构建规则必须和 LazyColumn 里点击时的规则完全一致
-                                                    val scanList = videoFilesToScan.map { file ->
-                                                        file.name to "smb://${file.username}:${file.password}@${file.server}/${file.share}${file.fullPath}"
-                                                    }
-
-                                                    // 3. 调用 ViewModel 开始后台任务
-                                                    Toast.makeText(
-                                                        context,
-                                                        context.getString(R.string.ui_label_start_background_info_retrieval),
-                                                        Toast.LENGTH_SHORT
-                                                    ).show()
-                                                    movieViewModel.batchScrapeVideoInfo(
-                                                        videoList = scanList,
-                                                        dataSourceType = "SMB",
-                                                        connectionName = connectionName
+                                                    MzToastManager.show(
+                                                        context.getString(R.string.ui_label_scraping_not_enabled)
                                                     )
+                                                } else {
+                                                    // 1. 获取要扫描的视频文件列表
+                                                    coroutineScope.launch {
+                                                        val scanList = if (settingsState.recursiveScanLevel > 0) {
+                                                            val smbConfig = viewModel.parseSMBPath(path ?: "")
+                                                            viewModel.scanVideosRecursive(smbConfig, settingsState.recursiveScanLevel)
+                                                        } else {
+                                                            // 非递归，只取当前层级
+                                                            files.filter { file ->
+                                                                !file.isDirectory &&
+                                                                        Tools.containsVideoFormat(
+                                                                            Tools.extractFileExtension(
+                                                                                file.name
+                                                                            )
+                                                                        )
+                                                            }.map { file ->
+                                                                file.name to "smb://${file.username}:${file.password}@${file.server}/${file.share}${file.fullPath}"
+                                                            }
+                                                        }
+
+                                                        if (scanList.isEmpty()) {
+                                                            MzToastManager.show(
+                                                                context.getString(R.string.ui_label_no_video_files_in_directory)
+                                                            )
+                                                        } else {
+                                                            // 3. 调用 ViewModel 开始后台任务
+                                                            MzToastManager.show(
+                                                                context.getString(R.string.ui_label_start_background_info_retrieval)
+                                                            )
+                                                            movieViewModel.batchScrapeVideoInfo(
+                                                                videoList = scanList,
+                                                                dataSourceType = "SMB",
+                                                                connectionName = connectionName
+                                                            )
+                                                        }
+                                                    }
                                                 }
                                             }
                                         )
@@ -585,11 +583,9 @@ fun SMBFileListScreen(
                                             tooltip = if (isAudioScanning) stringResource(R.string.ui_label_parsing_filename) else  stringResource(R.string.ui_label_bulk_add_to_music_library),
                                             onClick = {
                                                 if (!settingsState.smb) {
-                                                    Toast.makeText(
-                                                        context,
-                                                        context.getString(R.string.ui_label_scraping_not_enabled),
-                                                        Toast.LENGTH_SHORT
-                                                    ).show()
+                                                    MzToastManager.show(
+                                                        context.getString(R.string.ui_label_scraping_not_enabled)
+                                                    )
                                                 } else {
                                                     // 1. 过滤音频文件
                                                     val audioFiles = files.filter {
@@ -601,11 +597,9 @@ fun SMBFileListScreen(
                                                     }
 
                                                     if (audioFiles.isEmpty()) {
-                                                        Toast.makeText(
-                                                            context,
-                                                            context.getString(R.string.ui_label_no_audio_files_found),
-                                                            Toast.LENGTH_SHORT
-                                                        ).show()
+                                                        MzToastManager.show(
+                                                            context.getString(R.string.ui_label_no_audio_files_found)
+                                                        )
                                                         return@CirCleIconButton
                                                     }
 
@@ -620,11 +614,9 @@ fun SMBFileListScreen(
                                                         dataSourceType = "SMB",
                                                         connectionName = connectionName
                                                     )
-                                                    Toast.makeText(
-                                                        context,
-                                                        context.getString(R.string.ui_label_added_music_in_background,list.size),
-                                                        Toast.LENGTH_SHORT
-                                                    ).show()
+                                                    MzToastManager.show(
+                                                        context.getString(R.string.ui_label_added_music_in_background,list.size)
+                                                    )
                                                 }
                                             }
                                         )

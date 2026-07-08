@@ -5,7 +5,6 @@ import android.content.Context
 import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
-import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -54,9 +53,10 @@ import androidx.tv.material3.ListItem
 import androidx.tv.material3.ListItemDefaults
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.mz.mzdkplayer.MzDkPlayerApplication
 import org.mz.mzdkplayer.R
 import org.mz.mzdkplayer.data.repository.AudioPlaylistRepository
@@ -80,6 +80,7 @@ import org.mz.mzdkplayer.ui.screen.common.MediaPreviewSection
 import org.mz.mzdkplayer.ui.screen.common.MediaReleaseDate
 import org.mz.mzdkplayer.ui.screen.common.MediaTitle
 import org.mz.mzdkplayer.ui.screen.common.VAErrorScreen
+import org.mz.mzdkplayer.ui.screen.common.showToast
 
 
 import org.mz.mzdkplayer.ui.theme.myTTFColor
@@ -92,6 +93,7 @@ import org.mz.mzdkplayer.ui.screen.vm.SettingsViewModel
 import java.io.File
 import java.net.URLDecoder
 import java.net.URLEncoder
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -126,6 +128,7 @@ fun LocalFileListScreen(path: String?, navController: NavHostController, setting
     val audioViewModel: AudioViewModel = viewModelWithFactory {
         RepositoryProvider.createAudioViewModel() // 不需要 context 了
     }
+    val decodedPath = path ?: ""
     val isAudioScanning by audioViewModel.isScanning.collectAsState()
     var mediaId by remember { mutableIntStateOf(-1) }
     var focusedIsVideo by remember { mutableStateOf(false) }
@@ -133,7 +136,7 @@ fun LocalFileListScreen(path: String?, navController: NavHostController, setting
     LaunchedEffect(path) {
         status = LocalFileLoadStatus.LoadingFile
         files.clear()
-        delay(300)
+        delay(300.milliseconds)
 
         val decodedPath = path ?: ""
 
@@ -363,11 +366,10 @@ fun LocalFileListScreen(path: String?, navController: NavHostController, setting
                                                         }
 
                                                         else -> {
-                                                            Toast.makeText(
+                                                            showToast(
                                                                 context,
-                                                                context.getString(R.string.ui_label_unsupported_format_with_extension,fileExtension),
-                                                                Toast.LENGTH_SHORT
-                                                            ).show()
+                                                                context.getString(R.string.ui_label_unsupported_format_with_extension,fileExtension)
+                                                            )
                                                         }
                                                     }
                                                 }
@@ -485,48 +487,54 @@ fun LocalFileListScreen(path: String?, navController: NavHostController, setting
                                         else stringResource(R.string.ui_label_bulk_add_to_video_library),
                                         onClick = {
                                             if (!settingsState.local) {
-                                                Toast.makeText(
+                                                showToast(
                                                     context,
-                                                    context.getString(R.string.ui_label_scraping_not_enabled),
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            } else {
-                                                // 1. 过滤出所有的视频文件 (不递归，只取当前层级)
-                                                val videoFilesToScan = files.filter { file ->
-                                                    !file.isDirectory &&
-                                                            Tools.containsVideoFormat(
-                                                                Tools.extractFileExtension(
-                                                                    file.name
-                                                                )
-                                                            )
-                                                }
-
-                                                if (videoFilesToScan.isEmpty()) {
-                                                    Toast.makeText(
-                                                        context,
-                                                        context.getString(R.string.ui_label_no_video_files_in_directory),
-                                                        Toast.LENGTH_SHORT
-                                                    ).show()
-                                                    return@CirCleIconButton
-                                                }
-
-                                                // 2. 构建数据列表 Pair(fileName, fullUri)
-                                                // 注意：URI 的构建规则必须和 LazyColumn 里点击时的规则完全一致
-                                                val scanList = videoFilesToScan.map { file ->
-                                                    file.name to "file://${file.absolutePath}"
-                                                }
-
-                                                // 3. 调用 ViewModel 开始后台任务
-                                                Toast.makeText(
-                                                    context,
-                                                    context.getString(R.string.ui_label_start_background_info_retrieval),
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                                movieViewModel.batchScrapeVideoInfo(
-                                                    videoList = scanList,
-                                                    dataSourceType = "LOCAL",
-                                                    connectionName = "本地文件"
+                                                    context.getString(R.string.ui_label_scraping_not_enabled)
                                                 )
+                                            } else {
+                                                // 1. 获取要扫描的视频文件列表
+                                                coroutineScope.launch(Dispatchers.IO) {
+                                                    val scanList = if (settingsState.recursiveScanLevel > 0) {
+                                                        // 递归扫描
+                                                        val dir = File(decodedPath)
+                                                        dir.walkTopDown()
+                                                            .maxDepth(settingsState.recursiveScanLevel)
+                                                            .filter { file ->
+                                                                !file.isDirectory && Tools.containsVideoFormat(Tools.extractFileExtension(file.name))
+                                                            }
+                                                            .map { file ->
+                                                                file.name to "file://${file.absolutePath}"
+                                                            }
+                                                            .toList()
+                                                    } else {
+                                                        // 非递归，只取当前层级
+                                                        files.filter { file ->
+                                                            !file.isDirectory && Tools.containsVideoFormat(Tools.extractFileExtension(file.name))
+                                                        }.map { file ->
+                                                            file.name to "file://${file.absolutePath}"
+                                                        }
+                                                    }
+
+                                                    withContext(Dispatchers.Main) {
+                                                        if (scanList.isEmpty()) {
+                                                            showToast(
+                                                                context,
+                                                                context.getString(R.string.ui_label_no_video_files_in_directory)
+                                                            )
+                                                        } else {
+                                                            // 3. 调用 ViewModel 开始后台任务
+                                                            showToast(
+                                                                context,
+                                                                context.getString(R.string.ui_label_start_background_info_retrieval)
+                                                            )
+                                                            movieViewModel.batchScrapeVideoInfo(
+                                                                videoList = scanList,
+                                                                dataSourceType = "LOCAL",
+                                                                connectionName = "本地文件"
+                                                            )
+                                                        }
+                                                    }
+                                                }
                                             }
                                         }
                                     )
@@ -536,11 +544,10 @@ fun LocalFileListScreen(path: String?, navController: NavHostController, setting
                                         tooltip = if (isAudioScanning) stringResource(R.string.ui_label_parsing_filename) else  stringResource(R.string.ui_label_bulk_add_to_music_library),
                                         onClick = {
                                             if (!settingsState.local) {
-                                                Toast.makeText(
+                                                showToast(
                                                     context,
-                                                    context.getString(R.string.ui_label_scraping_not_enabled),
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
+                                                    context.getString(R.string.ui_label_scraping_not_enabled)
+                                                )
                                             } else {
                                                 // 1. 过滤音频文件
                                                 val audioFiles = files.filter {
@@ -552,11 +559,10 @@ fun LocalFileListScreen(path: String?, navController: NavHostController, setting
                                                 }
 
                                                 if (audioFiles.isEmpty()) {
-                                                    Toast.makeText(
+                                                    showToast(
                                                         context,
-                                                        context.getString(R.string.ui_label_no_audio_files_found),
-                                                        Toast.LENGTH_SHORT
-                                                    ).show()
+                                                        context.getString(R.string.ui_label_no_audio_files_found)
+                                                    )
                                                     return@CirCleIconButton
                                                 }
 
@@ -571,11 +577,10 @@ fun LocalFileListScreen(path: String?, navController: NavHostController, setting
                                                     dataSourceType = "LOCAL",
                                                     connectionName = "本地文件"
                                                 )
-                                                Toast.makeText(
+                                                showToast(
                                                     context,
-                                                    context.getString(R.string.ui_label_added_music_in_background,list.size),
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
+                                                    context.getString(R.string.ui_label_added_music_in_background,list.size)
+                                                )
                                             }
                                         }
                                     )

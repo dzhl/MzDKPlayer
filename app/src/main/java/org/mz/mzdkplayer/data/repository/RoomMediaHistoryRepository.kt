@@ -53,6 +53,11 @@ class RoomMediaHistoryRepository(private val historyDao: MediaHistoryDao) {
         return historyDao.getVideoHistoryWithMetadata()
     }
 
+    // 获取最近访问的文件记录（最大 100 条）
+    fun getRecentFiles(): Flow<List<MediaHistoryEntity>> {
+        return historyDao.getRecentFiles()
+    }
+
     // 获取音频历史
     fun getAudioHistory(): Flow<List<MediaHistoryEntity>> {
         return historyDao.getAudioHistory()

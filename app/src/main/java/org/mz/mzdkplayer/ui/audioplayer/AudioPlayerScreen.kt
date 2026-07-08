@@ -6,7 +6,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Log
 import android.view.KeyEvent
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -76,7 +75,7 @@ import org.mz.mzdkplayer.tool.handleDPadKeyEvents
 
 import org.mz.mzdkplayer.ui.audioplayer.components.*
 
-
+import org.mz.mzdkplayer.ui.screen.common.showToast
 import org.mz.mzdkplayer.ui.screen.vm.AudioPlayerViewModel
 import org.mz.mzdkplayer.ui.screen.vm.AudioViewModel
 import org.mz.mzdkplayer.ui.screen.vm.MediaHistoryViewModel
@@ -182,7 +181,7 @@ fun AudioPlayerScreen(
     ) { isGranted ->
         hasAudioPermission = isGranted
         if (!isGranted) {
-            Toast.makeText(context, context.getString(R.string.ui_label_no_recording_permission_spectrum), Toast.LENGTH_LONG).show()
+            showToast(context, context.getString(R.string.ui_label_no_recording_permission_spectrum))
         }
     }
 
@@ -507,7 +506,7 @@ fun AudioPlayerScreen(
 
     // 显示 "再按一次退出" Toast
     if (showToast) {
-        Toast.makeText(context, context.getString(R.string.ui_label_press_again_to_exit), Toast.LENGTH_SHORT).show()
+        showToast(context, context.getString(R.string.ui_label_press_again_to_exit))
         showToast = false
     }
 

@@ -262,6 +262,42 @@ class SMBConViewModel : ViewModel() {
     fun isDirectory(fileAttributes: Long): Boolean {
         return (fileAttributes and FileAttributes.FILE_ATTRIBUTE_DIRECTORY.value) != 0L
     }
+
+    suspend fun scanVideosRecursive(config: SMBConfig, maxDepth: Int): List<Pair<String, String>> = withContext(Dispatchers.IO) {
+        val result = mutableListOf<Pair<String, String>>()
+        if (share == null) return@withContext emptyList()
+
+        val cleanPath = config.path.let {
+            if (it == "/") "\\" else it.replace("/", "\\").trimEnd('\\')
+        }
+
+        fun scanRecursive(currentPath: String, currentDepth: Int) {
+            if (currentDepth > maxDepth) return
+
+            try {
+                share?.list(currentPath)?.forEach { fileInfo ->
+                    val fileName = fileInfo.fileName
+                    if (fileName == "." || fileName == "..") return@forEach
+
+                    val isDirectory = isDirectory(fileInfo.fileAttributes)
+                    val filePath = if (currentPath == "\\") "\\$fileName" else "$currentPath\\$fileName"
+                    val fullPath = filePath.replace("\\", "/")
+
+                    if (isDirectory) {
+                        scanRecursive(filePath, currentDepth + 1)
+                    } else if (org.mz.mzdkplayer.tool.Tools.containsVideoFormat(org.mz.mzdkplayer.tool.Tools.extractFileExtension(fileName))) {
+                        val fullUri = "smb://${config.username}:${config.password}@${config.server}/${config.share}$fullPath"
+                        result.add(fileName to fullUri)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("SMBConViewModel", "Error scanning $currentPath", e)
+            }
+        }
+
+        scanRecursive(cleanPath, 0)
+        result
+    }
 }
 
 // --- 状态枚举 ---

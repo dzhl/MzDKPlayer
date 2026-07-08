@@ -1,4 +1,4 @@
-package org.mz.mzdkplayer.ui.screen.home
+package org.mz.mzdkplayer.ui.screen.filehome
 
 
 import androidx.compose.foundation.layout.Arrangement
@@ -106,15 +106,9 @@ fun FileHomeScreen(mainNavController: NavHostController) {
                 }
 
             }
-            //FilePermissionScreen()
+
 
         }
     }
 
 }
-
-
-
-
-
-

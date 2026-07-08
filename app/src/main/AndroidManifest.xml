@@ -21,7 +21,16 @@
         tools:ignore="AllFilesAccessPolicy,ScopedStorage" /><!--add 2022-2-11 Android11-->
     <!-- 外部存储写入权限 -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <!-- Android 13+ 媒体权限 -->
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <!-- Android 13+ 通知权限 -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Android 14 部分访问权限 (如果需要) -->
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
     <!--  android:largeHeap="true" 增加Android应用的堆内存限制 -->
     <application
         android:allowBackup="true"

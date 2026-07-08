@@ -1,7 +1,6 @@
 package org.mz.mzdkplayer.ui.screen.httplink
 
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,6 +18,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,8 +42,10 @@ import org.mz.mzdkplayer.ui.screen.vm.HTTPLinkConViewModel
 import org.mz.mzdkplayer.ui.screen.vm.HTTPLinkListViewModel // 假设你也有一个管理 HTTPLink 连接列表的 ViewModel
 import org.mz.mzdkplayer.ui.theme.myTTFColor
 import org.mz.mzdkplayer.ui.screen.common.MyIconButton
+import org.mz.mzdkplayer.ui.screen.common.MzToast
 import org.mz.mzdkplayer.ui.screen.common.RemoteInputQRPanel
 import org.mz.mzdkplayer.ui.screen.common.TvTextField
+import org.mz.mzdkplayer.ui.screen.common.rememberMzToastState
 import java.util.UUID
 
 /**
@@ -58,6 +60,9 @@ fun HTTPLinkConScreen(httpLinkListViewModel: HTTPLinkListViewModel) {
     // UI 状态由 ViewModel 管理
     val connectionStatus by httpLinkConViewModel.connectionStatus.collectAsState()
     val fileList by httpLinkConViewModel.fileList.collectAsState()
+
+    val toastState = rememberMzToastState()
+    val coroutineScope = rememberCoroutineScope()
 
 
     // 用户输入状态 - HTTPLink 需要服务器地址和共享名称
@@ -146,7 +151,7 @@ fun HTTPLinkConScreen(httpLinkListViewModel: HTTPLinkListViewModel) {
                     onClick = {
                         keyboardController?.hide() // 隐藏键盘
                         currentPath =""
-                        if (!Tools.validateConnectionParams(context, serverAddress, shareName = shareName,aliasName=aliasName)){
+                        if (!Tools.validateConnectionParams(serverAddress, shareName = shareName,aliasName=aliasName)){
                             return@MyIconButton
                         }
                         // 构建完整的 URL，确保以 / 结尾
@@ -179,11 +184,11 @@ fun HTTPLinkConScreen(httpLinkListViewModel: HTTPLinkListViewModel) {
                     onClick = {
                         keyboardController?.hide()
                         currentPath =""
-                        if (!Tools.validateConnectionParams(context, serverAddress, shareName = shareName,aliasName=aliasName)) {
+                        if (!Tools.validateConnectionParams(serverAddress, shareName = shareName,aliasName=aliasName)) {
                             return@MyIconButton
                         }
                         if (!httpLinkConViewModel.isConnected()){
-                            Toast.makeText(context, context.getString(R.string.ui_label_save_after_successful_connection), Toast.LENGTH_SHORT).show()
+                            toastState.show(context.getString(R.string.ui_label_save_after_successful_connection), coroutineScope)
                             return@MyIconButton
                         }
                         // 创建 HTTPLinkConnection 数据对象
@@ -195,13 +200,12 @@ fun HTTPLinkConScreen(httpLinkListViewModel: HTTPLinkListViewModel) {
                         )
                         // 假设 HTTPLinkListViewModel 有 addConnection 方法
                         if (httpLinkListViewModel.addConnection(newConnection)) {
-                            Toast.makeText(context, context.getString(R.string.ui_label_http_link_connection_saved), Toast.LENGTH_SHORT).show()
+                            toastState.show(context.getString(R.string.ui_label_http_link_connection_saved), coroutineScope)
                         } else {
-                            Toast.makeText(
-                                context,
+                            toastState.show(
                                 context.getString(R.string.ui_label_save_failed_connection_exists),
-                                Toast.LENGTH_SHORT
-                            ).show()
+                                coroutineScope
+                            )
                         }
                         Log.d("HTTPLinkConScreen", "保存连接: $aliasName")
                     },
@@ -267,11 +271,10 @@ fun HTTPLinkConScreen(httpLinkListViewModel: HTTPLinkListViewModel) {
                                                     httpLinkConViewModel.getResourceFullUrl(
                                                         resourceName
                                                     )
-                                                Toast.makeText(
-                                                    context,
+                                                toastState.show(
                                                     context.getString(R.string.ui_label_http_file_clicked,resourceName),
-                                                    Toast.LENGTH_LONG // 长一些以便显示 URL
-                                                ).show()
+                                                    coroutineScope
+                                                )
 
                                                 // 可以使用 `fileUrl` 或 `resource` 的其他信息
                                             }
@@ -362,6 +365,7 @@ fun HTTPLinkConScreen(httpLinkListViewModel: HTTPLinkListViewModel) {
             }
         }
     }
+    MzToast(state = toastState)
 }
 
 

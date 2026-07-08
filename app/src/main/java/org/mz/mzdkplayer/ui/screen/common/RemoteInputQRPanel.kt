@@ -1,7 +1,6 @@
 package org.mz.mzdkplayer.ui.screen.common
 
 
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -52,7 +51,7 @@ fun RemoteInputQRPanel(
                 // 回调给父组件
                 onReceiveConfig(config)
                 // 可选：弹个吐司提示用户
-                Toast.makeText(context, context.getString(R.string.ui_label_mobile_config_received), Toast.LENGTH_SHORT).show()
+                MzToastManager.show(context.getString(R.string.ui_label_mobile_config_received))
             }
 
             if (result != null) {

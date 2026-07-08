@@ -1,7 +1,6 @@
 package org.mz.mzdkplayer.ui.screen.nfs
 
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -46,6 +45,7 @@ import org.mz.mzdkplayer.ui.theme.myTTFColor
 import org.mz.mzdkplayer.ui.screen.common.MyIconButton
 import org.mz.mzdkplayer.ui.screen.common.RemoteInputQRPanel
 import org.mz.mzdkplayer.ui.screen.common.TvTextField
+import org.mz.mzdkplayer.ui.screen.common.showToast
 import java.util.Locale
 import java.util.UUID
 
@@ -150,7 +150,7 @@ fun NFSConScreen(nfsListViewModel: NFSListViewModel) {
                     enabled = connectionStatus != FileConnectionStatus.Connecting, // 连接中时禁用
                     onClick = {
                         keyboardController?.hide() // 隐藏键盘
-                        if (!Tools.validateConnectionParams(context, serverAddress, shareName, aliasName = aliasName)) {
+                        if (!Tools.validateConnectionParams(serverAddress, shareName, aliasName = aliasName)) {
                             return@MyIconButton
                         }
                         // 创建临时连接对象用于测试
@@ -175,11 +175,11 @@ fun NFSConScreen(nfsListViewModel: NFSListViewModel) {
                         .padding(start = 8.dp), // 平分宽度并加左边距
                     onClick = {
                         keyboardController?.hide()
-                        if (!Tools.validateConnectionParams(context, serverAddress, shareName,aliasName=aliasName)) {
+                        if (!Tools.validateConnectionParams(serverAddress, shareName,aliasName=aliasName)) {
                             return@MyIconButton
                         }
                         if (!nfsConViewModel.isConnected()) {
-                            Toast.makeText(context, context.getString(R.string.ui_label_save_after_successful_connection), Toast.LENGTH_SHORT).show()
+                            showToast(context, context.getString(R.string.ui_label_save_after_successful_connection))
                             return@MyIconButton
                         }
                         // 创建 NfsConnection 数据对象
@@ -191,13 +191,12 @@ fun NFSConScreen(nfsListViewModel: NFSListViewModel) {
                         )
                         // 假设 NfsListViewModel 有 addConnection 方法
                         if (nfsListViewModel.addConnection(newConnection)) {
-                            Toast.makeText(context, context.getString(R.string.ui_label_nfs_connection_saved), Toast.LENGTH_SHORT).show()
+                            showToast(context, context.getString(R.string.ui_label_nfs_connection_saved))
                         } else {
-                            Toast.makeText(
+                            showToast(
                                 context,
-                                context.getString(R.string.ui_label_save_failed_connection_exists),
-                                Toast.LENGTH_SHORT
-                            ).show()
+                                context.getString(R.string.ui_label_save_failed_connection_exists)
+                            )
                         }
                         Log.d("NfsConScreen", "保存连接: $aliasName")
                     },
@@ -258,11 +257,10 @@ fun NFSConScreen(nfsListViewModel: NFSListViewModel) {
                                                     Log.d("NfsConScreen", "进入目录: $resourceName")
                                                 } else {
                                                     // 点击文件：可以触发播放或其他操作
-                                                    Toast.makeText(
+                                                    showToast(
                                                         context,
-                                                        context.getString(R.string.ui_label_http_file_clicked,resourceName),
-                                                        Toast.LENGTH_LONG // 长一些以便显示 URL
-                                                    ).show()
+                                                        context.getString(R.string.ui_label_http_file_clicked,resourceName)
+                                                    )
 
                                                     // 可以使用 nfsFile 的路径等信息
                                                 }

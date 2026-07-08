@@ -3,7 +3,7 @@ package org.mz.mzdkplayer.player.vlc
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import android.widget.Toast
+import org.mz.mzdkplayer.ui.screen.common.MzToastManager
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -434,7 +434,7 @@ class MzVlcPlayer(
             mediaPlayer.addSlave(IMedia.Slave.Type.Subtitle, uri.toUri(), true)
 
         }
-        Toast.makeText(context, "加载外部字幕中...", Toast.LENGTH_SHORT).show()
+        MzToastManager.show("加载外部字幕中...")
 
     }
 }

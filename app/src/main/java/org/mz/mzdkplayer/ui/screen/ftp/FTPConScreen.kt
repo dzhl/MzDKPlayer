@@ -2,10 +2,11 @@
 // (请根据你的实际项目结构调整包名和文件路径)
 package org.mz.mzdkplayer.ui.screen.ftp
 
+import android.annotation.SuppressLint
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -21,6 +22,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,8 +46,10 @@ import org.mz.mzdkplayer.ui.screen.vm.FTPConViewModel // 引入 FTP ViewModel
 import org.mz.mzdkplayer.ui.screen.vm.FTPListViewModel // 引入 FTP List ViewModel
 import org.mz.mzdkplayer.ui.theme.myTTFColor
 import org.mz.mzdkplayer.ui.screen.common.MyIconButton
+import org.mz.mzdkplayer.ui.screen.common.MzToast
 import org.mz.mzdkplayer.ui.screen.common.RemoteInputQRPanel
 import org.mz.mzdkplayer.ui.screen.common.TvTextField
+import org.mz.mzdkplayer.ui.screen.common.rememberMzToastState
 import java.util.Locale
 
 import java.util.UUID
@@ -53,6 +57,7 @@ import java.util.UUID
 /**
  * FTP 连接界面
  */
+@SuppressLint("LocalContextGetResourceValueCall")
 @Composable
 fun FTPConScreen(ftpListViewModel: FTPListViewModel) {
     // 使用 FTP 的 ViewModel
@@ -63,6 +68,9 @@ fun FTPConScreen(ftpListViewModel: FTPListViewModel) {
     val connectionStatus by ftpConViewModel.connectionStatus.collectAsState()
     val fileList by ftpConViewModel.fileList.collectAsState()
     val currentPath by ftpConViewModel.currentPath.collectAsState()
+
+    val toastState = rememberMzToastState()
+    val coroutineScope = rememberCoroutineScope()
 
     // 用户输入状态 - 注意 FTP 需要服务器地址和端口
     var server by remember { mutableStateOf("") } // 服务器地址
@@ -76,7 +84,8 @@ fun FTPConScreen(ftpListViewModel: FTPListViewModel) {
     val keyboardController = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
 
-    Row(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Row(modifier = Modifier.fillMaxSize()) {
         // 左侧：连接配置和控制面板
         Column(
             modifier = Modifier
@@ -185,7 +194,7 @@ fun FTPConScreen(ftpListViewModel: FTPListViewModel) {
                     enabled = connectionStatus != FileConnectionStatus.Connecting, // 连接中时禁用
                     onClick = {
                         keyboardController?.hide() // 隐藏键盘
-                        if (!Tools.validateConnectionParams(context, server, shareName = shareName, aliasName = aliasName)) {
+                        if (!Tools.validateConnectionParams(server, shareName = shareName, aliasName = aliasName)) {
                             return@MyIconButton
                         }
                         val portInt = port.toIntOrNull() ?: 21 // 转换端口，失败则默认 21
@@ -203,11 +212,11 @@ fun FTPConScreen(ftpListViewModel: FTPListViewModel) {
 
                         keyboardController?.hide()
                         // 验证必填项
-                        if (!Tools.validateConnectionParams(context, server, shareName = shareName, aliasName = aliasName)) {
+                        if (!Tools.validateConnectionParams(server, shareName = shareName, aliasName = aliasName)) {
                             return@MyIconButton
                         }
                         if (!ftpConViewModel.isConnected()){
-                            Toast.makeText(context, context.getString(R.string.ui_label_save_after_successful_connection), Toast.LENGTH_SHORT).show()
+                            toastState.show(context.getString(R.string.ui_label_save_after_successful_connection), coroutineScope)
                             return@MyIconButton
                         }
                         val portInt = port.toIntOrNull() ?: 21 // 保存时也转换端口，空值则默认 21
@@ -222,10 +231,9 @@ fun FTPConScreen(ftpListViewModel: FTPListViewModel) {
                             port = portInt
                         )
                         if (ftpListViewModel.addConnection(newConnection)) {
-                            Toast.makeText(context, context.getString(R.string.ui_label_ftp_connection_saved), Toast.LENGTH_SHORT).show()
+                            toastState.show(context.getString(R.string.ui_label_ftp_connection_saved), coroutineScope)
                         } else {
-                            Toast.makeText(context, context.getString(R.string.ui_label_save_failed_connection_exists), Toast.LENGTH_SHORT)
-                                .show()
+                            toastState.show(context.getString(R.string.ui_label_save_failed_connection_exists), coroutineScope)
                         }
                         Log.d("FtpConScreen", "保存连接: $aliasName")
                     },
@@ -288,11 +296,10 @@ fun FTPConScreen(ftpListViewModel: FTPListViewModel) {
                                             ftpConViewModel.listFiles(newPath)
                                         } else {
                                             // 点击文件：可以触发下载或其他操作
-                                            Toast.makeText(
-                                                context,
+                                            toastState.show(
                                                 context.getString(R.string.ui_label_current_path_truncated,resourceName),
-                                                Toast.LENGTH_SHORT
-                                            ).show()
+                                                coroutineScope
+                                            )
 
                                         }
                                     }
@@ -411,6 +418,8 @@ fun FTPConScreen(ftpListViewModel: FTPListViewModel) {
             }
         }
     }
+    MzToast(state = toastState)
+}
 }
 
 

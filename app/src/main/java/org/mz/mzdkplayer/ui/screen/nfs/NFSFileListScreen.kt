@@ -4,7 +4,6 @@ package org.mz.mzdkplayer.ui.screen.nfs
 
 import NoSearchResult
 import android.util.Log
-import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -63,6 +62,7 @@ import org.mz.mzdkplayer.ui.screen.common.MediaReleaseDate
 import org.mz.mzdkplayer.ui.screen.common.MediaTitle
 import org.mz.mzdkplayer.ui.screen.common.TvTextField
 import org.mz.mzdkplayer.ui.screen.common.VAErrorScreen
+import org.mz.mzdkplayer.ui.screen.common.showToast
 import org.mz.mzdkplayer.ui.screen.vm.AudioViewModel
 import org.mz.mzdkplayer.ui.screen.vm.MovieViewModel
 import org.mz.mzdkplayer.ui.screen.vm.NFSConViewModel
@@ -168,7 +168,7 @@ fun NFSFileListScreen(
                 // 连接或列表错误
                 val errorMessage = (connectionStatus as FileConnectionStatus.Error).message
                 Log.e("NFSFileListScreen", "Error state: $errorMessage")
-                Toast.makeText(context, context.getString(R.string.ui_label_nfs_error,errorMessage), Toast.LENGTH_LONG).show()
+                showToast(context, context.getString(R.string.ui_label_nfs_error,errorMessage))
             }
             else -> {
 
@@ -387,11 +387,10 @@ fun NFSFileListScreen(
                                                             "PicViewer/$encodedFileUrl/NFS/$encodedFileName/$encodedConnectionName"
                                                         )
                                                     } else {
-                                                        Toast.makeText(
+                                                        showToast(
                                                             context,
-                                                            context.getString(R.string.ui_label_unsupported_file_format,"test"),
-                                                            Toast.LENGTH_SHORT
-                                                        ).show()
+                                                            context.getString(R.string.ui_label_unsupported_file_format,"test")
+                                                        )
                                                     }
                                                 }
                                             }
@@ -505,49 +504,51 @@ fun NFSFileListScreen(
                                         else stringResource(R.string.ui_label_bulk_add_to_video_library),
                                         onClick = {
                                             if (!settingsState.nfs) {
-                                                Toast.makeText(
+                                                showToast(
                                                     context,
-                                                    context.getString(R.string.ui_label_scraping_not_enabled),
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            } else {
-                                                // 1. 过滤出所有的视频文件 (不递归，只取当前层级)
-                                                val videoFilesToScan = fileList.filter { file ->
-                                                    !file.isDirectory &&
-                                                            Tools.containsVideoFormat(
-                                                                Tools.extractFileExtension(
-                                                                    file.name
-                                                                )
-                                                            )
-                                                }
-
-                                                if (videoFilesToScan.isEmpty()) {
-                                                    Toast.makeText(
-                                                        context,
-                                                        context.getString(R.string.ui_label_no_video_files_in_directory),
-                                                        Toast.LENGTH_SHORT
-                                                    ).show()
-                                                    return@CirCleIconButton
-                                                }
-
-                                                // 2. 构建数据列表 Pair(fileName, fullUri)
-                                                // 注意：URI 的构建规则必须和 LazyColumn 里点击时的规则完全一致
-                                                val scanList = videoFilesToScan.map { file ->
-                                                    file.name to "nfs://${nfsConnection.serverAddress}:${nfsConnection.shareName}:${file.path.ifEmpty { " " }}"
-                                                }
-
-                                                // 3. 调用 ViewModel 开始后台任务
-                                                Toast.makeText(
-                                                    context,
-                                                    context.getString(R.string.ui_label_start_background_info_retrieval),
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                                movieViewModel.batchScrapeVideoInfo(
-                                                    videoList = scanList,
-                                                    dataSourceType = "NFS",
-                                                    connectionName = nfsConnection.name
-                                                        ?: "未知连接"
+                                                    context.getString(R.string.ui_label_scraping_not_enabled)
                                                 )
+                                            } else {
+                                                // 1. 获取要扫描的视频文件列表
+                                                coroutineScope.launch {
+                                                    val scanList = if (settingsState.recursiveScanLevel > 0) {
+                                                        viewModel.scanVideosRecursive(
+                                                            path = sharePath,
+                                                            maxDepth = settingsState.recursiveScanLevel
+                                                        )
+                                                    } else {
+                                                        // 非递归，只取当前层级
+                                                        fileList.filter { file ->
+                                                            !file.isDirectory &&
+                                                                    Tools.containsVideoFormat(
+                                                                        Tools.extractFileExtension(
+                                                                            file.name
+                                                                        )
+                                                                    )
+                                                        }.map { file ->
+                                                            file.name to "nfs://${nfsConnection.serverAddress}:${nfsConnection.shareName}:${file.path.ifEmpty { " " }}"
+                                                        }
+                                                    }
+
+                                                    if (scanList.isEmpty()) {
+                                                        showToast(
+                                                            context,
+                                                            context.getString(R.string.ui_label_no_video_files_in_directory)
+                                                        )
+                                                    } else {
+                                                        // 3. 调用 ViewModel 开始后台任务
+                                                        showToast(
+                                                            context,
+                                                            context.getString(R.string.ui_label_start_background_info_retrieval)
+                                                        )
+                                                        movieViewModel.batchScrapeVideoInfo(
+                                                            videoList = scanList,
+                                                            dataSourceType = "NFS",
+                                                            connectionName = nfsConnection.name
+                                                                ?: "未知连接"
+                                                        )
+                                                    }
+                                                }
                                             }
                                         }
                                     )
@@ -557,11 +558,10 @@ fun NFSFileListScreen(
                                         tooltip = if (isAudioScanning) stringResource(R.string.ui_label_parsing_filename) else  stringResource(R.string.ui_label_bulk_add_to_music_library),
                                         onClick = {
                                             if (!settingsState.nfs) {
-                                                Toast.makeText(
+                                                showToast(
                                                     context,
-                                                    context.getString(R.string.ui_label_scraping_not_enabled),
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
+                                                    context.getString(R.string.ui_label_scraping_not_enabled)
+                                                )
                                             } else {
                                                 // 1. 过滤音频文件
                                                 val audioFiles = fileList.filter {
@@ -573,11 +573,10 @@ fun NFSFileListScreen(
                                                 }
 
                                                 if (audioFiles.isEmpty()) {
-                                                    Toast.makeText(
+                                                    showToast(
                                                         context,
-                                                        context.getString(R.string.ui_label_no_audio_files_found),
-                                                        Toast.LENGTH_SHORT
-                                                    ).show()
+                                                        context.getString(R.string.ui_label_no_audio_files_found)
+                                                    )
                                                     return@CirCleIconButton
                                                 }
 
@@ -593,11 +592,10 @@ fun NFSFileListScreen(
                                                     connectionName = nfsConnection.name
                                                         ?: "未知连接"
                                                 )
-                                                Toast.makeText(
+                                                showToast(
                                                     context,
-                                                    context.getString(R.string.ui_label_added_music_in_background,list.size),
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
+                                                    context.getString(R.string.ui_label_added_music_in_background,list.size)
+                                                )
                                             }
                                         }
                                     )

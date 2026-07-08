@@ -246,7 +246,7 @@ fun TvLibraryScreen(
                 if (tvShow != null) {
                     Column(
                         modifier = Modifier
-                            .padding(start = 56.dp, top = 20.dp)
+                            .padding(start = 32.dp, top = 20.dp)
                     ) {
                         Text(
                             text = stringResource(R.string.ui_label_tv_show_library),
@@ -288,7 +288,7 @@ fun TvLibraryScreen(
                     Column(
                         modifier = Modifier
                             .height(260.dp) // 保持高度一致
-                            .padding(start = 56.dp, top = 20.dp)
+                            .padding(start = 32.dp, top = 20.dp)
                     ) {
                         Text(
                             text = stringResource(R.string.ui_label_tv_show_library),

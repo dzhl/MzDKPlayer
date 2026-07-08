@@ -2,8 +2,10 @@ package org.mz.mzdkplayer.ui.screen.setting
 
 import android.R.attr.versionCode
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
@@ -33,8 +35,10 @@ import androidx.tv.material3.FilterChip
 import androidx.tv.material3.FilterChipDefaults
 import androidx.tv.material3.Icon
 import androidx.tv.material3.ListItem
+import androidx.tv.material3.ListItemDefaults
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
+import androidx.tv.material3.SurfaceDefaults
 import androidx.tv.material3.Switch
 import androidx.tv.material3.Text
 import org.mz.mzdkplayer.R
@@ -50,6 +54,7 @@ import org.mz.mzdkplayer.ui.screen.vm.SettingsUiState
 import org.mz.mzdkplayer.ui.screen.vm.SettingsViewModel
 import org.mz.mzdkplayer.ui.theme.myListItemCoverColor
 import org.mz.mzdkplayer.ui.theme.mySideFilterChipColor
+import androidx.core.net.toUri
 
 // 定义左侧菜单分类
 enum class SettingCategory(@param:StringRes val titleRes: Int, val iconRes: Int? = null) {
@@ -416,11 +421,51 @@ fun SourceSection(state: SettingsUiState, settingsVM: SettingsViewModel) {
             onClick = { showTmdbConfig = true }
         )
         Spacer(modifier = Modifier.height(8.dp))
+        ActionSettingItem(
+            title = stringResource(R.string.setting_tmdb_search_lang),
+            value = formatTmdbLang(state.tmdbSearchLang),
+            onClick = {
+                val next = when (state.tmdbSearchLang) {
+                    "" -> "zh-CN"
+                    "zh-CN" -> "zh-TW"
+                    "zh-TW" -> "en-US"
+                    "en-US" -> "ja-JP"
+                    "ja-JP" -> "ko-KR"
+                    else -> ""
+                }
+                settingsVM.setTmdbSearchLang(next)
+            }
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        ActionSettingItem(
+            title = stringResource(R.string.setting_tmdb_result_lang),
+            value = formatTmdbLang(state.tmdbResultLang),
+            onClick = {
+                val next = when (state.tmdbResultLang) {
+                    "" -> "zh-CN"
+                    "zh-CN" -> "zh-TW"
+                    "zh-TW" -> "en-US"
+                    "en-US" -> "ja-JP"
+                    "ja-JP" -> "ko-KR"
+                    else -> ""
+                }
+                settingsVM.setTmdbResultLang(next)
+            }
+        )
+        Spacer(modifier = Modifier.height(8.dp))
         SwitchSettingItem(
             title = stringResource(R.string.setting_prioritize_nfo),
             subtitle = stringResource(R.string.setting_prioritize_nfo_sub),
             checked = state.prioritizeLocalNfo,
             onCheckedChange = { settingsVM.togglePrioritizeLocalNfo(it) }
+        )
+        ActionSettingItem(
+            title = stringResource(R.string.setting_recursive_scan_level),
+            value = formatRecursiveScanLevel(state.recursiveScanLevel),
+            onClick = {
+                val next = (state.recursiveScanLevel + 1) % 6
+                settingsVM.setRecursiveScanLevel(next)
+            }
         )
     }
 
@@ -438,32 +483,84 @@ fun ToolsSection(movieVM: MovieViewModel, audioViewModel: AudioViewModel) {
     var showClearMovieDialog by remember { mutableStateOf(false) }
     var showClearAudioDialog by remember { mutableStateOf(false) }
 
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Box(Modifier
-            .padding(vertical = 8.dp)
-            .fillMaxWidth()) {
-            FilePermissionScreen() // 如果需要可以取消注释
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        // --- 权限管理板块 ---
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = stringResource(R.string.cat_tools),
+                style = MaterialTheme.typography.titleLarge,
+                color = Color.White
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        color = Color.White.copy(alpha = 0.05f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    .padding(8.dp)
+            ) {
+                FilePermissionScreen()
+            }
         }
 
-        MyIconButton(
-            text = stringResource(R.string.btn_clear_movie_db),
-            icon = R.drawable.close24dp,
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-            // 2. 点击时不直接清理，而是把弹窗状态设为 true
-            onClick = { showClearMovieDialog = true }
-        )
-        Spacer(Modifier.height(16.dp))
+        // --- 数据库管理板块 ---
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = stringResource(R.string.tool_section_database),
+                style = MaterialTheme.typography.titleLarge,
+                color = Color.White
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        color = Color.White.copy(alpha = 0.05f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    .padding(8.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    MyIconButton(
+                        text = stringResource(R.string.btn_clear_movie_db),
+                        icon = R.drawable.delete24dp,
+                        modifier = Modifier.weight(1f),
+                        onClick = { showClearMovieDialog = true }
+                    )
+                    MyIconButton(
+                        text = stringResource(R.string.btn_clear_audio_db),
+                        icon = R.drawable.delete24dp,
+                        modifier = Modifier.weight(1f),
+                        onClick = { showClearAudioDialog = true }
+                    )
+                }
+            }
+        }
 
-        MyIconButton(
-            text = stringResource(R.string.btn_clear_audio_db),
-            icon = R.drawable.close24dp,
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-            // 3. 同样，点击时呼出音乐库清理弹窗
-            onClick = { showClearAudioDialog = true }
-        )
-        Spacer(Modifier.height(16.dp))
-
-        PerformanceTestScreen()
+        // --- 性能测试工具板块 ---
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = stringResource(R.string.tool_section_performance),
+                style = MaterialTheme.typography.titleLarge,
+                color = Color.White
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        color = Color.White.copy(alpha = 0.05f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    .padding(8.dp)
+            ) {
+                PerformanceTestScreen()
+            }
+        }
     }
 
     // 4. 在界面底部挂载弹窗组件（当状态为 true 时显示）
@@ -581,63 +678,177 @@ fun AboutSection(context: Context, navController: NavHostController) {
     // 记录最后一次点击时间，超过 2 秒没点就重置计数
     var lastClickTime by remember { mutableLongStateOf(0L) }
 
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(top = 8.dp)
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        Icon(
-            painter = painterResource(R.mipmap.ic_launcher),
-            contentDescription = "Logo",
-            modifier = Modifier.size(80.dp),
-            tint = Color.Unspecified
-        )
-        Spacer(Modifier.width(24.dp))
-        Column {
-            Text(
-                text = context.getString(R.string.app_name),
-                style = MaterialTheme.typography.headlineMedium
-            )
+        // --- 头部：Logo 和 版本信息 ---
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(top = 8.dp)
+        ) {
             Surface(
-                shape = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(8.dp)),
+                shape = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(16.dp)),
                 colors = ClickableSurfaceDefaults.colors(
-                    containerColor = Color.Transparent,
-                    focusedContainerColor = Color.White.copy(alpha = 0.1f),
-                    pressedContainerColor = Color.White.copy(alpha = 0.2f)
+                    containerColor = Color.White.copy(alpha = 0.05f),
+                    focusedContainerColor = Color.White.copy(alpha = 0.05f),
+                    pressedContainerColor = Color.White.copy(alpha = 0.05f)
                 ),
-                border = ClickableSurfaceDefaults.border(
-                    focusedBorder = Border(BorderStroke(1.dp, Color.White.copy(alpha = 0.5f)))
-                ),
-                onClick = {
-                    val currentTime = System.currentTimeMillis()
-                    if (currentTime - lastClickTime < 1000) {
-                        clickCount++
-                    } else {
-                        clickCount = 1
-                    }
-                    lastClickTime = currentTime
-
-                    // 达到 5 次点击触发
-                    if (clickCount >= 5) {
-                        clickCount = 0 // 重置
-                        // 逻辑：奇数次去太阳系，偶数次去黑洞（或者根据喜好修改）
-                        if (System.currentTimeMillis() % 2 == 0L) {
-                            navController.navigate("SolarSystemScreen")
-                        } else {
-                            navController.navigate("BlackHoleSimulationScreen")
-                        }
-                    }
-                }
+                onClick = { /* 仅展示 */ }
             ) {
-                Text(
-                    modifier = Modifier.padding(3.dp),
-                    text = stringResource(R.string.ui_label_version_prefix) + "${pkgInfo?.versionName} (${pkgInfo?.versionCodeCompat})",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = Color.Gray
+                Icon(
+                    painter = painterResource(R.mipmap.ic_launcher),
+                    contentDescription = "Logo",
+                    modifier = Modifier
+                        .size(100.dp)
+                        .padding(12.dp),
+                    tint = Color.Unspecified
                 )
             }
+            Spacer(Modifier.width(24.dp))
+            Column {
+                Text(
+                    text = context.getString(R.string.app_name),
+                    style = MaterialTheme.typography.displaySmall,
+                    color = Color.White
+                )
+                Spacer(Modifier.height(8.dp))
+                Surface(
+                    shape = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(8.dp)),
+                    colors = ClickableSurfaceDefaults.colors(
+                        containerColor = Color.Transparent,
+                        focusedContainerColor = Color.White.copy(alpha = 0.1f),
+                        pressedContainerColor = Color.White.copy(alpha = 0.2f)
+                    ),
+                    border = ClickableSurfaceDefaults.border(
+                        focusedBorder = Border(BorderStroke(1.dp, Color.White.copy(alpha = 0.5f)))
+                    ),
+                    onClick = {
+                        val currentTime = System.currentTimeMillis()
+                        if (currentTime - lastClickTime < 1000) {
+                            clickCount++
+                        } else {
+                            clickCount = 1
+                        }
+                        lastClickTime = currentTime
+
+                        if (clickCount >= 5) {
+                            clickCount = 0
+                            if (System.currentTimeMillis() % 2 == 0L) {
+                                navController.navigate("SolarSystemScreen")
+                            } else {
+                                navController.navigate("BlackHoleSimulationScreen")
+                            }
+                        }
+                    }
+                ) {
+                    Text(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        text = stringResource(R.string.ui_label_version_prefix) + "${pkgInfo?.versionName} (${pkgInfo?.versionCodeCompat})",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.White.copy(alpha = 0.6f)
+                    )
+                }
+            }
+        }
+
+        // --- 内容：项目链接和版权 ---
+        Column(
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            AboutItem(
+                label = stringResource(R.string.ui_label_author),
+                value = "@MZHSY",
+            )
+
+            AboutItem(
+                label = stringResource(R.string.ui_label_official_website),
+                value = "https://mzdkplayer.pages.dev/",
+                onClick = {
+                    val intent = Intent(Intent.ACTION_VIEW, "https://mzdkplayer.pages.dev/".toUri())
+                    context.startActivity(intent)
+                }
+            )
+
+            AboutItem(
+                label = stringResource(R.string.ui_label_github),
+                value = "https://github.com/mzhsy1/MzDKPlayer",
+                onClick = {
+                    val intent = Intent(Intent.ACTION_VIEW,
+                        "https://github.com/mzhsy1/MzDKPlayer".toUri())
+                    context.startActivity(intent)
+                }
+            )
+
+            AboutItem(
+                label = stringResource(R.string.ui_label_gitee),
+                value = "https://gitee.com/mzhsy/MzDKPlayer",
+                onClick = {
+                    val intent = Intent(Intent.ACTION_VIEW,
+                        "https://gitee.com/mzhsy/MzDKPlayer".toUri())
+                    context.startActivity(intent)
+                }
+            )
+        }
+
+        // --- 底部：版权和免责声明 ---
+        Column(
+            modifier = Modifier.padding(top = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.ui_label_copyright),
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.White.copy(alpha = 0.4f)
+            )
+            Text(
+                text = stringResource(R.string.ui_label_disclaimer),
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.White.copy(alpha = 0.3f)
+            )
         }
     }
+}
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+fun AboutItem(
+    label: String,
+    value: String,
+    icon: Int? = null,
+    onClick: (() -> Unit)? = null
+) {
+    ListItem(
+        selected = false,
+        onClick = { onClick?.invoke() },
+        enabled = onClick != null,
+        headlineContent = {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White.copy(alpha = 0.6f)
+            )
+        },
+        supportingContent = {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color.White
+            )
+        },
+        leadingContent = icon?.let {
+            { Icon(painterResource(it), contentDescription = null, modifier = Modifier.size(24.dp)) }
+        },
+        shape = ListItemDefaults.shape(shape = RoundedCornerShape(12.dp)),
+        colors = ListItemDefaults.colors(
+            containerColor = Color.White.copy(alpha = 0.05f),
+            focusedContainerColor = Color.White.copy(alpha = 0.15f),
+            pressedContainerColor = Color.White.copy(alpha = 0.2f),
+            contentColor = Color.White,
+            focusedContentColor = Color.White
+        ),
+        modifier = Modifier.fillMaxWidth()
+    )
 }
 
 // --- Helper Functions ---
@@ -669,4 +880,25 @@ fun formatAudioDecodeMode(mode: Int): String = when (mode) {
     1 -> stringResource(R.string.setting_audio_decode_hw_priority)
     2 -> stringResource(R.string.setting_audio_decode_sw_priority)
     else -> stringResource(R.string.ui_label_unknown)
+}
+@Composable
+fun formatRecursiveScanLevel(level: Int): String = when (level) {
+    0 -> stringResource(R.string.recursive_scan_level_0)
+    1 -> stringResource(R.string.recursive_scan_level_1)
+    2 -> stringResource(R.string.recursive_scan_level_2)
+    3 -> stringResource(R.string.recursive_scan_level_3)
+    4 -> stringResource(R.string.recursive_scan_level_4)
+    5 -> stringResource(R.string.recursive_scan_level_5)
+    else -> "Level $level"
+}
+
+@Composable
+fun formatTmdbLang(code: String): String = when (code) {
+    "" -> stringResource(R.string.lang_auto_system)
+    "zh-CN" -> "简体中文"
+    "zh-TW" -> "繁體中文"
+    "en-US" -> "English"
+    "ja-JP" -> "日本語"
+    "ko-KR" -> "한국어"
+    else -> code
 }

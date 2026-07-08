@@ -36,7 +36,10 @@ data class SettingsUiState(
     val http: Boolean = false,
     val appLang: String = "",
     val prioritizeLocalNfo: Boolean = false,
-    val tmdbBaseUrl: String = SettingsRepository.DEFAULT_TMDB_URL
+    val tmdbBaseUrl: String = SettingsRepository.DEFAULT_TMDB_URL,
+    val recursiveScanLevel: Int = 1,
+    val tmdbSearchLang: String = "",
+    val tmdbResultLang: String = ""
 )
 
 class SettingsViewModel : ViewModel() {
@@ -72,7 +75,10 @@ class SettingsViewModel : ViewModel() {
                 http = repo.enableHttp,
                 appLang = repo.appLanguage,
                 prioritizeLocalNfo = repo.prioritizeLocalNfo,
-                tmdbBaseUrl = repo.tmdbBaseUrl
+                tmdbBaseUrl = repo.tmdbBaseUrl,
+                recursiveScanLevel = repo.recursiveScanLevel,
+                tmdbSearchLang = repo.tmdbSearchLang,
+                tmdbResultLang = repo.tmdbResultLang
             )
         }
     }
@@ -158,6 +164,21 @@ class SettingsViewModel : ViewModel() {
 
     fun setTmdbBaseUrl(v: String) {
         repo.tmdbBaseUrl = v
+        refreshState()
+    }
+
+    fun setRecursiveScanLevel(v: Int) {
+        repo.recursiveScanLevel = v
+        refreshState()
+    }
+
+    fun setTmdbSearchLang(v: String) {
+        repo.tmdbSearchLang = v
+        refreshState()
+    }
+
+    fun setTmdbResultLang(v: String) {
+        repo.tmdbResultLang = v
         refreshState()
     }
 }

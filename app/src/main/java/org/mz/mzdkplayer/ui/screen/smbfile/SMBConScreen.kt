@@ -2,7 +2,6 @@ package org.mz.mzdkplayer.ui.screen.smbfile
 
 
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -41,6 +40,7 @@ import org.mz.mzdkplayer.data.model.FileConnectionStatus
 
 import org.mz.mzdkplayer.data.model.SMBConnection
 import org.mz.mzdkplayer.tool.Tools
+import org.mz.mzdkplayer.ui.screen.common.showToast
 
 import org.mz.mzdkplayer.ui.screen.common.TvTextField
 
@@ -171,7 +171,7 @@ fun SMBConScreen(smbListViewModel: SMBListViewModel = viewModel()) {
                 modifier = Modifier.fillMaxWidth(1f),
                 enabled = true,
                 onClick = {
-                    if (!Tools.validateSMBConnectionParams(context, ip, shareName, aliasName)) {
+                    if (!Tools.validateSMBConnectionParams(ip, shareName, aliasName)) {
                         return@MyIconButton
                     }
                     viewModel.testConnectSMB(ip, username, password, shareName)
@@ -185,7 +185,7 @@ fun SMBConScreen(smbListViewModel: SMBListViewModel = viewModel()) {
 
                 modifier = Modifier.fillMaxWidth(1f),
                 onClick = {
-                    if (!Tools.validateSMBConnectionParams(context, ip, shareName, aliasName)) {
+                    if (!Tools.validateSMBConnectionParams(ip, shareName, aliasName)) {
                         return@MyIconButton
                     }
 
@@ -201,16 +201,15 @@ fun SMBConScreen(smbListViewModel: SMBListViewModel = viewModel()) {
                                 )
                             )
                         ) {
-                            Toast.makeText(context, context.getString(R.string.ui_label_added_successfully), Toast.LENGTH_SHORT).show()
+                            showToast(context, context.getString(R.string.ui_label_added_successfully))
                         } else {
-                            Toast.makeText(
+                            showToast(
                                 context,
-                                context.getString(R.string.ui_label_save_failed_connection_exists),
-                                Toast.LENGTH_SHORT
-                            ).show()
+                                context.getString(R.string.ui_label_save_failed_connection_exists)
+                            )
                         }
                     } else {
-                        Toast.makeText(context, context.getString(R.string.ui_label_save_after_successful_connection), Toast.LENGTH_SHORT).show()
+                        showToast(context, context.getString(R.string.ui_label_save_after_successful_connection))
                     }
                 },
 

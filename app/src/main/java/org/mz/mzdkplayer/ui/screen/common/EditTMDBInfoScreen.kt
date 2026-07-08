@@ -1,6 +1,5 @@
 package org.mz.mzdkplayer.ui.screen.common
 
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -196,7 +195,7 @@ fun EditTMDBInfoScreen(
                     if (searchKeyword.isNotBlank()) {
                         movieViewModel.searchMediaManual(searchKeyword, isSearchMovie)
                     } else {
-                        Toast.makeText(context, context.getString(R.string.ui_label_please_enter_keyword), Toast.LENGTH_SHORT).show()
+                        showToast(context, context.getString(R.string.ui_label_please_enter_keyword))
                     }
                 }
             )
@@ -256,7 +255,7 @@ fun EditTMDBInfoScreen(
                                             originalFileName = fileName
                                         )
 
-                                        Toast.makeText(context, context.getString(R.string.ui_label_corrected_to,item.title), Toast.LENGTH_SHORT).show()
+                                        showToast(context, context.getString(R.string.ui_label_corrected_to,item.title))
                                         //navController.popBackStack() // 返回上一页
                                     },
                                     colors = myListItemCoverColor(),

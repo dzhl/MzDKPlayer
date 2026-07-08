@@ -14,12 +14,23 @@
     <string name="setting_prioritize_nfo">Prioritize Local NFO Files</string>
     <string name="setting_prioritize_nfo_sub">If a .nfo file with the same name exists in the media directory, information will be extracted from it first instead of scraping online</string>
 
+    <string name="setting_recursive_scan_level">Recursive Scan Level</string>
+    <string name="setting_recursive_scan_level_sub">Depth for recursive video searching during bulk add</string>
+    <string name="recursive_scan_level_0">Current folder only (Level 0)</string>
+    <string name="recursive_scan_level_1">Current + 1 level of subfolders (Level 1)</string>
+    <string name="recursive_scan_level_2">Current + 2 levels of subfolders (Level 2)</string>
+    <string name="recursive_scan_level_3">Current + 3 levels of subfolders (Level 3)</string>
+    <string name="recursive_scan_level_4">Current + 4 levels of subfolders (Level 4)</string>
+    <string name="recursive_scan_level_5">Current + 5 levels of subfolders (Level 5)</string>
+
     <string name="setting_hide_details">Hide Details</string>
     <string name="setting_hide_details_sub">Play directly without showing details</string>
     <string name="setting_hide_net_speed">Hide Network Speed</string>
     <string name="setting_app_lang">App Language</string>
     <string name="setting_tmdb_api_mirror">TMDB API URL (Mirror)</string>
     <string name="setting_tmdb_api_mirror_sub">Useful if TMDB is blocked in your region. Example: https://api.tmdb.org/3/</string>
+    <string name="setting_tmdb_search_lang">TMDB Search Language</string>
+    <string name="setting_tmdb_result_lang">TMDB Details Language</string>
     <string name="ui_label_custom_tmdb_url">Custom TMDB API URL</string>
     <string name="ui_label_enter_tmdb_url">Enter TMDB API URL (must end with /3/)</string>
     <string name="ui_label_test_tmdb_connection">Test TMDB Connection</string>
@@ -111,6 +122,20 @@
     <string name="ui_label_app_needs_storage_permission">The app needs storage permission to access files. Please grant the permission.</string>
     <string name="ui_label_storage_permission_needed_for_files">Storage Permission Needed to Access Files</string>
     <string name="ui_label_manually_enable_permission_in_settings">Please manually enable the permission in Settings</string>
+
+    <string name="perm_title_all_files">All Files Access (Recommended)</string>
+    <string name="perm_desc_all_files">Allows the player to access all video, audio, and subtitle files on the device. This is the best choice for Android 11+ TV devices.</string>
+    <string name="perm_title_media_video">Video Access</string>
+    <string name="perm_title_media_audio">Audio Access</string>
+    <string name="perm_title_media_images">Images Access</string>
+    <string name="perm_title_notifications">Notifications Access</string>
+    <string name="perm_status_granted">Granted</string>
+    <string name="perm_status_denied">Denied</string>
+    <string name="perm_section_storage">Storage Permissions</string>
+    <string name="perm_section_other">Other Permissions</string>
+
+    <string name="tool_section_database">Database Management</string>
+    <string name="tool_section_performance">Performance Tools</string>
     <string name="ui_label_no_movie_info_yet">No Movie Information Yet</string>
     <string name="ui_label_no_tv_show_info_yet">No TV Show Information Yet</string>
     <string name="ui_label_no_music_info_yet">No Music Information Yet</string>
@@ -404,4 +429,12 @@
     <string name="ui_label_no_poster">No Poster</string>
     <string name="ui_label_subtitle_off">Turn off Subtitles</string>
     <string name="ui_label_subtitle_file_not_found_hint">(File not found, may be buffering)</string>
+
+    <string name="ui_label_author">Author</string>
+    <string name="ui_label_github">GitHub Project</string>
+    <string name="ui_label_gitee">Gitee Project</string>
+    <string name="ui_label_official_website">Official Website</string>
+    <string name="ui_label_copyright">Copyright © 2026 MZHSY. All Rights Reserved.</string>
+    <string name="ui_label_disclaimer">Disclaimer: This software is for learning and exchange purposes only. No media resources are provided.</string>
+
 </resources>

@@ -2,7 +2,6 @@ package org.mz.mzdkplayer.ui.screen.ftp
 
 import NoSearchResult
 import android.util.Log
-import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -59,7 +58,9 @@ import org.mz.mzdkplayer.ui.screen.common.MediaInfoLoading
 import org.mz.mzdkplayer.ui.screen.common.MediaPreviewSection
 import org.mz.mzdkplayer.ui.screen.common.MediaReleaseDate
 import org.mz.mzdkplayer.ui.screen.common.MediaTitle
+import org.mz.mzdkplayer.ui.screen.common.MzToast
 import org.mz.mzdkplayer.ui.screen.common.VAErrorScreen
+import org.mz.mzdkplayer.ui.screen.common.rememberMzToastState
 import org.mz.mzdkplayer.ui.screen.vm.FTPConViewModel
 
 
@@ -89,6 +90,7 @@ fun FTPFileListScreen(
     val viewModel: FTPConViewModel = viewModel()
 
     // 收集 ViewModel 中的状态
+    val toastState = rememberMzToastState()
     val fileList by viewModel.fileList.collectAsState()
     val connectionStatus by viewModel.connectionStatus.collectAsState()
     val currentPath by viewModel.currentPath.collectAsState()
@@ -160,7 +162,7 @@ fun FTPFileListScreen(
                 // 连接或列表错误
                 val errorMessage = (connectionStatus as FileConnectionStatus.Error).message
                 Log.e("FTPFileListScreen", "Error state: $errorMessage")
-                Toast.makeText(context, "${context.getString(R.string.ui_label_ftp_error)} $errorMessage", Toast.LENGTH_LONG).show()
+                toastState.show("${context.getString(R.string.ui_label_ftp_error)} $errorMessage", coroutineScope)
             }
 
             else -> {}
@@ -375,11 +377,10 @@ fun FTPFileListScreen(
                                                             }
 
                                                             else -> {
-                                                                Toast.makeText(
-                                                                    context,
+                                                                toastState.show(
                                                                     context.getString(R.string.ui_label_unsupported_file_format,fileExtension),
-                                                                    Toast.LENGTH_SHORT
-                                                                ).show()
+                                                                    coroutineScope
+                                                                )
                                                             }
                                                         }
                                                     }
@@ -488,50 +489,51 @@ fun FTPFileListScreen(
                                         else stringResource(R.string.ui_label_bulk_add_to_video_library),
                                         onClick = {
                                             if (!settingsState.ftp) {
-                                                Toast.makeText(
-                                                    context,
+                                                toastState.show(
                                                     context.getString(R.string.ui_label_scraping_not_enabled),
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            } else {
-                                                // 1. 过滤出所有的视频文件 (不递归，只取当前层级)
-                                                val videoFilesToScan = fileList.filter { file ->
-                                                    !file.isDirectory &&
-                                                            Tools.containsVideoFormat(
-                                                                Tools.extractFileExtension(
-                                                                    file.name
-                                                                )
-                                                            )
-                                                }
-
-                                                if (videoFilesToScan.isEmpty()) {
-                                                    Toast.makeText(
-                                                        context,
-                                                        context.getString(R.string.ui_label_no_video_files_in_directory),
-                                                        Toast.LENGTH_SHORT
-                                                    ).show()
-                                                    return@CirCleIconButton
-                                                }
-
-                                                // 2. 构建数据列表 Pair(fileName, fullUri)
-                                                // 注意：URI 的构建规则必须和 LazyColumn 里点击时的规则完全一致
-                                                val scanList = videoFilesToScan.map { file ->
-
-                                                    file.name to viewModel.getResourceFullUrl(file.name)
-                                                }
-
-                                                // 3. 调用 ViewModel 开始后台任务
-                                                Toast.makeText(
-                                                    context,
-                                                    context.getString(R.string.ui_label_start_background_info_retrieval),
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                                movieViewModel.batchScrapeVideoInfo(
-                                                    videoList = scanList,
-                                                    dataSourceType = "FTP",
-                                                    connectionName = ftpConnection.name
-                                                        ?: "未知连接"
+                                                    coroutineScope
                                                 )
+                                            } else {
+                                                // 1. 获取要扫描的视频文件列表
+                                                coroutineScope.launch {
+                                                    val scanList = if (settingsState.recursiveScanLevel > 0) {
+                                                        viewModel.scanVideosRecursive(
+                                                            path = path ?: "",
+                                                            maxDepth = settingsState.recursiveScanLevel
+                                                        )
+                                                    } else {
+                                                        // 非递归，只取当前层级
+                                                        fileList.filter { file ->
+                                                            !file.isDirectory &&
+                                                                    Tools.containsVideoFormat(
+                                                                        Tools.extractFileExtension(
+                                                                            file.name
+                                                                        )
+                                                                    )
+                                                        }.map { file ->
+                                                            file.name to viewModel.getResourceFullUrl(file.name)
+                                                        }
+                                                    }
+
+                                                    if (scanList.isEmpty()) {
+                                                        toastState.show(
+                                                            context.getString(R.string.ui_label_no_video_files_in_directory),
+                                                            coroutineScope
+                                                        )
+                                                    } else {
+                                                        // 3. 调用 ViewModel 开始后台任务
+                                                        toastState.show(
+                                                            context.getString(R.string.ui_label_start_background_info_retrieval),
+                                                            coroutineScope
+                                                        )
+                                                        movieViewModel.batchScrapeVideoInfo(
+                                                            videoList = scanList,
+                                                            dataSourceType = "FTP",
+                                                            connectionName = ftpConnection.name
+                                                                ?: "未知连接"
+                                                        )
+                                                    }
+                                                }
                                             }
                                         }
                                     )
@@ -541,11 +543,10 @@ fun FTPFileListScreen(
                                         tooltip = if (isAudioScanning) stringResource(R.string.ui_label_parsing_filename) else  stringResource(R.string.ui_label_bulk_add_to_music_library),
                                         onClick = {
                                             if (!settingsState.ftp) {
-                                                Toast.makeText(
-                                                    context,
+                                                toastState.show(
                                                     context.getString(R.string.ui_label_scraping_not_enabled),
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
+                                                    coroutineScope
+                                                )
                                             } else {
                                                 // 1. 过滤音频文件
                                                 val audioFiles = fileList.filter {
@@ -557,11 +558,10 @@ fun FTPFileListScreen(
                                                 }
 
                                                 if (audioFiles.isEmpty()) {
-                                                    Toast.makeText(
-                                                        context,
+                                                    toastState.show(
                                                         context.getString(R.string.ui_label_no_audio_files_found),
-                                                        Toast.LENGTH_SHORT
-                                                    ).show()
+                                                        coroutineScope
+                                                    )
                                                     return@CirCleIconButton
                                                 }
 
@@ -577,11 +577,10 @@ fun FTPFileListScreen(
                                                     connectionName = ftpConnection.name
                                                         ?: "未知连接"
                                                 )
-                                                Toast.makeText(
-                                                    context,
+                                                toastState.show(
                                                     context.getString(R.string.ui_label_added_music_in_background,list.size),
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
+                                                    coroutineScope
+                                                )
                                             }
                                         }
                                     )
@@ -602,6 +601,7 @@ fun FTPFileListScreen(
                 )
             }
         }
+        MzToast(state = toastState)
     }
 }
 

@@ -9,7 +9,7 @@ import android.graphics.Color
 import android.os.Build
 import android.util.Base64
 import android.util.Log
-import android.widget.Toast
+import org.mz.mzdkplayer.ui.screen.common.MzToastManager
 import androidx.annotation.OptIn
 import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
@@ -436,22 +436,22 @@ object Tools {
      * @param shareName 分享文件名称
      * @return 如果验证通过返回true，否则返回false
      */
-    fun validateConnectionParams(context: Context, serverAddress: String, shareName: String,aliasName: String): Boolean {
+    fun validateConnectionParams(serverAddress: String, shareName: String,aliasName: String): Boolean {
         if (serverAddress.isBlank()) {
-            Toast.makeText(context, "请输入服务器地址", Toast.LENGTH_SHORT).show()
+            MzToastManager.show("请输入服务器地址")
             return false
         }
         if (shareName.isBlank()) {
-            Toast.makeText(context, "请输入分享文件名称", Toast.LENGTH_SHORT).show()
+            MzToastManager.show("请输入分享文件名称")
             return false
         }
         if (!shareName.startsWith("/")) {
-            Toast.makeText(context, "分享连接必须以/开头", Toast.LENGTH_SHORT).show()
+            MzToastManager.show("分享连接必须以/开头")
             return false
         }
         val pattern = Regex("^[a-zA-Z0-9_\\-\\u4e00-\\u9fa5]+\$")
         if (!pattern.matches(aliasName)) {
-            Toast.makeText(context, "别名只能包含字母、数字、下划线、中划线和中文，不能包含特殊符号", Toast.LENGTH_SHORT).show()
+            MzToastManager.show("别名只能包含字母、数字、下划线、中划线和中文，不能包含特殊符号")
             return false
         }
         return true
@@ -464,29 +464,29 @@ object Tools {
      * @param shareName 分享文件名称
      * @return 如果验证通过返回true，否则返回false
      */
-    fun validateSMBConnectionParams(context: Context, serverAddress: String, shareName: String,aliasName:String): Boolean {
+    fun validateSMBConnectionParams(serverAddress: String, shareName: String,aliasName:String): Boolean {
         if (serverAddress.isBlank()) {
-            Toast.makeText(context, "请输入服务器地址", Toast.LENGTH_SHORT).show()
+            MzToastManager.show("请输入服务器地址")
             return false
         }
         if (shareName.isBlank()) {
-            Toast.makeText(context, "请输入分享文件名称", Toast.LENGTH_SHORT).show()
+            MzToastManager.show("请输入分享文件名称")
             return false
         }
         if (shareName.startsWith("/")) {
-            Toast.makeText(context, "SMB分享名称不能以/开头", Toast.LENGTH_SHORT).show()
+            MzToastManager.show("SMB分享名称不能以/开头")
             return false
         }
         // 验证 aliasName 不能为空
         if (aliasName.isBlank()) {
-            Toast.makeText(context, "请输入别名", Toast.LENGTH_SHORT).show()
+            MzToastManager.show("请输入别名")
             return false
         }
 
         // 使用正则表达式验证 aliasName 只允许字母、数字、下划线、中划线和中文
         val pattern = Regex("^[a-zA-Z0-9_\\-\\u4e00-\\u9fa5]+\$")
         if (!pattern.matches(aliasName)) {
-            Toast.makeText(context, "别名只能包含字母、数字、下划线、中划线和中文，不能包含特殊符号", Toast.LENGTH_SHORT).show()
+            MzToastManager.show("别名只能包含字母、数字、下划线、中划线和中文，不能包含特殊符号")
             return false
         }
         return true
@@ -498,9 +498,9 @@ object Tools {
      * @param serverAddress 服务器地址
      * @return 如果验证通过返回true，否则返回false
      */
-    fun validateWebConnectionParams(context: Context, serverAddress: String): Boolean {
+    fun validateWebConnectionParams(serverAddress: String): Boolean {
         if (serverAddress.isBlank()) {
-            Toast.makeText(context, "请输入服务器地址", Toast.LENGTH_SHORT).show()
+            MzToastManager.show("请输入服务器地址")
             return false
         }
 

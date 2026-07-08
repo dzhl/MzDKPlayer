@@ -34,7 +34,7 @@ object RepositoryProvider {
     }
     fun createMediaLibraryViewModel(): MediaLibraryViewModel {
         val db = database ?: throw IllegalStateException("RepositoryProvider.init(context) must be called before creating ViewModels")
-        return MediaLibraryViewModel(db.mediaDao())
+        return MediaLibraryViewModel(db.mediaDao(), RoomMediaHistoryRepository(db.mediaHistoryDao()))
     }
 
     fun createSearchViewModel(): SearchViewModel {

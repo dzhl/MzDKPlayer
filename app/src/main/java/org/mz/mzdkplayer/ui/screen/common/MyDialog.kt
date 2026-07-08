@@ -1,7 +1,6 @@
 package org.mz.mzdkplayer.ui.screen.common
 
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -105,7 +104,7 @@ fun MyFileDialog(
                     icon = R.drawable.delete24dp,
                     onClick = {
                         if (allowClick) {
-                            Toast.makeText(context, context.getString(R.string.ui_label_click_to_delete), Toast.LENGTH_SHORT).show()
+                            MzToastManager.show(context.getString(R.string.ui_label_click_to_delete))
                         }
                     }
                 )

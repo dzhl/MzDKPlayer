@@ -10,28 +10,38 @@ import retrofit2.http.Path
 
 class TmdbRepository(private val apiService: TmdbApiService) {
 
+    private fun getSearchLanguage(): String {
+        val pref = SettingsRepository.tmdbSearchLang
+        return if (pref.isEmpty()) java.util.Locale.getDefault().toLanguageTag() else pref
+    }
+
+    private fun getResultLanguage(): String {
+        val pref = SettingsRepository.tmdbResultLang
+        return if (pref.isEmpty()) java.util.Locale.getDefault().toLanguageTag() else pref
+    }
+
     suspend fun getPopularMovies(page: Int = 1) = safeApiCall {
-        apiService.getPopularMovies(page = page)
+        apiService.getPopularMovies(page = page, language = getResultLanguage())
     }
 
     suspend fun getTopRatedMovies(page: Int = 1) = safeApiCall {
-        apiService.getTopRatedMovies(page = page)
+        apiService.getTopRatedMovies(page = page, language = getResultLanguage())
     }
 
     suspend fun searchMovies(query: String, page: Int = 1, year: String) = safeApiCall {
-        apiService.searchMovies(query = query, page = page, year = year)
+        apiService.searchMovies(query = query, page = page, year = year, language = getSearchLanguage())
     }
 
     suspend fun searchTV(query: String, page: Int = 1, year: String) = safeApiCall {
-        apiService.searchTV(query = query, page = page, year = year)
+        apiService.searchTV(query = query, page = page, year = year, language = getSearchLanguage())
     }
 
     suspend fun getMovieDetails(movieId: Int) = safeApiCall {
-        apiService.getMovieDetails(movieId = movieId)
+        apiService.getMovieDetails(movieId = movieId, language = getResultLanguage())
     }
 
     suspend fun getTVSeriesDetails(seriesId: Int) = safeApiCall {
-        apiService.getTVSeriesDetails(seriesId = seriesId)
+        apiService.getTVSeriesDetails(seriesId = seriesId, language = getResultLanguage())
     }
 
     suspend fun getTVEpisodeDetails(
@@ -42,7 +52,8 @@ class TmdbRepository(private val apiService: TmdbApiService) {
         apiService.getTVEpisodeDetails(
             seriesId = seriesId,
             seasonNumber = seasonNumber,
-            episodeNumber = episodeNumber
+            episodeNumber = episodeNumber,
+            language = getResultLanguage()
         )
     }
 

@@ -4,7 +4,6 @@ package org.mz.mzdkplayer.ui.videoplayer
 
 import android.net.TrafficStats
 import android.view.KeyEvent
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
@@ -100,6 +99,7 @@ import org.mz.mzdkplayer.tool.handleDPadKeyEvents
 
 import org.mz.mzdkplayer.ui.screen.common.LoadingScreen
 import org.mz.mzdkplayer.ui.screen.common.VAErrorScreen
+import org.mz.mzdkplayer.ui.screen.common.showToast
 import org.mz.mzdkplayer.ui.screen.vm.MediaHistoryViewModel
 import org.mz.mzdkplayer.ui.screen.vm.SettingsViewModel
 import org.mz.mzdkplayer.ui.screen.vm.VideoPlayerStatus
@@ -636,7 +636,7 @@ fun VideoPlayerScreen(
         // 显示 "再按一次退出" Toast
         if (showToast) {
             val pressAgainText = stringResource(R.string.ui_label_press_again_to_exit)
-            Toast.makeText(context, pressAgainText, Toast.LENGTH_SHORT).show()
+            showToast(context, pressAgainText)
             showToast = false
         }
 
