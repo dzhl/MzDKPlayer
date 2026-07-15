@@ -248,18 +248,20 @@ class WebDavConViewModel : ViewModel() {
         }
 
         try {
-            val uri = java.net.URI.create(current)
-            val path = uri.path
+            val uri = current.toUri()
+            val path = uri.path ?: ""
 
             if (path.isEmpty() || path == "/") {
                 return ""
             }
 
-            // 找到最后一个 '/' 并截取前面的部分
-            val lastSlashIndex = path.lastIndexOf('/')
+            // 去掉末尾的斜杠再找上级目录
+            val cleanPath = path.trimEnd('/')
+            val lastSlashIndex = cleanPath.lastIndexOf('/')
+            
             return if (lastSlashIndex >= 0) {
-                val parentPath = path.take(lastSlashIndex)
-                "${uri.scheme}://${uri.host}${if (uri.port != -1) ":${uri.port}" else ""}$parentPath"
+                val parentPath = cleanPath.take(lastSlashIndex)
+                "${uri.scheme}://${uri.host}${if (uri.port != -1) ":${uri.port}" else ""}${if (parentPath.isEmpty()) "/" else parentPath}"
             } else {
                 "${uri.scheme}://${uri.host}${if (uri.port != -1) ":${uri.port}" else ""}/"
             }
@@ -316,9 +318,6 @@ class WebDavConViewModel : ViewModel() {
                     // 这里的逻辑需要小心处理，因为 sardine 返回的 resource.path 可能是编码过的或带协议的。
                     // 简单起见，如果 resource.name 为空或与当前路径最后一部分相同（且不是第一个元素），我们可能需要跳过。
                     // 实际上，sardine 返回的第一个元素的 path 通常就是传入的 path。
-                    if (resource.path.trimEnd('/') == encodedPath.substringAfter("://").substringAfter("/").let { if (it.isEmpty()) "/" else "/$it" }.trimEnd('/')) {
-                       // return@forEach // 这种比较方式可能不太可靠
-                    }
                     // 更可靠的方式：如果 resource.name 为空（根目录）或者 resource.path 与 list 的路径一致，跳过
                     // 但是 resource.name 在 sardine 中通常是最后一部分。
 
@@ -332,23 +331,24 @@ class WebDavConViewModel : ViewModel() {
                 filteredResources.forEach { resource ->
                     val fileName = resource.name
                     val isDir = resource.isDirectory
-                    // resource.path 是服务器上的路径，我们需要构建完整的 URL
-                    // getCurrentFullUrl() 这种方式不适合递归。
-                    // 我们可以根据 resource.path 来构建。
-                    // davResource.path 往往是 /dav/path/to/file
-                    // 我们需要结合协议、主机、端口。
-
-                    val baseUrlObj = java.net.URI(currentPath)
-                    val fullUrl = "${baseUrlObj.scheme}://${baseUrlObj.host}${if (baseUrlObj.port != -1) ":${baseUrlObj.port}" else ""}${resource.path}"
+                    
+                    // 使用更加健壮的方式构建完整 URL，避免 java.net.URI 在处理包含空格或中文字符的路径时崩溃
+                    // resource.name 通常是未编码的名称，直接拼接在 currentPath 后面
+                    val fullUrl = if (currentPath.endsWith("/")) {
+                        "$currentPath$fileName"
+                    } else {
+                        "$currentPath/$fileName"
+                    }
 
                     if (isDir) {
                         scanRecursive(fullUrl, currentDepth + 1)
-                    } else if (org.mz.mzdkplayer.tool.Tools.containsVideoFormat(org.mz.mzdkplayer.tool.Tools.extractFileExtension(fileName))) {
-                        // 构建带认证信息的 URL
+                    } else if (Tools.containsVideoFormat(Tools.extractFileExtension(fileName))) {
+                        // 构建带认证信息的 URL，并确保进行 URL 编码
+                        val encodedFullUrl = encodeWebDavPath(fullUrl)
                         val authenticatedUrl = if (username != null && password != null) {
-                            buildAuthenticatedUrl(fullUrl, username, password)
+                            buildAuthenticatedUrl(encodedFullUrl, username, password)
                         } else {
-                            fullUrl
+                            encodedFullUrl
                         }
                         result.add(fileName to authenticatedUrl)
                     }
