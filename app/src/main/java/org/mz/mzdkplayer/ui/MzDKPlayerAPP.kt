@@ -196,9 +196,6 @@ fun MzDKPlayerAPP(
         composable("MainPage") {
             val homeNavController = rememberNavController()
             val sideFocusRequest = remember { FocusRequester() }
-            LaunchedEffect(Unit) {
-                sideFocusRequest.requestFocus()
-            }
             val drawerState = remember { DrawerState(initialValue = DrawerValue.Closed) }
             ModalNavigationDrawer(
                 drawerState = drawerState, // 直接传入保存的状态,
@@ -360,7 +357,7 @@ fun MzDKPlayerAPP(
                             .padding(start = 84.dp)
                     ) {
                         composable("HomePage") {
-                            HomeScreen(libraryViewModel, mainNavController, settingsVM)
+                            HomeScreen(libraryViewModel, mainNavController, homeNavController, settingsVM)
                         }
                         //声明名为MainPage的页面路由
                         composable("FileHomePage") {

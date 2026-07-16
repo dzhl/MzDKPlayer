@@ -17,9 +17,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.tv.material3.*
 import coil3.compose.AsyncImage
@@ -32,93 +34,171 @@ import org.mz.mzdkplayer.data.model.HistoryWithMetadata
 import org.mz.mzdkplayer.ui.screen.vm.MediaLibraryViewModel
 import org.mz.mzdkplayer.ui.screen.vm.SettingsViewModel
 import org.mz.mzdkplayer.tool.Tools.toBase64
+import org.mz.mzdkplayer.ui.screen.common.MyIconButton
+import org.mz.mzdkplayer.ui.screen.common.TwoArcLoading
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun HomeScreen(
     viewModel: MediaLibraryViewModel,
     navController: NavController,
+    homeNavController: NavController,
     settingsViewModel: SettingsViewModel
 ) {
     val recentlyWatched by viewModel.recentlyWatched.collectAsState()
     val recentlyAdded = viewModel.recentlyAdded.collectAsLazyPagingItems()
     val recentlyAccessed by viewModel.recentlyAccessedFiles.collectAsState()
     val settingsState by settingsViewModel.uiState.collectAsState()
-// 👇 添加一个 FocusRequester
-    val buttonFocusRequester = remember { FocusRequester() }
 
-    // 👇 关键：页面加载后，主动把焦点丢给按钮
-    LaunchedEffect(Unit) {
-        buttonFocusRequester.requestFocus()
+    val isLoading = recentlyAdded.loadState.refresh is LoadState.Loading
+    val isEmpty = !isLoading && recentlyWatched.isEmpty() && recentlyAccessed.isEmpty() && recentlyAdded.itemCount == 0
+
+    // 👇 添加一个 FocusRequester
+    val mainFocusRequester = remember { FocusRequester() }
+
+    // 👇 关键：页面加载后，主动把焦点丢给可聚焦元素
+    LaunchedEffect(isEmpty, isLoading) {
+        if (!isLoading) {
+            mainFocusRequester.requestFocus()
+        }
     }
+
     Box(modifier = Modifier.fillMaxSize().background(Color(0xFF0F1115))) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().focusRequester(buttonFocusRequester),
-            contentPadding = PaddingValues(top = 48.dp, bottom = 48.dp), // 移除水平 padding
-            verticalArrangement = Arrangement.spacedBy(32.dp)
-        ) {
-            // 最近观看 Section
-            if (recentlyWatched.isNotEmpty()) {
-                item {
-                    SectionHeader(
-                        title = stringResource(R.string.ui_label_recently_watched),
-                        modifier = Modifier.padding(start = 32.dp) // 标题保持左边距
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(20.dp),
-                        contentPadding = PaddingValues(start = 32.dp, end = 32.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        items(recentlyWatched) { item ->
-                            HistoryCard(item, navController, settingsState.hideDetails)
+        when {
+            isLoading -> {
+                LoadingHomeState()
+            }
+            isEmpty -> {
+                EmptyHomeState(homeNavController, mainFocusRequester)
+            }
+            else -> {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize().focusRequester(mainFocusRequester),
+                    contentPadding = PaddingValues(top = 48.dp, bottom = 48.dp),
+                    verticalArrangement = Arrangement.spacedBy(32.dp)
+                ) {
+                    // 最近观看 Section
+                    if (recentlyWatched.isNotEmpty()) {
+                        item {
+                            SectionHeader(
+                                title = stringResource(R.string.ui_label_recently_watched),
+                                modifier = Modifier.padding(start = 32.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            LazyRow(
+                                horizontalArrangement = Arrangement.spacedBy(20.dp),
+                                contentPadding = PaddingValues(start = 32.dp, end = 32.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                items(recentlyWatched) { item ->
+                                    HistoryCard(item, navController, settingsState.hideDetails)
+                                }
+                            }
                         }
                     }
-                }
-            }
 
-            // 最近添加 Section
-            if (recentlyAdded.itemCount > 0) {
-                item {
-                    SectionHeader(
-                        title = stringResource(R.string.ui_label_recently_added),
-                        modifier = Modifier.padding(start = 32.dp)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(20.dp),
-                        contentPadding = PaddingValues(start = 32.dp, end = 32.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        items(recentlyAdded.itemCount) { index ->
-                            recentlyAdded[index]?.let { movie ->
-                                MediaCard(movie, navController, settingsState.hideDetails)
+                    // 最近添加 Section
+                    if (recentlyAdded.itemCount > 0) {
+                        item {
+                            SectionHeader(
+                                title = stringResource(R.string.ui_label_recently_added),
+                                modifier = Modifier.padding(start = 32.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            LazyRow(
+                                horizontalArrangement = Arrangement.spacedBy(20.dp),
+                                contentPadding = PaddingValues(start = 32.dp, end = 32.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                items(recentlyAdded.itemCount) { index ->
+                                    recentlyAdded[index]?.let { movie ->
+                                        MediaCard(movie, navController, settingsState.hideDetails)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // 最近访问 Section
+                    if (recentlyAccessed.isNotEmpty()) {
+                        item {
+                            SectionHeader(
+                                title = stringResource(R.string.ui_label_recently_visited),
+                                modifier = Modifier.padding(start = 32.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            LazyRow(
+                                horizontalArrangement = Arrangement.spacedBy(20.dp),
+                                contentPadding = PaddingValues(start = 32.dp, end = 32.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                items(recentlyAccessed) { item ->
+                                    FileHistoryCard(item, navController)
+                                }
                             }
                         }
                     }
                 }
             }
+        }
+    }
+}
 
-            // 最近访问 Section
-            if (recentlyAccessed.isNotEmpty()) {
-                item {
-                    SectionHeader(
-                        title = stringResource(R.string.ui_label_recently_visited),
-                        modifier = Modifier.padding(start = 32.dp)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(20.dp),
-                        contentPadding = PaddingValues(start = 32.dp, end = 32.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        items(recentlyAccessed) { item ->
-                            FileHistoryCard(item, navController)
-                        }
-                    }
-                }
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+fun LoadingHomeState() {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        TwoArcLoading(modifier = Modifier.size(64.dp))
+    }
+}
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+fun EmptyHomeState(
+    homeNavController: NavController,
+    focusRequester: FocusRequester
+) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(bottom = 64.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Surface(
+            modifier = Modifier.size(120.dp),
+            shape = RoundedCornerShape(60.dp),
+            colors = SurfaceDefaults.colors(
+                containerColor = Color.White.copy(alpha = 0.05f)
+            )
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    painter = painterResource(id = R.drawable.tvoff24dp),
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp),
+                    tint = Color.White.copy(alpha = 0.2f)
+                )
             }
         }
+        Spacer(modifier = Modifier.height(32.dp))
+        Text(
+            text = stringResource(R.string.ui_label_no_content),
+            style = MaterialTheme.typography.headlineSmall,
+            color = Color.White.copy(alpha = 0.8f),
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(
+            text = stringResource(R.string.ui_label_go_to_file_section_to_add),
+            style = MaterialTheme.typography.bodyLarge,
+            color = Color.White.copy(alpha = 0.5f)
+        )
+        Spacer(modifier = Modifier.height(40.dp))
+        MyIconButton(
+            text = stringResource(R.string.ui_label_file_browsing),
+            icon = R.drawable.baseline_folder_24,
+            modifier = Modifier.focusRequester(focusRequester),
+            onClick = { homeNavController.navigate("FileHomePage") }
+        )
     }
 }
 

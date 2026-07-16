@@ -1,108 +1,126 @@
 # MzDKPlayer - Android TV Local Danmaku Media Player
 ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/mzhsy1/MzDKPlayer/total)
 
-中文 | [English](https://www.google.com/search?q=README_en.md)
+[中文](README.md) | English
+> GitHub https://github.com/mzhsy1/MzDKPlayer Gitee Mirror https://gitee.com/mzhsy/MzDKPlayer
 
-> GitHub: [https://github.com/mzhsy1/MzDKPlayer](https://github.com/mzhsy1/MzDKPlayer)
-> Gitee Mirror: [https://gitee.com/mzhsy/MzDKPlayer](https://gitee.com/mzhsy/MzDKPlayer)
-
-**MzDKPlayer** is a local music and video player specifically designed for **Android TV**. It features Danmaku (bullet comment) support, various network protocol integration, and wide-ranging audio/video format compatibility.
+> MzDKPlayer is a local music and video player specifically designed for Android TV, supporting danmaku (bullet comments), multiple network protocols, and various audio/video formats.
 
 ---
 
 ## Features
 
-### Core Capabilities
+### Core Features
 
-* 🎬 **Video Playback** - Supports local and network streaming for various video formats.
-* 🎵 **Audio Playback** - High-fidelity playback with lyrics, album art, metadata display, and playlist management.
-* 🖼️ **Image Viewer** - Browse local and network images.
-* 🏡 **Media Library** - Integrated Movies/TV Shows/Music libraries with automated metadata fetching from **TMDB**.
-* 🕛 **History** - Keep track of your recently played videos and audio.
-* 🔍 **Search** - Quickly find movies or TV series in your library.
-* 💬 **Danmaku Support** - Bilibili-style danmaku display with deep customization options.
-* ⚙️ **Settings** - Flexible configuration for the app and playback engine.
-* 🌐 **Network Protocols**:
-* ✅ **SMB** (Supported)
-* ✅ **FTP** (Supported)
-* ✅ **WebDAV** (Supported; Note: LAN services like freenas/feiniu may only support HTTP, while public clouds like Aliyun support HTTPS).
-* ✅ **NFS** (Supported)
-* ✅ **HTTP** (Supported via NGINX servers)
-* 🎚️ **Track Switching** - Seamless switching between audio tracks, video tracks, and subtitle tracks.
+- 🎬 **Video Playback** - Supports various video formats for local and network protocol playback.
+- 🎵 **Audio Playback** - Supports various audio formats for local and network protocol playback. Includes lyrics, album cover display, music information, playlists, and other common features.
+- 🖼️ **Image Viewer** - Supports various image formats for local and network protocol viewing.
+- 🏡 **Media Library** - Includes Movie/TV/Music libraries, fetching information from TMDB, supporting batch addition.
+- 🕛 **History** - Playback history for both audio and video.
+- 🔍 **Search Function** - Search for movies and TV shows.
+- 💬 **Danmaku Function** - Supports Bilibili-style danmaku display and customization.
+- ⚙️ **Settings** - Detailed application and playback settings.
+- 🌐 **Network Protocol Support**:
+  - ✅ SMB protocol (Supported)
+  - ✅ FTP protocol (Supported)
+  - ✅ WebDAV protocol (Supported; Note: LAN WebDAV services like those from Feiniu NAS may only support HTTP, while public clouds like Aliyun support HTTPS).
+  - ✅ NFS protocol (Supported)
+  - ✅ HTTP protocol (Supported via NGINX servers)
+- 🎚️ **Track Selection** - Supports switching audio, video, and subtitle tracks, playback speed control, and audio software/hardware decoding.
 
 ### 🔊 Advanced Playback: Audio Passthrough
 
-MzDKPlayer supports Audio Passthrough, allowing raw audio signals to be sent directly to your AV receiver, soundbar, or compatible TV for a cinema-grade experience.
+MzDKPlayer supports audio passthrough, allowing raw audio signals (source) to be output directly to an amplifier, soundbar, or TV that supports multi-channel decoding for a cinema-grade listening experience.
 
-* **Settings Path**: `Settings` -> `Audio Settings` -> `Audio Passthrough`
-* **Compatibility**: **This setting applies ONLY to the VLC playback engine.** The ExoPlayer engine intelligently manages audio output based on device capabilities automatically, requiring no manual intervention.
-* **Recommendations**:
-* **Default Status**: Recommended to keep **OFF**. ExoPlayer provides automatic adaptation for most devices.
-* **Prerequisites**: Only enable this if you have an external receiver or high-end decoding hardware and are certain it supports the specific audio format (e.g., DTS-HD, TrueHD).
-* **Troubleshooting**: If you experience **no sound** after enabling this, your hardware may not support the specific audio format (e.g., some TVs do not support TrueHD passthrough). **Please turn off this setting** to allow the player to decode the audio into PCM.
+* **Path**: `Settings` -> `Audio Settings` -> `Audio Passthrough`
+* **Applicability**: **This toggle only affects the VLC playback engine**. The ExoPlayer engine will automatically determine this based on your device, no manual intervention needed.
+* **Suggestions**:
+* **Default State**: Recommended to keep it **Off**. ExoPlayer already meets the automatic adaptation needs of most devices.
+* **Prerequisites**: Only enable this if you have an external amplifier or high-end audio decoding device and are certain it supports the audio encoding format (e.g., DTS-HD, TrueHD) of the video being played.
+* **Troubleshooting**: If you encounter **no sound** during playback after enabling, it means your audio device does not support the current video's audio track format (e.g., some TVs do not support TrueHD passthrough). **In this case, please turn off this toggle** to let the player output via PCM through software decoding.
 
 ### Format Support
 
-#### 📺 Video
+#### 📺 Video Formats
 
-* **Containers**: MP4, MKV, MOV, AVI, WMV, FLV, WebM
-* **Blu-ray/Pro**: **ISO (Blu-ray Image)**, **M2TS**, **MTS**, TS, VOB
-* **Codecs**: H.264 (AVC), **H.265 (HEVC)**, **AV1**, VP9, MPEG-2
-* **Features**: 4K/8K UHD, HDR10/HLG, **Dolby Vision**
+* **Common Containers**: MP4, MKV, MOV, AVI, WMV, FLV, WebM
+* **Blu-ray/Professional Formats**: **ISO (Blu-ray Image)**, **M2TS**, **MTS**, TS, VOB
+* **Video Encodings**: H.264 (AVC), **H.265 (HEVC)**, **AV1**, VP9, MPEG-2
+* **Feature Support**: 4K/8K UHD playback, HDR10/HLG, Dolby Vision
 
-#### 🎵 Audio
+#### 🎵 Audio Formats
 
 * **Lossless/Hi-Fi**: **FLAC**, WAV, ALAC (Apple Lossless)
-* **General**: MP3, AAC, OGG, Opus, WMA
-* **Cinema Grade**: **DTS**, **DTS-HD**, **TrueHD**, AC3 (Dolby Digital), E-AC3
+* **General Formats**: MP3, AAC, OGG, Opus, WMA
+* **Cinema-grade Tracks**: **DTS**, **DTS-HD**, **TrueHD**, AC3 (Dolby Digital), E-AC3
 
-#### 🖼️ Image
+#### 🖼️ Image Formats
 
-* **Standard**: JPEG (JPG), PNG, WebP, BMP
-* **Modern**: HEIC / HEIF
+* **Standard Formats**: JPEG (JPG), PNG, WebP, BMP
+* **Modern Formats**: HEIC / HEIF
 * *Note: Apple Live Photos are currently not supported.*
 
-#### 💬 Subtitles
+#### 💬 Subtitle Support
 
-* **External**: **SRT**, **ASS**, **SSA**, VTT
-* **Embedded**: MKV Internal, **PGS (Blu-ray)**, DVB, Teletext
+* **External Subtitles**: **SRT**, **ASS**, **SSA**, VTT
+* **Embedded Subtitles**: MKV Internal, **PGS (Blu-ray Subtitles)**, DVB, Teletext
 
 ---
 
-> ⚠️ **Note**: Accessing TMDB in certain regions may require a proxy or Host modification for stability.
+> ⚠️ **Note**: TMDB may require a proxy or Host modification for stable access in some regions.
 
-> 💡 **Tip 1**: For the best experience, set MzDKPlayer as your system's default video player.
+> 💡 Tip 1: If used frequently, it's recommended to set this player as the default video player in your TV system for a smoother experience.
 
-> 💡 **Tip 2**: If your device has limited performance, enabling Danmaku while playing 70-80GB Blu-ray files may cause lag.
+> 💡 Tip 2: If device performance is insufficient, enabling danmaku while playing 70-80GB Blu-ray videos may cause playback lag.
 
-> 💡 **Tip 3**: If a video fails to play using the default ExoPlayer engine, try switching to the **VLC player engine** in `Settings` -> `Playback & Video` -> `Default Player Engine`.
-
-
+> 💡 Tip 3: If you encounter issues with the default ExoPlayer engine, you can try switching to the VLC player engine in `Settings` -> `Playback & Video` -> `Default Player Engine`.
 
 ---
 
 ## App Preview
 
-*(Screenshots omitted in this text, please refer to the Chinese README for visuals)*
+### Main Interface & File List
+
+![Main Interface Screenshot](screenshots/Screenshot_20260708_114700.webp)
+![Main Interface Screenshot](screenshots/Screenshot_20260708_105320.webp)
+![Main Interface Screenshot](screenshots/Screenshot_20251116_163213.webp)
+![Main Interface Screenshot](screenshots/Screenshot_20251223_174613.webp)
+![Main Interface Screenshot](screenshots/Screenshot_20260708_111419.webp)
+
+### Playback Interface & Danmaku
+
+![Video Playback Screenshot](screenshots/Screenshot_20251104_190350.webp)  
+![Video Playback Screenshot](screenshots/Screenshot_20251104_190409.webp)
+![Audio Playback Screenshot](screenshots/Screenshot_20260126_182132.webp)
+
+### Movie/TV Details Page
+
+![Movie Details Screenshot](screenshots/Screenshot_20251220_112824.webp)
+![TV Details Screenshot](screenshots/Screenshot_20251220_112844.webp)
+
+### Settings Page
+
+![Settings Screenshot](screenshots/Screenshot_20260708_105422.webp)
 
 ---
 
 ## Technical Architecture
 
-### Tech Stack
+### Key Tech Stack
 
-* **Media Engine**: ExoPlayer + Custom Extensions
-* **UI Framework**: Jetpack Compose for TV
-* **Danmaku Engine**: AKDanmaku
-* **Subtitle Rendering**: ASS Subtitle Library
-* **Networking**: Custom implementations for SMB/FTP/WebDAV/NFS
+- **Media Playback**: ExoPlayer + Custom Extensions
+- **UI Framework**: Jetpack Compose for TV
+- **Danmaku Engine**: AKDanmaku
+- **Subtitle Rendering**: ASS Subtitle Library
+- **Network Protocols**: Custom SMB/FTP/WebDAV client implementations
 
-### Key Components
+### Core Components
 
-* `VideoPlayerScreen` - Main playback interface
-* `BuilderMzPlayer` - Player construction and configuration
-* `AkDanmakuPlayer` - Danmaku logic handler
-* `MovieDetailsScreen` / `TVSeriesDetailsScreen` - TMDB-powered detail pages
+- `VideoPlayerScreen` - Main player interface
+- `BuilderMzPlayer` - Player construction and configuration
+- `AkDanmakuPlayer` - Danmaku playback component
+- `MovieDetailsScreen` / `TVSeriesDetailsScreen` - Movie/TV show details pages
+- `FullDescriptionDialog` - Detailed description popup dialog
 
 ---
 
@@ -110,75 +128,80 @@ MzDKPlayer supports Audio Passthrough, allowing raw audio signals to be sent dir
 
 ### Recommended
 
-* **SoC**: Amlogic S928X-J
-* **RAM**: 4GB+
-* **OS**: Android TV 11+
+- **Chipset**: Amlogic S928X-J
+- **RAM**: 4GB and above
+- **System**: Android TV 11 and above
 
 ### Balanced
 
-* **SoC**: MT9653 or equivalent
-* **RAM**: 2GB
-* **OS**: Android TV 7+
+- **Chipset**: MT9653 or equivalent performance chipset
+- **RAM**: 2GB RAM
+- **System**: Android TV 7 and above
 
 ### Minimum
 
-* **SoC**: Amlogic S905L or equivalent
-* **RAM**: 1GB
-* **OS**: Android TV 7+
+- **Chipset**: Amlogic S905L or equivalent performance chipset
+- **RAM**: 1GB RAM
+- **System**: Android TV 7 and above
 
-> ⚠️ **Disclaimer**: The code is a work in progress (and honestly a bit messy). Expect bugs. If your hardware is weak, high-bitrate videos or danmaku might stutter.
+> ⚠️ **Note**: The code is not well-optimized; it's a success if it runs. There are bugs. Insufficient device performance may cause video and danmaku playback lag, or failure to play high-bitrate videos.
 
 ---
 
-## Build & Usage
+## Build, Installation & Usage
 
 ### Build Requirements
 
-* Android Studio (Latest Version)
-* Android SDK 36+
-* Java 17
+- Latest version of Android Studio
+- Android SDK 36+
+- Java 17
 
 ### Build Steps
 
-1. Clone the repository.
-2. Open with Android Studio.
-3. Connect your Android TV via ADB.
-4. Build and Run.
+1. Clone the project locally
+2. Open the project with Android Studio
+3. Connect an Android TV device with ADB debugging enabled
+4. Build and run the application
 
-### Remote Control Shortcuts
+### Basic Usage
 
-* **Left/Right**: Seek backward/forward
-* **Center/OK**: Play/Pause
-* **Menu**: Show control panel
-* **Up**: Danmaku settings
-* **Down**: Audio track selection
+1. Select a video file (local or network) on the main interface; the player will automatically look for an XML danmaku file with the same name in the same directory.
+2. Control the playback interface using the remote:
+   - Left/Right keys: Fast forward / Rewind
+   - OK key: Pause / Play
+   - Menu key: Show control interface
+   - Remote Up key: Danmaku settings; Down key: Audio track selection
+3. Click a video file to view movie/TV series details (including poster, summary, rating, year, country, genre, etc.)
 
 ---
 
-## Roadmap
+## Project Status
 
-⚠️ **Status**: Early Development (Alpha)
+⚠️ **Development Phase**: Initial stage, known bugs exist
 
-* [x] FTP / WebDAV / NFS Support
-* [x] Audio and Image file support
-* [x] Playlist management
-* [x] Movie/TV Show detail pages
-* [ ] **Online Danmaku fetching**
-* [ ] Settings UI optimization
+### Recent Development Plans
+
+- [x] FTP protocol support
+- [x] WebDAV protocol support
+- [x] NFS protocol support
+- [x] Audio file and image file support
+- [x] Playlist management
+- [x] Movie/TV series details page
+- [ ] Online danmaku loading function
+- [ ] Settings interface optimization
 
 ---
 
 ## Contributing
 
-Issues and Pull Requests are more than welcome! We especially appreciate help with **playback stability** and optimization.
+Contributions via Issues and Pull Requests are welcome to help improve this project. Contributions to **player stability** are especially welcome!
 
 ---
 
-## License
+## Disclaimer
 
-For educational and exchange purposes only. Do not use for commercial purposes. The developer is not responsible for any issues arising from the use of this software.
+This software is for learning and exchange purposes only; please do not use it for commercial purposes. The developer is not responsible for any issues caused by the use of this software.
 
 ---
 
-**Note**: Features like Dolby Vision, Atmos, and DTS-HD require compatible hardware.
-
+**Note**: Normal use of features like Dolby Vision, Dolby Atmos, and DTS-HD requires device hardware support. Some features may require specific audio/video equipment for the best experience.
