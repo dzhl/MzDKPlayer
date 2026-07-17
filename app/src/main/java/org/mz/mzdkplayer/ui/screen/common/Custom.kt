@@ -2,6 +2,7 @@ package org.mz.mzdkplayer.ui.screen.common
 
 import android.content.Context
 import android.view.KeyEvent
+import androidx.annotation.StringRes
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -230,7 +231,7 @@ fun MyIconButton(
 
 }
 
-fun showToast(context: Context, message: String, duration: Int = 0) {
+fun showToast(context: Context,  message: String, duration: Int = 0) {
     MzToastManager.show(message)
 }
 

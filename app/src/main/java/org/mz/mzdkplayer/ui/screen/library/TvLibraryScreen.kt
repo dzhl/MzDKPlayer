@@ -164,7 +164,7 @@ fun TvLibraryScreen(
                                 .background(
                                     Brush.horizontalGradient(
                                         colors = listOf(
-                                            Color.Black.copy(alpha = 0.9f),
+                                            Color.Black,
                                             Color.Transparent
                                         ),
                                         endX = 1000f // 左侧文字区域加深

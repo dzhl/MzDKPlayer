@@ -63,7 +63,7 @@ fun HomeScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(Color(0xFF0F1115))) {
+    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
         when {
             isLoading -> {
                 LoadingHomeState()

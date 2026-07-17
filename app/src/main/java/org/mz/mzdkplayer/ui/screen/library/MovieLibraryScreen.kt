@@ -153,8 +153,8 @@ fun MovieLibraryScreen(
     } else if (isMoviesEmpty) {
         LibraryEmpty(navController = homeNavController)
     } else {
-        // 使用符合现代电视 UI 的暗色底色
-        Box(modifier = Modifier.fillMaxSize().background(Color(0xFF0F1115))) {
+        // 使用纯黑背景，确保与导航栏无缝衔接
+        Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
 
             // ================= 1. 沉浸式海报背景层 =================
             AnimatedContent(
@@ -201,7 +201,7 @@ fun MovieLibraryScreen(
                                 .background(
                                     Brush.horizontalGradient(
                                         colors = listOf(
-                                            Color.Black.copy(alpha = 0.85f),
+                                            Color.Black,
                                             Color.Black.copy(alpha = 0.3f),
                                             Color.Transparent
                                         ),

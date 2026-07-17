@@ -51,6 +51,7 @@ import org.mz.mzdkplayer.tool.Tools.toBase64
 import java.io.File
 import java.net.URLEncoder
 import java.util.Locale
+import androidx.compose.ui.platform.LocalLocale
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalTvMaterial3Api::class)
@@ -194,7 +195,7 @@ fun AudioLibraryScreen(
                             shape = ListItemDefaults.shape(RoundedCornerShape(8.dp)),
                             leadingContent = {
                                 Text(
-                                    text = String.format(Locale.getDefault(),"%02d", index + 1),
+                                    text = String.format(LocalLocale.current.platformLocale,"%02d", index + 1),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = if (isFocused) Color.Black.copy(0.5f) else Color.Gray
                                 )
