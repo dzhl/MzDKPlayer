@@ -152,15 +152,20 @@ fun SubtitleView(
                     .drawWithCache {
                         // 1. 预处理：将 Bitmap 转换为 ImageBitmap 并在缓存阶段准备好
                         // 这里我们过滤掉没有 bitmap 的 cue，只处理位图字幕
-                        val validCues = cueGroup.cues.filter { it.bitmap != null }
-                        val imageBitmaps = validCues.map { it.bitmap!!.asImageBitmap() }
+                        val validBitmapData = cueGroup.cues.mapNotNull { cue ->
+                            cue.bitmap?.let { bmp ->
+                                cue to bmp // 返回 Pair<Cue, Bitmap>
+                            }
+                        }
+
+                        // 生成对应的 ImageBitmap 缓存
+                        val imageBitmaps = validBitmapData.map { it.second.asImageBitmap() }
 
                         onDrawWithContent {
                             // 遍历绘制，按照 index 顺序绘制（自然的 Z-Index）
                             // 如果需要严格遵循 cue.zIndex，可以在 validCues 处先排序
-                            validCues.forEachIndexed { index, cue ->
+                            validBitmapData.forEachIndexed { index, (cue, bitmap)->
                                 val imageBitmap = imageBitmaps[index]
-                                val bitmap = cue.bitmap!!
 
                                 // === 下面是原本的数学计算逻辑，移植到 DrawScope 内部 ===
                                 // 注意：在 drawScope 中，size.width/height 就是 Canvas 的像素大小
