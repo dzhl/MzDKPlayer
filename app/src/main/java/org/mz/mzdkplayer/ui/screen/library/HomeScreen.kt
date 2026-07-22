@@ -2,6 +2,7 @@ package org.mz.mzdkplayer.ui.screen.library
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -56,8 +57,13 @@ fun HomeScreen(
     // 👇 添加一个 FocusRequester
     val mainFocusRequester = remember { FocusRequester() }
 
-    // 👇 关键：页面加载后，主动把焦点丢给可聚焦元素
-    LaunchedEffect(isEmpty, isLoading) {
+    // 👇 关键：页面加载后，立即请求焦点，防止焦点落在侧边栏
+    LaunchedEffect(Unit) {
+        mainFocusRequester.requestFocus()
+    }
+
+    // 当加载完成后，再次尝试请求焦点以确保落在内容列表上
+    LaunchedEffect(isLoading) {
         if (!isLoading) {
             mainFocusRequester.requestFocus()
         }
@@ -66,7 +72,7 @@ fun HomeScreen(
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
         when {
             isLoading -> {
-                LoadingHomeState()
+                LoadingHomeState(Modifier.focusRequester(mainFocusRequester))
             }
             isEmpty -> {
                 EmptyHomeState(homeNavController, mainFocusRequester)
@@ -146,8 +152,13 @@ fun HomeScreen(
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-fun LoadingHomeState() {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+fun LoadingHomeState(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .focusable(), // 让加载界面也具有捕获焦点的能力
+        contentAlignment = Alignment.Center
+    ) {
         TwoArcLoading(modifier = Modifier.size(64.dp))
     }
 }

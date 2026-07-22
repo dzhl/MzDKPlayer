@@ -59,8 +59,8 @@ class MzVlcPlayer(
     private val options = arrayListOf(
         "-vvv",
         "--mediacodec-dr",
-        // "--vout=android_display", // VLC 4.0 不再建议显式指定，可能导致黑屏
-        // "--no-video-deco",
+        "--vout=android_display", // 强制使用安卓原生显示输出，HDR 关键
+        "--no-video-deco",        // 禁用装饰，防止 GLES 混合导致 HDR 失效
         "--aout=audiotrack",
         // 动态 caching（本地快，网络稳）
         "--file-caching=${if (!isNetworkProtocol) 500 else 1200}",
@@ -230,8 +230,25 @@ class MzVlcPlayer(
                 }
                 // 当轨道发生变化时（例如添加了外部字幕），刷新列表
                 MediaPlayer.Event.ESAdded, MediaPlayer.Event.ESDeleted -> {
+                    //Log.i("ESAdded", "字幕轨道变化 → 更新列表, 当前数量: ${mediaPlayer.media?.trackCount}")
+                    // updateTracks()
+                    //Toast.makeText(context,"添加成功，找到外部字幕", Toast.LENGTH_SHORT).show()
                     CoroutineScope(Dispatchers.Main).launch {
                         delay(1000.milliseconds)
+//                        val media = mediaPlayer.media ?: return@launch
+//                        val trackCount = media.trackCount
+//
+//                        val allTracks = (0 until trackCount).mapNotNull { media.getTrack(it) }
+//                        val subtitleCount = allTracks.count { it.type == IMedia.Track.Type.Text }
+//
+//                        Log.i("SubtitleDebug", "字幕数量 = $subtitleCount")
+//
+//                        if (subtitleCount > 0) {
+//                            Toast.makeText(context, "已加载外部字幕", Toast.LENGTH_SHORT).show()
+//                        } else {
+//                            Toast.makeText(context, "未找到可用字幕", Toast.LENGTH_SHORT).show()
+//                        }
+
                         updateTracks()
                     }
                 }
@@ -261,88 +278,70 @@ class MzVlcPlayer(
         }
     }
     private fun updateTracks() {
+        val media = mediaPlayer.media ?: return
 
-        // 1. 获取 Media 的所有轨道（4.0 使用 getTracks API）
-        // 注意：4.0 不再返回 id 为 -1 的禁用轨，我们需要在 UI 层或此处手动构造一个 "None" 轨
+        // 1. 获取 Media 的元数据映射表（解析 ES 编码、语言等）
+        val trackMetadataMap = (0 until media.trackCount)
+            .mapNotNull { media.getTrack(it) }
+            .associateBy { it.id }
 
         // 2. 🎧 音频轨道
-        val audioTracks = mediaPlayer.getTracks(IMedia.Track.Type.Audio) ?: emptyArray()
-        val audioList = mutableListOf<MzBasicTrack>()
-        // 添加禁用选项
-        audioList.add(
+        val audioDescriptions = mediaPlayer.audioTracks ?: emptyArray()
+        _audioTracks.value = audioDescriptions.mapIndexed { index, desc ->
+            val meta = trackMetadataMap[desc.id] as? IMedia.AudioTrack
+            val isDisableTrack = desc.id == -1
+            val displayName = if (isDisableTrack) "关闭音频" else (desc.name ?: "音轨 $index")
+
             MzBasicTrack(
-                id = "-1",
-                index = -1,
-                name = "关闭音频",
-                isSelected = mediaPlayer.getSelectedTrack(IMedia.Track.Type.Audio) == null,
-                rawData = "-1"
-            )
-        )
-        audioTracks.forEachIndexed { index, track ->
-            val audioTrack = track as? IMedia.AudioTrack
-            audioList.add(
-                MzBasicTrack(
-                    id = track.id,
-                    index = index,
-                    language = track.language ?: "",
-                    channelCount = audioTrack?.channels ?: 0,
-                    mimeType = track.codec ?: "",
-                    sampleRate = audioTrack?.rate ?: 0,
-                    bitrate = track.bitrate,
-                    name = track.name ?: "音轨 $index",
-                    isSelected = track.selected,
-                    rawData = track.id
-                )
+                id = desc.id.toString(),
+                index = index,
+                language = meta?.language ?: "",
+                channelCount = meta?.channels ?: 0,
+                mimeType = meta?.codec ?: "",
+                sampleRate = meta?.rate ?: 0,
+                bitrate = meta?.bitrate ?: 0,
+                name = displayName,
+                isSelected = desc.id == mediaPlayer.audioTrack,
+                rawData = desc.id
             )
         }
-        _audioTracks.value = audioList
 
         // 3. 📝 字幕轨道
-        val spuTracks = mediaPlayer.getTracks(IMedia.Track.Type.Text) ?: emptyArray()
-        val spuList = mutableListOf<MzBasicTrack>()
-        spuList.add(
+        val spuDescriptions = mediaPlayer.spuTracks ?: emptyArray()
+        _subtitleTracks.value = spuDescriptions.mapIndexed { index, desc ->
+            val meta = trackMetadataMap[desc.id] as? IMedia.SubtitleTrack
+            val isDisableTrack = desc.id == -1
+            val displayName = if (isDisableTrack) "关闭字幕" else (desc.name ?: "字幕 $index")
+
             MzBasicTrack(
-                id = "-1",
-                index = -1,
-                name = "关闭字幕",
-                isSelected = mediaPlayer.getSelectedTrack(IMedia.Track.Type.Text) == null,
-                rawData = "-1"
-            )
-        )
-        spuTracks.forEachIndexed { index, track ->
-            spuList.add(
-                MzBasicTrack(
-                    id = track.id,
-                    index = index,
-                    language = track.language ?: "",
-                    mimeType = track.codec ?: "",
-                    name = track.name ?: "字幕 $index",
-                    isSelected = track.selected,
-                    rawData = track.id
-                )
+                id = desc.id.toString(),
+                index = index,
+                language = meta?.language ?: "",
+                mimeType = meta?.codec ?: "",
+                name = displayName,
+                isSelected = desc.id == mediaPlayer.spuTrack,
+                rawData = desc.id
             )
         }
-        _subtitleTracks.value = spuList
 
         // 4. 📺 视频轨道
-        val videoTracks = mediaPlayer.getTracks(IMedia.Track.Type.Video) ?: emptyArray()
-        _videoTracks.value = videoTracks.mapIndexed { index, track ->
-            val vTrack = track as? IMedia.VideoTrack
+        val videoDescriptions = mediaPlayer.videoTracks ?: emptyArray()
+        _videoTracks.value = videoDescriptions.mapIndexed { index, desc ->
             MzVideoTrack(
-                id = track.id,
+                id = desc.id.toString(),
                 index = index,
-                height = vTrack?.height ?: 0,
-                bitrate = track.bitrate,
-                codecs = track.codec ?: "",
-                isSelected = track.selected,
-                rawData = track.id
+                height = 0,
+                bitrate = 0,
+                codecs = "",
+                isSelected = desc.id == mediaPlayer.videoTrack,
+                rawData = desc.id
             )
         }
 
-        // 5. 💿 蓝光/DVD Titles
-        val titles = mediaPlayer.titles // 4.0 titles 属性
+        // 5. 💿 蓝光/DVD Titles (新增回位)
+        val titles = mediaPlayer.titles
         if (titles != null && titles.isNotEmpty()) {
-            val currentTitleIdx = mediaPlayer.title // 4.0 title 属性
+            val currentTitleIdx = mediaPlayer.title
             _isoTitles.value = titles.mapIndexed { index, title ->
                 MzIsoTitle(
                     index = index,
@@ -352,7 +351,7 @@ class MzVlcPlayer(
                 )
             }
         } else {
-            _isoTitles.value = emptyList()
+            _isoTitles.value = emptyList() // 非光盘介质清空列表
         }
     }
 
@@ -373,27 +372,16 @@ class MzVlcPlayer(
     override fun seekBack(ms: Long) { mediaPlayer.time = currentPosition - ms }
 
     override fun selectVideoTrack(track: MzVideoTrack) {
-        val id = track.rawData as? String ?: track.id
-        mediaPlayer.selectTrack(id)
+        mediaPlayer.videoTrack = track.rawData as? Int ?: -1
     }
 
     override fun selectAudioTrack(track: MzBasicTrack) {
-        val id = track.rawData as? String ?: track.id
-        if (id == "-1") {
-            mediaPlayer.unselectTrackType(IMedia.Track.Type.Audio)
-        } else {
-            mediaPlayer.selectTrack(id)
-        }
+        mediaPlayer.audioTrack = track.rawData as? Int ?: -1
         updateTracks()
     }
 
     override fun selectSubtitleTrack(track: MzBasicTrack) {
-        val id = track.rawData as? String ?: track.id
-        if (id == "-1") {
-            mediaPlayer.unselectTrackType(IMedia.Track.Type.Text)
-        } else {
-            mediaPlayer.selectTrack(id)
-        }
+        mediaPlayer.spuTrack = track.rawData as? Int ?: -1
         updateTracks()
     }
 
@@ -440,7 +428,7 @@ class MzVlcPlayer(
     override fun addExternalSubtitles(subtitles: List<Pair<String, String>>) {
         val media = mediaPlayer.media ?: return
 
-        lastSubtitleCount = media.getTracks()?.size ?: 0 
+        lastSubtitleCount = media.trackCount // ⭐️记录之前数量（或只数 Text 轨）
         subtitles.forEach { (uri, _) ->
             // true 表示优先选中最后添加的那个
             mediaPlayer.addSlave(IMedia.Slave.Type.Subtitle, uri.toUri(), true)
